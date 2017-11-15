@@ -7,13 +7,24 @@
 #include <fftw3.h>																					// allows the Fast Fourier Transform to be used
 #include <mkl_lapack.h>
 
-// MARCROS TO CHOOSE WHICH VARIATION OF THE CODE TO RUN:
+//************************//
+//         MACROS         //
+//************************//
+
+// CHOOSE WHETHER OR NOT TO USE MPI:
 #define MPI 																						// define the macro MPI (UNCOMMENT IF THE CODE SHOULD UTILISE MPI)
+
+// CHOOSE WHICH VARIATION OF THE CODE TO RUN:
 //#define Damping																					// define the macro Damping (UNCOMMENT IF BEING RUN FOR THE LANDAU DAMPING PROBLEM)
 //#define FullandLinear 																			// define the macro FullandLinear (UNCOMMENT IF THE LINEAR ELE-ION COLLISION OPERATOR IS NEEDED; OTHERWISE, ONLY ELE-ELE COLLISIONS)
 //#define TwoStream																					// define the macro TwoStream (UNCOMMENT IF BEING RUN FOR THE TWO STREAM PROBLEM)
 #define FourHump																					// define the macro FourHump (UNCOMMENT IF BEING RUN FOR THE FOUR HUMP IC PROBLEM)
 //#define TwoHump																					// define the macro TwoHump (UNCOMMENT IF BEING RUN FOR THE TWO HUMP IC PROBLEM)
+
+// CHOOSE IF THIS IS THE INITIAL RUN OR A SUBSEQUENT RUN:
+#define First																						// define the macro First (UNCOMMENT IF RUNNING THE CODE FOR THE FIRST TIME)
+//#define Second																					// define the macro Second (UNCOMMENT IF PICKING UP DATA FROM A PREVIOUS RUN)
+
 
 double PI=M_PI;																						// declare PI and set it to M_PI (the value stored in the library math.h)
 int M=5;																							// declare M (the number of collision invarients) and set it equal to 5
@@ -327,7 +338,7 @@ int main()
 									buffer_phi[100], buffer_marg[100], buffer_ent[100];				// declare the arrays buffer_moment (to store the name of the file where the moments are printed), buffer_u (to store the name of the file where the solution U is printed), buffer_ufull (to store the name of the file where the solution U is printed in the TwoStream), buffer_flags (to store the flag added to the end of the filenames), buffer_phi (to store the name of the file where the values of phi are printed), buffer_marg (to store the name of the file where the marginals are printed) & buffer_ent (to store the name of the file where the entropy values are printed)
 
 	// EVERY TIME THE CODE IS RUN, CHANGE THE FLAG TO A NAME THAT IDENTIFIES THE CASE RUNNING FOR OR WHAT TIME RUN UP TO:
-	sprintf(buffer_flags,"4HumpMacroTest");														// store the string "4Hump_Test" in buffer_flags
+	sprintf(buffer_flags,"4HumpMacroTest2");														// store the string "4HumpMacroTest2" in buffer_flags
 	sprintf(buffer_moment,"Data/Moments_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
 					nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is Moments_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
 	sprintf(buffer_u,"Data/U_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
@@ -341,17 +352,19 @@ int main()
 	sprintf(buffer_ent,"Data/EntropyVals_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
 					nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is EntropyVals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
 
-	#ifdef Damping																					// only do this if Damping was defined
-	SetInit_LD(U);																					// set initial DG solution for Landau Damping. For the first time run t=0, use this to give init solution (otherwise, comment out)
-	#endif
-	#ifdef TwoStream																				// only do this if TwoStream was defined
-	SetInit_LD(U);																					// set initial DG solution for Landau Damping. For the first time run t=0, use this to give init solution (otherwise, comment out)
-	#endif
-	#ifdef FourHump																					// only do this if FourHump was defined
-	SetInit_4H(U);																					// set initial DG solution with the 4Hump IC. For the first time run t=0, use this to give init solution (otherwise, comment out)
-    #endif
-	#ifdef TwoHump																					// only do this if TwoHump was defined
-	SetInit_2H(U);																					// set initial DG solution with the 2Hump IC. For the first time run t=0, use this to give init solution (otherwise, comment out)
+	#ifdef First																					// only do this if First was defined (setting initial conditions)
+		#ifdef Damping																				// only do this if Damping was defined
+		SetInit_LD(U);																				// set initial DG solution for Landau Damping. For the first time run t=0, use this to give init solution (otherwise, comment out)
+		#endif
+		#ifdef TwoStream																			// only do this if TwoStream was defined
+		SetInit_LD(U);																				// set initial DG solution for Landau Damping. For the first time run t=0, use this to give init solution (otherwise, comment out)
+		#endif
+		#ifdef FourHump																				// only do this if FourHump was defined
+		SetInit_4H(U);																				// set initial DG solution with the 4Hump IC. For the first time run t=0, use this to give init solution (otherwise, comment out)
+		#endif
+		#ifdef TwoHump																				// only do this if TwoHump was defined
+		SetInit_2H(U);																				// set initial DG solution with the 2Hump IC. For the first time run t=0, use this to give init solution (otherwise, comment out)
+		#endif
 	#endif
 
 	FILE *fmom, *fu, *fufull, *fmarg, *fphi, *fent;													// declare pointers to the files fmom (which will store the moments), fu (which will store the solution U), fufull (which will store the solution U in the TwoStream case), fmarg (which will store the values of the marginals), fphi (which will store the values of the potential phi) & fent (which will store the values fo the entropy)
@@ -381,22 +394,29 @@ int main()
 				buffer_flags, nu, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT,chunk_Nx,nprocs_Nx);			// display in the output file that this is the calculation with the 2Hump IC, as well as the contents of the string buffer_flags and the values of nu, A_amp,k_wave, Nx, Lv, Nv, N, dt, nT, chunk_Nx & nprocs_Nx
 		#endif
 	
-		// THIS NEXT SECTION MUST BE COMMENTED OUT WHEN RUNNING FOR THE FIRST TIME - UNCOMMENT IF USING THE OUTPUT OF A PREVIOUS RUN AND CONTINUING!
+		#ifdef Second																				// only do this Second was defined (picking up data from a previous run)
+		fu=fopen("Data/U_nu0.05A0.2k0.5Nx24Lx12.5664Nv24Lv5.25SpectralN16dt0.01nT1_4HumpMacroTest.dc","r"); 		// set fu to be a file with the name U_nu0.02A0.5k0.785398Nx48Lx8Nv48Lv4.5SpectralN24dt0.004nT500_non_nu002_2.dc, stored in the directory Data, and set the file access mode of fu to r (which means the file must exist already and will be read from)
 
-		/*
-		fu=fopen("Data/U_nu0.02A0.5k0.785398Nx48Lx8Nv48Lv4.5SpectralN24dt0.004nT500_damping_nT400.dc","r"); 		// set fu to be a file with the name U_nu0.02A0.5k0.785398Nx48Lx8Nv48Lv4.5SpectralN24dt0.004nT500_non_nu002_2.dc, stored in the directory Data, and set the file access mode of fu to r (which means the file must exist already and will be read from)
-    
-		tp = fread(U,sizeof(double),size*6,fu);															// store the contents of the file fu in U, expecting 6*size many entries of datatype double, and set the number of entries actually read to tp
-		if(tp != size*6)																				// check that the number of elements read was 6*size
+		fseek(fu ,0 ,SEEK_END);																		// find the final entry of the file fu
+	    tp = ftell(fu);																				// use the final entry to determine the size of the file
+
+	    //printf("tp = %d. \n", tp);																// display in the output file the value of tp
+	    float NoSol = (float)tp/(size*6*sizeof(double));											// calculate the number of solutions of U that must be in the file
+	    printf("no. of set of U = %f \n", NoSol);													// display in the output file the number of solutions of U that must be in the file
+
+		if(tp%(size*6) != 0)																		// check that the number of elements read was a multiple of 6*size
 		{
-			printf("Error reading file\n");																// if tp did not equal 6*size then display that there was an error
-			exit(1);																					// then exit the program
+			printf("Error reading file\n");															// if tp was not a multiple of 6*size then display that there was an error
+			exit(1);																				// then exit the program
+		}
+		else
+		{
+			fseek(fu, tp - size*6*sizeof(double), SEEK_SET);										// find the last solution that was printed in the file
+			fread(U,sizeof(double),size*6,fu);														// store the contents of the final solution in the file fu in U, expecting 6*size many entries of datatype double
 		}
 
-		fclose(fu);
-		*/
-
-		// END OF SECTION																			// close the file fu
+		fclose(fu);																					// close the file fu
+		#endif
       
 		fmom=fopen(buffer_moment,"w");																// set fmom to be a file with the name stored in buffer_moment and set the file access mode of fmom to w (which creates an empty file and allows it to be written to)
 		fu=fopen(buffer_u, "w");																	// set fu to be a file with the name stored in buffer_u and set the file access mode of fu to w (which creates an empty file and allows it to be written to)
