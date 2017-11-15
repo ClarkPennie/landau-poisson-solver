@@ -832,10 +832,12 @@ void ComputeEquiVals(double *f)																	// function to compute the equil
 	rhoeqvals = fopen("Data/RhoEquiVals_nu0.05A0.2k0.5Nx24Lx12.5664Nv24Lv5.25SpectralN16dt0.01nT0_4Hump.dc","r");														// set rhoeqvals to be a file with the name stored in buffer_rhoeq and setthe file access more of rhoeqvals to r (which allows the file to be read from)
 	fread(rho_vals, sizeof(double), 5*Nx, rhoeqvals);											// read from the file rhoeqvals, which contains 5*Nx many entries of the size of a double number and store it rho_vals
 	fclose(rhoeqvals);																			// close the file rhoeqvals
+	/*DEGUG TEST
 	for(i=0;i<5*Nx;i++)
 	{
 		printf("%g ", rho_vals[i]);
-	}
+	}i
+	*/
 	#pragma omp parallel for private(k,k_equi,i,j1,j2,j3,iNNN,j1NN,j2N,nx,nv1,nv2,nv3,x_0,v1_0,v2_0,v3_0,x_val,v1_val,v2_val,v3_val) shared(size_v,Nv,dv,dx,vt,wt,rho_vals,f)
 	for(i=0;i<Nx;i++)																												// loop through the space cells
 	{

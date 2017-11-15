@@ -13,7 +13,7 @@ CPP=icpc
 MPICC=mpicxx
 
 # Compiler flags: crashed when compiling with -O0
-CFLAGS = -O2 -openmp  -I$(TACC_FFTW3_INC) -I$(TACC_MKL_INC)
+CFLAGS = -O2 -qopenmp  -I$(TACC_FFTW3_INC) -I$(TACC_MKL_INC)
 FFTFLAGS = -L$(TACC_FFTW3_LIB) -lfftw3_threads -lfftw3 -lpthread -lm 
 MKLFLAGS = -Wl,-rpath,$(TACC_MKL_LIB) -L$(TACC_MKL_LIB) -Wl,--start-group -lmkl_core -lmkl_intel_lp64 -lmkl_intel_thread -Wl,--end-group -liomp5 -lpthread
 
@@ -46,7 +46,7 @@ LP: $(objects_LP)
 
 LP1: $(objects_LP1)
 	@echo "Building Landau-Poisson solver1"
-	@$(MPICC) $(CFLAGS) $(objects_LP1) -o $(EXECDIR)LPsolver_nu005_T20.out  $(FFTFLAGS) $(MKLFLAGS)
+	@$(MPICC) $(CFLAGS) $(objects_LP1) -o $(EXECDIR)LPsolver_nu005_2HumpMacroTest.out  $(FFTFLAGS) $(MKLFLAGS)
 
 LP2: $(objects_LP2)
 	@echo "Building Landau-Poisson solver1"
