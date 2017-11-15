@@ -7,14 +7,13 @@
 #include <fftw3.h>																					// allows the Fast Fourier Transform to be used
 #include <mkl_lapack.h>
 
-//#define FullandLinear // add the linear ele-ion collision operator; otherwise, only ele-ele collisions
-
+// MARCROS TO CHOOSE WHICH VARIATION OF THE CODE TO RUN:
 #define MPI 																						// define the macro MPI (UNCOMMENT IF THE CODE SHOULD UTILISE MPI)
-//#define Damping																						// define the macro Damping (UNCOMMENT IF BEING RUN FOR THE LANDAU DAMPING PROBLEM)
+//#define Damping																					// define the macro Damping (UNCOMMENT IF BEING RUN FOR THE LANDAU DAMPING PROBLEM)
+//#define FullandLinear 																			// define the macro FullandLinear (UNCOMMENT IF THE LINEAR ELE-ION COLLISION OPERATOR IS NEEDED; OTHERWISE, ONLY ELE-ELE COLLISIONS)
 //#define TwoStream																					// define the macro TwoStream (UNCOMMENT IF BEING RUN FOR THE TWO STREAM PROBLEM)
 #define FourHump																					// define the macro FourHump (UNCOMMENT IF BEING RUN FOR THE FOUR HUMP IC PROBLEM)
 //#define TwoHump																					// define the macro TwoHump (UNCOMMENT IF BEING RUN FOR THE TWO HUMP IC PROBLEM)
-
 
 double PI=M_PI;																						// declare PI and set it to M_PI (the value stored in the library math.h)
 int M=5;																							// declare M (the number of collision invarients) and set it equal to 5
@@ -57,8 +56,6 @@ double h_eta, h_v;																					// declare h_eta (the Fourier stepsize) &
 double nu=0.05, dt=0.01, nthread=16; 																// declare nu (1/knudson#) and set it to 0.02, dt (the timestep) and set it to 0.004 & nthread (the number of OpenMP threads) and set it to 16
 #endif
 
-
-// There is not much need for storing double; use float to save space, esp for collision weights.
 double *v, *eta;																					// declare v (the velocity variable) & eta (the Fourier space variable)
 double *wtN;																						// declare wtN (the trapezoidal rule weights to be used)
 double scale, scale3, scaleL=8*Lv*Lv*Lv, scalev=dv*dv*dv;											// declare scale (the 1/sqrt(2pi) factor appearing in Gaussians), scale (the 1/(sqrt(2pi))^3 factor appearing in the Maxwellian), scaleL (the volume of the velocity domain) and set it to 8Lv^3 & scalev (the volume of a discretised velocity element) and set it to dv^3
@@ -77,11 +74,10 @@ fftw_complex *Q1_fft_linear, *Q2_fft_linear, *Q3_fft_linear;										// declare
 fftw_complex *fftIn, *fftOut;																		// declare pointers to the FFT variables fftIn (a vector to be to have the FFT applied to it) & fftOut (the output of an FFT)
 double IntM[10];																					// declare an array IntM to hold 10 double variables
 #pragma omp threadprivate(IntM)																		// start the OpenMP parallel construct to start the threads which will run in parallel, passing IntM to each thread as private variables which will have their contents deleted when the threads finish (doesn't seem to be doing anything since no {} afterwards???)
-//double **IntM_all; // take too many memory 
 
 double ce, *cp, *intE, *intE1, *intE2;																// declare ce and pointers to cp, intE, intE1 & intE2 (precomputed quantities for advections)
 
-//set up FFT plans - to be used multiple times
+// SET UP FFT PLANS (WHICH ARE USED MULTIPLE TIMES):
 fftw_plan p_forward; 																				// declare the fftw_plan p_forward (an object which contains all the data which allows fftw3 to compute the FFT)
 fftw_plan p_backward; 																				// declare the fftw_plan p_backward (an object which contains all the data which allows fftw3 to compute the inverse FFT)
 fftw_complex *temp;																					// declare a pointer to complex number temp (a temporary array used when calculating the FFT)
@@ -94,7 +90,7 @@ double *fAvgVals;																					// declare fAvgVals (to store the average 
 double *fEquiVals;																					// declare f_equivals (to store the equilibrium solution)
 
 #include "advection_1.cpp"																			// allows computeMass, computeMomentum, computeKiE, computeEleE & RK3 to be used
-#include "SetInit_1.cpp"																			// allows TrapezoidalRule, SetInit_DH & setInit_spectral to be used
+#include "SetInit_1.cpp"																			// allows TrapezoidalRule, SetInit_LD, SetInit_4H, SetInit_2H & setInit_spectral to be used
 #include "conservationRoutines.cpp"         														// allows createCCtAndPivot & conserveAllMoments to be used
 #include "collisionRoutines_1.cpp"            														// allows generate_conv_weights, generate_conv_weights_linear, computeQ & RK4 to be used
 
@@ -116,17 +112,13 @@ int main()
 	int provided;                       															// declare provided (the actual provided level of MPI thread support)
 	MPI_Status status;																				// declare status (to store any status required for MPI operations)
 
-	//------------------------------
-	//Initialize MPI with threading
 	MPI_Init_thread(NULL, NULL, required, &provided);												// initialise the hybrid MPI & OpenMP environment, requesting the level of thread support to be required and store the actual thread support provided in provided
-	// MPI_Init(NULL, NULL);
 	MPI_Comm_rank(MPI_COMM_WORLD, &myrank_mpi);														// store the rank of the current process in the MPI_COMM_WORLD communicator in myrank_mpi
 	MPI_Comm_size(MPI_COMM_WORLD, &nprocs_mpi);														// store the total number of processes running in the MPI_COMM_WORLD communicator in nprocs_mpi
   
-	// Check the threading support level
+	// CHECK THE LEVEL OF THREAD SUPPORT:
 	if (provided < required)																		// only do this if the required thread support was not possible
 	{
-		// Insufficient support, degrade to 1 thread and warn the user
 		if (myrank_mpi == 0)
 		{
 			printf( "provided=%d < required=%d. Warning:  This MPI implementation "
@@ -134,13 +126,11 @@ int main()
 			MPI_Finalize();																			// ensure that MPI exits cleanly
 			exit(0);
 		}
-		//omp_set_num_threads(1);
 	}
 	else
 	{
 		omp_set_num_threads(nthread);																// if the thread support required is possible, set the number of OpenMP threads to nthread
 	}
-   
    
 	double MPIt1, MPIt2, MPIelapsed;																// declare MPIt1 (the start time of an MPI operation), MPIt2 (the end time of an MPI operation) and MPIelapsed (the total time for the MPI operation)
 
@@ -154,7 +144,6 @@ int main()
 		exit(0);
 	}
 
-	// nprocs_vlasov = 3;
 	chunksize_dg = size/nprocs_mpi;																	// set chunksize_dg to size/nprocs_mpi (which will be an integer since nprocs_mpi is a facot of size_v and size = Nx*size_v)
 	chunksize_ft = size_ft/nprocs_mpi; 																// set chunksize_ft to size_ft/nprocs_mpi
 
@@ -166,28 +155,20 @@ int main()
 	{
 		chunk_Nx = Nx/nprocs_mpi + 1;																// if nprocs_mpi does not divide into Nx, set chunk_Nx to Nx/nprocs_mpi + 1
 	}
-  
-	//chunk_Nx = (int)((double)Nx/(double)nprocs_mpi + 0.5); // rounding to nearest int
-	//if(chunk_Nx==0)chunk_Nx=1;
-  
-	//if(chunk_Nx==1) nprocs_Nx = Nx;
-	//else
-  
+
 	nprocs_Nx = (int)((double)Nx/(double)chunk_Nx + 0.5);											// set nprocs_Nx to Nx/chunk_Nx + 0.5 and store the result as an integer
 
-	U = (double *)malloc(size*6*sizeof(double));													// allocate enough space at the pointer U for 6*size many double numbers
+	U = (double*)malloc(size*6*sizeof(double));														// allocate enough space at the pointer U for 6*size many double numbers
 	U1 = (double*)malloc(size*6*sizeof(double));													// allocate enough space at the pointer U1 for 6*size many floating point numbers
-	//for (i=0;i<size;i++) U1[i] = (double*)malloc(6*sizeof(double));
  
 	Utmp = (double*)malloc(chunksize_dg*6*sizeof(double));											// allocate enough space at the pointer Utmp for 6*chunksize_dg many floating point numbers
-	//for (i=0;i<chunksize_dg;i++) Utmp[i] = (double*)malloc(6*sizeof(double));
 	// H[i] = (double*)malloc(6*sizeof(double));}
 	output_buffer_vp = (double *) malloc(chunksize_dg*6*sizeof(double));							// allocate enough space at the pointer output_buffer_vp for 6*chunksize_dg many floating point numbers
   
-	cp = (double *)malloc(Nx*sizeof(double));														// allocate enough space at the pointer cp for Nx many double numbers
-	intE = (double *)malloc(Nx*sizeof(double));														// allocate enough space at the pointer intE for Nx many double numbers
-	intE1 = (double *)malloc(Nx*sizeof(double));													// allocate enough space at the pointer intE1 for Nx many double numbers
-	intE2 = (double *)malloc(Nx*sizeof(double));													// allocate enough space at the pointer intE2 for Nx many double numbers
+	cp = (double*)malloc(Nx*sizeof(double));														// allocate enough space at the pointer cp for Nx many double numbers
+	intE = (double*)malloc(Nx*sizeof(double));														// allocate enough space at the pointer intE for Nx many double numbers
+	intE1 = (double*)malloc(Nx*sizeof(double));														// allocate enough space at the pointer intE1 for Nx many double numbers
+	intE2 = (double*)malloc(Nx*sizeof(double));														// allocate enough space at the pointer intE2 for Nx many double numbers
 
 	fNegVals = (int*)malloc(size*sizeof(int));														// allocate enough space at the pointer fNegVals for size many integers
 	fAvgVals = (double*)malloc(size*sizeof(double));												// allocate enough space at the pointer fAvgVals for size many doubles
@@ -202,7 +183,6 @@ int main()
 			C1[i] = (double *)malloc(size_ft*sizeof(double));										// allocate enough space at the ith entry of C1 for size_ft many double numbers
 			C2[i] = (double *)malloc(size_ft*sizeof(double));										// allocate enough space at the ith entry of C2 for size_ft many double numbers
 		}
-		//for (i=0;i<size;i++) U[i] = (double *)malloc(6*sizeof(double));
 		f = (double **)malloc(chunk_Nx*sizeof(double *));											// allocate enough space at the pointer f for chunk_Nx many pointers to double numbers
 		for (i=0;i<chunk_Nx;i++)
 		{
@@ -227,39 +207,29 @@ int main()
   
 		qHat_linear = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));					// allocate enough space at the pointer QHat_linear for size_ft many complex numbers
 		#endif
-  
-		//IntM_all = (double **)malloc(size_v*size_ft*sizeof(double *));
-		//for (i=0;i<size_v*size_ft;i++) IntM_all[i] = (double *)malloc(10*sizeof(double));
-  
-		Q = (double *)malloc(size_ft*sizeof(double));												// allocate enough space at the pointer Q for size_ft many double numbers
-		f1 = (double *)malloc(size_ft*sizeof(double)); 												// allocate enough space at the pointer f1 for size_ft many double numbers
-		Q1 = (double *)malloc(size_ft*sizeof(double));												// allocate enough space at the pointer Q1 for size_ft many double numbers
-		Utmp_coll = (double *)malloc(chunk_Nx*size_v*5*sizeof(double));								// allocate enough space at the pointer Utmp_coll for 5*chunk_Nx*size_v many double numbers
-		output_buffer = (double *) malloc(chunk_Nx*size_v*5*sizeof(double));						// allocate enough space at the pointer output_buffer for 5*chunk_Nx*size_v many double numbers
+
+		Q = (double*)malloc(size_ft*sizeof(double));												// allocate enough space at the pointer Q for size_ft many double numbers
+		f1 = (double*)malloc(size_ft*sizeof(double)); 												// allocate enough space at the pointer f1 for size_ft many double numbers
+		Q1 = (double*)malloc(size_ft*sizeof(double));												// allocate enough space at the pointer Q1 for size_ft many double numbers
+		Utmp_coll = (double*)malloc(chunk_Nx*size_v*5*sizeof(double));								// allocate enough space at the pointer Utmp_coll for 5*chunk_Nx*size_v many double numbers
+		output_buffer = (double*)malloc(chunk_Nx*size_v*5*sizeof(double));							// allocate enough space at the pointer output_buffer for 5*chunk_Nx*size_v many double numbers
   
 		//f2 = (double *)malloc(size_ft*sizeof(double));
 		//Q2 = (double *)malloc(N*N*N*sizeof(double));
 		//f3 = (double *)malloc(size_ft*sizeof(double));
 		//Q3 = (double *)malloc(N*N*N*sizeof(double));
 
-		//Temporary array for FFT
 		temp = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer temp for size_ft many complex numbers
 		//qHat_local = (fftw_complex *)fftw_malloc(chunksize_ft*sizeof(fftw_complex));
 		qHat = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer qHat for size_ft many complex numbers
   
-  
-		//FFTW run with threads
-		//Initialization
+		// INITIALISE FFTW FOR USE WITH THREADING (MUST BE DONE BEFORE ANY PLAN IS CREATED):
 		fftw_init_threads();																		// initialise the environment for using the fftw3 routines with multiple threads
-
-		//Setting number of threads (this must be done before any plan is created)
 		fftw_plan_with_nthreads(nthread);															// set the number of threads used by fftw3 routines to nthread
 
-		//Set up plans for FFTs (executed by using nThreads)
+		// SET UP PLANS FOR FFTs (EXECUTED BY USING nThreads):
 		p_forward = fftw_plan_dft_3d (N, N, N, temp, temp, FFTW_FORWARD, FFTW_MEASURE);				// set p_forward to a 3D fftw plan of dimension NxNxN, which will take the FFT of the vector in temp, store the result back in temp, set the sign to FFTW_FORWARD (so that this is an FFT) and set the flag to FFT_MEASURE so that at this stage fftw3 finds the most efficient way to compute the FFT of this size
 		p_backward = fftw_plan_dft_3d (N, N, N, temp, temp, FFTW_BACKWARD, FFTW_MEASURE);			// set p_backward to a 3D fftw plan of dimension NxNxN, which will take the FFT of the vector in temp, store the result back in temp, set the sign to FFTW_BACKWARD (so that this is an inverse FFT) and set the flag to FFT_MEASURE so that at this stage fftw3 finds the most efficient way to compute the FFT of this size
-		//p_forward = fftw3d_create_plan(N, N, N, FFTW_FORWARD, FFTW_ESTIMATE|FFTW_IN_PLACE);
-		//p_backward = fftw3d_create_plan(N, N, N, FFTW_BACKWARD, FFTW_ESTIMATE|FFTW_IN_PLACE);
 
 		wtN = (double *)malloc(N*sizeof(double));													// allocate enough space at the pointer wtN to store N many double numbers
 		v = (double *)malloc(N*sizeof(double));														// allocate enough space at the pointer v to store N many double numbers
@@ -280,11 +250,11 @@ int main()
 		sprintf(buffer_weights1,"Weights/N%d_L%g_Landau_linear.wts",N,L_v);							// store the values of N & L_v in buffer_weights1 and note that it's for the linear Landau damping
 		#endif
 
-		//commonly used constants
+		// COMMONLY USED CONSTANTS:
 		scale = 1.0/sqrt(2.0*M_PI);																	// set scale to 1/sqrt(2*pi)
 		scale3 = pow(scale, 3.0);																	// set scale3 to scale^3
 
-		//initialize velocity and fourier domains
+		//INITIALISE VELOCITY AND FOURIER DOMAINS:
 		L_v = Lv;//sqrt(0.5*(double)N*PI); 															// set L_v to Lv
 		L_eta = 0.5*(double)(N-1)*PI/L_v;					// BUG: N-1?							// set L_eta to (N-1)*Pi/(2*L_v)
 		h_v = 2.0*L_v/(double)(N-1);						// BUG: N-1?							// set h_v to 2*L_v/(N-1)
@@ -294,7 +264,7 @@ int main()
 			eta[i] = -L_eta + (double)i*h_eta;														// set the ith value of eta to -L_eta + i*h_eta
 			v[i] = -L_v + (double)i*h_v;															// set the ith value of v to -L_v + i*h_v
 		}
-		//initialize trapezoid rule weights
+
 		trapezoidalRule(N, wtN);																	// set wtN to the weights required for a trapezoidal rule with N points
   
 		createCCtAndPivot();																		// calculate the values of the conservation matrices
@@ -349,48 +319,6 @@ int main()
 		#ifdef FullandLinear																		// only do this FullandLinear was defined
 		generate_conv_weights_linear(conv_weights_linear);											// calculate the values of the convolution weights for the linear case (the matrix G_Hat(xi, omega), for xi = (xi_i, xi_j, xi_k), omega = (omega_l, omega_m, omega_n), i,j,k,l,m,n = 0,1,...,N-1) and store the values in conv_weights_linear
 		#endif
-		/*
-		  int chunksize = size_v/nprocs_mpi;
-		  double IntM[10], *IntM_tmp=(double *)malloc(chunksize*size_ft*10*sizeof(double)), *output_buffer_intm=(double *)malloc(chunksize*size_ft*10*sizeof(double));
-		  //for (i=0;i<chunksize*size_ft;i++) IntM_tmp[i] = (double *)malloc(10*sizeof(double));
-  
-		  #pragma omp parallel for schedule(dynamic) private(j1,j2,j3,i,j,k, k_eta, IntM) shared(IntM_tmp) //reduction(+: tmp0, tmp2, tmp3, tmp4, tmp5)
-		  for(int kt=chunksize*myrank_mpi;kt<chunksize*(myrank_mpi+1);kt++){
-			j3 = kt % Nv; j2 = ((kt-j3)/Nv) % Nv; j1 = (kt - j3 - Nv*j2)/(Nv*Nv);
-			for(i=0;i<N;i++){
-		  for(j=0;j<N;j++){
-			for(k=0;k<N;k++){
-			  k_eta = k + N*(j + N*i);
-			  IntModes(i,j,k,j1,j2,j3,IntM);
-			  for(l=0;l<10;l++) IntM_tmp[((kt%chunksize)*size_ft+k_eta)*10+l] = IntM[l];
-				}
-			  }
-		}
-	  }
-		  if(myrank_mpi == 0) {
-			//dump the weights we've computed into U1
-			for(k=0;k<chunksize;k++) {
-			for(k_eta=0;k_eta<size_ft;k_eta++){
-			  for(l=0;l<10;l++) IntM_all[k*size_ft+k_eta][l] = IntM_tmp[(k*size_ft+k_eta)*10+l];
-			}
-			}
-			//receive from all other processes
-			for(i=1;i<nprocs_mpi;i++) {
-			  MPI_Recv(output_buffer_intm, chunksize*size_ft*10, MPI_DOUBLE, i, i, MPI_COMM_WORLD, &status); // receive weight from other processes consecutively, rank i=1..numNodes-1, ensuring the weights are stored in the file consecutively !
-			  for(k=0;k<chunksize;k++) {
-				for(k_eta=0;k_eta<size_ft;k_eta++){
-				   for(l=0;l<10;l++) IntM_all[(i*chunksize+k)*size_ft+k_eta][l] = output_buffer_intm[(k*size_ft+k_eta)*10+l];
-				}
-			  }
-			}
-		  }
-		  else {
-			MPI_Send(IntM_tmp, chunksize*size_ft*10, MPI_DOUBLE, 0, myrank_mpi, MPI_COMM_WORLD);
-		  }
-  
-		  free(IntM_tmp); free(output_buffer_intm);
-		  for(k=0;k<size_v*size_ft;k++)MPI_Bcast(IntM_all[k], 10, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-		 */
 
 		MPI_Barrier(MPI_COMM_WORLD);																// set an MPI barrier to ensure that all processes have reached this point before continuing
 	}
@@ -398,7 +326,7 @@ int main()
 	char buffer_moment[100], buffer_u[100], buffer_ufull[100], buffer_flags[100],
 									buffer_phi[100], buffer_marg[100], buffer_ent[100];				// declare the arrays buffer_moment (to store the name of the file where the moments are printed), buffer_u (to store the name of the file where the solution U is printed), buffer_ufull (to store the name of the file where the solution U is printed in the TwoStream), buffer_flags (to store the flag added to the end of the filenames), buffer_phi (to store the name of the file where the values of phi are printed), buffer_marg (to store the name of the file where the marginals are printed) & buffer_ent (to store the name of the file where the entropy values are printed)
 
-	// Every time run, change flag to indicate what stage has been run up to!
+	// EVERY TIME THE CODE IS RUN, CHANGE THE FLAG TO A NAME THAT IDENTIFIES THE CASE RUNNING FOR OR WHAT TIME RUN UP TO:
 	sprintf(buffer_flags,"4HumpMacroTest");														// store the string "4Hump_Test" in buffer_flags
 	sprintf(buffer_moment,"Data/Moments_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
 					nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is Moments_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
@@ -480,7 +408,7 @@ int main()
 
 		ComputeEquiVals(fEquiVals);																// compute the values of the equilibrium solution, for use in Gaussian quadrature, and store them in f_equivals
 
-		/*
+		/* DEBUG TEST
 		for(int i=0;i<Nx;i++)
 		{
 			printf("i = %d: ", i);
@@ -497,6 +425,7 @@ int main()
 			printf("\n");
 		}
 		*/
+
 		mass=computeMass(U);																		// set mass to the value calculated through computeMass, for the solution f(x,v,t) at the current time t, using its DG coefficients stored U
 		computeMomentum(U, a);																		// calculate the momentum for the solution f(x,v,t) at the current time t, using its DG coefficients stored U, and store it in a
 		KiE=computeKiE(U);																			// set KiE to the value calculated through computeKiE, for the solution f(x,v,t) at the current time t, using its DG coefficients stored U
@@ -510,17 +439,14 @@ int main()
 		ll_ent2 = log(fabs(l_ent2));																// set ll_ent2 to the log of l_ent2
 		printf("step #0: %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g %11.8g %11.8g \n",
 				mass, a[0], a[1], a[2], KiE, EleE, tmp, log(tmp), KiE+EleE, ent1);					// display in the output file that this is step 0 (so these are the initial conditions), then the mass, 3 components of momentum, kinetic energy, electric energy, sqrt(electric energy), log(sqrt(electric energy)), total energy & entropy
-		// printf("0 %11.8g %11.8g\n",log(tmp), KiE+EleE);
 		fprintf(fmom, "%11.8g %11.8g %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g \n",
 				mass, a[0], a[1], a[2], KiE, EleE, tmp, log(tmp), KiE+EleE);						// in the file tagged as fmom, print the initial mass, 3 components of momentum, kinetic energy, electric energy, sqrt(electric energy), log(sqrt(electric energy)) & total energy
 		fprintf(fent, "%11.8g %11.8g %11.8g %11.8g %11.8g %11.8g \n",
 				ent1, l_ent1, ll_ent1, ent2, l_ent2, ll_ent2);										// in the file tagged as fent, print the entropy, its log, the log of that, then the relative entropy, its log and then the log of that
 
-		//CheckNegVals(U, fNegVals, fAvgVals);
 		KiEratio = computeKiEratio(U, fNegVals);													// compute the ratio of the kinetic energy where f is negative to that where it is positive and store it in KiEratio
 		printf("Kinetic Energy Ratio = %g\n", KiEratio);											// print the ratio of the kinetic energy where f is negative to that where it is positive
 
-    
 		//fufull=fopen("Data/U_nu0.02A0.5k1.5708Nx48Lx4Nv32Lv4SpectralN24dt0.004_non_nu002_time15s.dc", "w");
 		//fprintf(fmom, "%11.8g  %11.8g\n", EleE, log(tmp));
 		/*#ifdef TwoStream
@@ -564,7 +490,7 @@ int main()
 			MPI_Barrier(MPI_COMM_WORLD);															// set an MPI barrier to ensure that all processes have reached this point before continuing
 			if(myrank_mpi == 0) 																	// only the process with rank 0 will do this
 			{
-				//dump the dU (Utmp_coll) we've computed into U1 (U)
+				// TRANSFER CONTENTS OF THE dU (Utmp_coll) THAT HAVE BEEN COMPUTED INTO U1 (U):
 				for(l=0;l<chunk_Nx;l++) 															// cycle through all space-steps stored in the first chunk of the space interval (which is stored on the process with rank 0)
 				{
 					for(k=0;k<size_v;k++)															// cycle through all size_v (= Nv^3) many velocity-steps (which will exist for each space-step)
@@ -577,7 +503,7 @@ int main()
 						U[k_v*6+4] = Utmp_coll[k_v*5+3];											// set the (6*k_v + 4)-th entry of U to the (5*k_v + 3)-th entry of Utmp_coll
 					}
 				}
-				// RECEIVE FROM ALL OTHER PROCESSES CONSECUTIVELY TO ENSURE THE WEIGHTS ARE STORED IN THE FILE U CONSECUTIVELY
+				// RECEIVE FROM ALL OTHER PROCESSES CONSECUTIVELY TO ENSURE THE WEIGHTS ARE STORED IN THE FILE U CONSECUTIVELY:
 				for(i=1;i<nprocs_Nx;i++)															// store the DG coefficients of the current solution in U that were calculated by the remaining processes (with ranks i = 1, 2, ..., nprocs_Nx-1) for their corresponding chunk of space
 				{
 					MPI_Recv(output_buffer, chunk_Nx*size_v*5, MPI_DOUBLE, i, i,
@@ -590,7 +516,8 @@ int main()
 							{
 								k_v = (chunk_Nx*i+l)*size_v + k; 									// set k_v to be the value associated with the k-th velocity-step for the (chunk_Nx*i + l)-th space-step (which is the l-th space-step in the current chunk)
 								k_local = l*size_v + k;												// set k_local to be the value associated with the k-th veolcity-step for the l-th local space step (which is the current one, as indicated in the previous line)
-								// Store contents of the receive buffer in the correct portion of U to add this part of the solution
+
+								// STORE CONTENTS OF THE RECEIVE BUFFER IN THE CORRECT PORTION OF U TO ADD THIS PART OF THE SOLUTION:
 								U[k_v*6+0] = output_buffer[k_local*5];								// set the 6*k_v-th entry of U to the 5*k_local-th entry of Utmp_coll
 								U[k_v*6+5] = output_buffer[k_local*5+4];							// set the (6*k_v + 5)-th entry of U to the (5*k_local + 4)-th entry of Utmp_coll
 								U[k_v*6+2] = output_buffer[k_local*5+1];  							// set the (6*k_v + 2)-th entry of U to the (5*k_local + 1)-th entry of Utmp_coll
@@ -612,11 +539,9 @@ int main()
 		    MPI_Bcast(U, size*6, MPI_DOUBLE, 0, MPI_COMM_WORLD);    								// send the contents of U, from the process with rank 0, which contains 6*size entries of datatype MPI_DOUBLE, to all processes via the communicator MPI_COMM_WORLD (so that all processes have the coefficients of the DG approximation to f at the current time-step for the start of the next calculation)
 		}
    
-		//MPI_Barrier(MPI_COMM_WORLD);
 		if(myrank_mpi==0)																			// only the process with rank 0 will do this
 		{
 			FindNegVals(U, fNegVals, fAvgVals);																// find out in which cells the approximate solution goes negative and record it in fNegVals
-			//CheckNegVals(U, fNegVals, fAvgVals);
 
 			mass=computeMass(U);																	// set mass to the value calculated through computeMass, for the solution f(x,v,t) at the current time t, using its DG coefficients stored U
 			computeMomentum(U, a);																	// calculate the momentum for the solution f(x,v,t) at the current time t, using its DG coefficients stored U, and store it in a
@@ -631,7 +556,6 @@ int main()
 			ll_ent2 = log(fabs(l_ent2));															// set ll_ent2 to the log of l_ent2
 			printf("step %d: %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g %11.8g %11.8g \n",
 					t+1, mass, a[0], a[1], a[2], KiE, EleE, tmp, log(tmp), KiE+EleE, ent1);			// display in the output file that this is step t+1, then the mass, 3 components of momentum, kinetic energy, electric energy, sqrt(electric energy), log(sqrt(electric energy)), total energy & entropy
-			// printf("0 %11.8g %11.8g\n",log(tmp), KiE+EleE);
 			fprintf(fmom, "%11.8g %11.8g %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g \n",
 					mass, a[0], a[1], a[2], KiE, EleE, tmp, log(tmp), KiE+EleE);					// in the file tagged as fmom, print the initial mass, 3 components of momentum, kinetic energy, electric energy, sqrt(electric energy), log(sqrt(electric energy)) & total energy
 			fprintf(fent, "%11.8g %11.8g %11.8g %11.8g %11.8g %11.8g \n",
@@ -655,12 +579,8 @@ int main()
 			  }
 			  #endif*/
       
-			//if(t==751) fwrite(U,sizeof(double),size*6,fufull); // at this point, the total time=15s (3750 steps * 0.004)
 
 	    	//if(t%400==0)fwrite(U,sizeof(double),size*6,fu);
-	    	//if(t==1600)fwrite(U,sizeof(double),size*6,fu2);
-		    //if(t==2400)fwrite(U,sizeof(double),size*6,fu3);
-		    //if(t==800)fwrite(U,sizeof(double),size*6,fu4);
 			if(t%20==0)
 			{
 				PrintMarginal(U, fmarg);																	// print the marginal distribution for the initial condition, using the DG coefficients in U, in the file tagged as fmarg
@@ -679,11 +599,6 @@ int main()
     
 		fwrite(U,sizeof(double),size*6,fu);															// write the coefficients of the DG approximation at the end, stored in U, which is 6*size entires, each of the size of a double datatype, in the file tagged as fu
 		PrintPhiVals(U, fphi);																		// print the values of the potential in the file tagged as filephi at the given timestep
-    
-		/* for(k=0;k<size;k++)
-		 * {
-				  for(l=0;l<6;l++)fprintf(fu, "%g ", U[k*6+l]);
-			} */
 	
 		fclose(fu);  																				// remove the tag fu to close the file
 	}
@@ -695,12 +610,10 @@ int main()
 		fclose(fmarg);  																			// remove the tag fmarg to close the file
 		fclose(fphi);  																				// remove the tag fphi to close the file
 		fclose(fent);  																				// remove the tag fent to close the file
-		//fclose(fufull);
 		#ifdef TwoStream																			// only do this if TwoStream was defined
 		//fclose(fufull);
 		#endif
 	}
-	//free(IntM_all);
 	if(nu > 0.)
 	{
 		free(C1); free(C2); free(v); free(eta); free(wtN);											// delete the dynamic memory allocated for C1, C2, v, eta & wtN
