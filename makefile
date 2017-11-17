@@ -1,8 +1,8 @@
 # Directories
 DIR=$(PWD)/
-EXECDIR=$(DIR)
-OBJDIR=$(DIR)
-SRCDIR=$(DIR)
+EXECDIR:=$(DIR)/bin
+OBJDIR:=$(DIR)/build
+SRCDIR:=$(DIR)/source
 
 # GNU C compiler
 MPICC=mpicxx 
@@ -23,7 +23,7 @@ RM=rm -f
 sources_FPL = FPL_main.cpp 
 objects_FPL= $(sources_FPL:.c=.o)
 
-sources_LP = LP_ompi.cpp 
+sources_LP = $(SRCDIR)/LP_ompi.cpp 
 objects_LP= $(sources_LP:.c=.o)
 
 sources_wt = WeightGenerator_mpi.cpp 
@@ -36,7 +36,7 @@ FPL: $(objects_FPL)
 
 LP: $(objects_LP)
 	@echo "Building Landau-Poisson solver"
-	@$(MPICC) $(CFLAGS) $(objects_LP) -o $(EXECDIR)LPsolver_nu005_TestNewFiles.out  $(FFTFLAGS) $(MKLFLAGS)
+	@$(MPICC) $(CFLAGS) $(objects_LP) -o $(EXECDIR)/LPsolver_nu005_TestNewDirs.out  $(FFTFLAGS) $(MKLFLAGS)
 
 wts: $(objects_wt)
 	@echo "Building mpi weights"

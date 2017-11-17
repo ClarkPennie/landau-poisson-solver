@@ -1,0 +1,4 @@
+bin/			# ignore the executables
+build/			# ignore the object files created
+Data/			# ignore all data files
+Weight/			# ignore all weight files

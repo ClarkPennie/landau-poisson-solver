@@ -2,7 +2,7 @@
 
 #SBATCH -J LPsolver            # Job Name
 #SBATCH -A Boltzmann-spectral      # Charges run to <project_account_name>
-#SBATCH -o LPsolver.%j.out    # Name of the output and error file (%j expands to jobID) // only symbol % can be recoginized, others say & not
+#SBATCH -o output_files/LPsolver.%j.out    # Name of the output and error file (%j expands to jobID) // only symbol % can be recoginized, others say & not
 #SBATCH -n 8     # Total number of mpi tasks requested
 #SBATCH -N 8     # The number of nodes. n/N tasks are launched on each node. used in conjunction with the -n option (above). Use this option to specify launching less than 16 tasks per node. 
 #SBATCH -p development     # Queue (partition) name  -- normal, largemem, development, gpu, etc.
@@ -13,6 +13,6 @@
 set -x
 export OMP_NUM_THREADS=16
 
-ibrun tacc_affinity ./LPsolver_nu005_TestNewFiles.out
+ibrun tacc_affinity ./bin/LPsolver_nu005_TestNewDirs.out
 
 #./fpl.out
