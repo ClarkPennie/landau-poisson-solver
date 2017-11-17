@@ -1,3 +1,9 @@
+/* This is the source file which contains the subroutines necessary for enforcing conservation on the collision operator
+ *
+ * Functions included: solveWithCCt, conserveAllMoments, createCCtAndPivot
+ *
+ */
+
 //#include "conservationRoutines.h"
 extern fftw_plan p_forward; 
 extern fftw_plan p_backward; 

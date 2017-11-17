@@ -1,3 +1,10 @@
+/* This is the source file which contains the subroutines necessary for solving the space homogeneous, collision problem
+ * resulting from time-splitting, including FFT routines.
+ *
+ * Functions included: S1hat, S233hat, S213hat, gHat3, gHat3_linear, generate_conv_weights, generate_conv_weights_linear,
+ * fft3D, ifft3D, FS, ComputeQ, IntModes, ProjectedNodeValue, RK4
+ *
+ */
 
 extern fftw_plan p_forward; 
 extern fftw_plan p_backward; 

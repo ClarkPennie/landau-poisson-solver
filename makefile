@@ -23,14 +23,8 @@ RM=rm -f
 sources_FPL = FPL_main.cpp 
 objects_FPL= $(sources_FPL:.c=.o)
 
-sources_LP = LP_ompi_testscaling.cpp 
+sources_LP = LP_ompi.cpp 
 objects_LP= $(sources_LP:.c=.o)
-
-sources_LP1 = LP_ompi_1.cpp 
-objects_LP1= $(sources_LP1:.c=.o)
-
-sources_LP2 = LP_ompi_2.cpp 
-objects_LP2= $(sources_LP2:.c=.o)
 
 sources_wt = WeightGenerator_mpi.cpp 
 objects_wt= $(sources_wt:.c=.o)
@@ -42,15 +36,7 @@ FPL: $(objects_FPL)
 
 LP: $(objects_LP)
 	@echo "Building Landau-Poisson solver"
-	@$(MPICC) $(CFLAGS) $(objects_LP) -o $(EXECDIR)lp_testscaling.out  $(FFTFLAGS) $(MKLFLAGS)
-
-LP1: $(objects_LP1)
-	@echo "Building Landau-Poisson solver1"
-	@$(MPICC) $(CFLAGS) $(objects_LP1) -o $(EXECDIR)LPsolver_nu005_2HumpMacroTest.out  $(FFTFLAGS) $(MKLFLAGS)
-
-LP2: $(objects_LP2)
-	@echo "Building Landau-Poisson solver1"
-	@$(MPICC) $(CFLAGS) $(objects_LP2) -o $(EXECDIR)LPsolver_nu005_N30_T40.out  $(FFTFLAGS) $(MKLFLAGS)
+	@$(MPICC) $(CFLAGS) $(objects_LP) -o $(EXECDIR)LPsolver_nu005_TestNewFiles.out  $(FFTFLAGS) $(MKLFLAGS)
 
 wts: $(objects_wt)
 	@echo "Building mpi weights"

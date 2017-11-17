@@ -1,3 +1,12 @@
+/* This is the source file which contains the subroutines necessary for setting the initial conditions, as well as
+ * projecting to the function required as the initial condition to the spectral method for the collision problem
+ * resulting from time-splitting, as well as the function for setting the trapezoidal weights.
+ *
+ * Functions included: sinc, trapezoidalRule, f_TS, f_2Gauss, Mw, Mw_x, f_2H, SetInit_LD, SetInit_4H, SetInit_2H,
+ * setInit_spectral
+ *
+ */
+
 //static double vt[4] = {-0.3399810435848562648026658,0.3399810435848562648026658,-0.8611363115940525752239465,0.8611363115940525752239465};
 //static double wt[4] = {0.6521451548625461426269361,0.6521451548625461426269361,0.3478548451374538573730639,0.3478548451374538573730639};
 //double wt[5]={0.5688888888888889, 0.4786286704993665, 0.4786286704993665,0.2369268850561891, 0.2369268850561891};				// weights for Gaussian quadrature

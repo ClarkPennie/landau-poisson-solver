@@ -1,3 +1,9 @@
+/* This is the main source file for running the simulations of the space inhomogeneous Landau-Poisson
+ * equation, using the conservative spectral method with RK4 for the collision problem and RKDG for
+ * the advection problem (both of which result from time-splitting).
+ *
+ */
+
 #include <mpi.h>																					// allows all MPI routines to be used
 #include <stdio.h>																					// allows the object type FILE (an object suitable for storing information for a file stream) to be used, as well as the functions printf, sprintf, fopen, fread, fclose
 #include <malloc.h>																					// allows malloc to be used
@@ -104,6 +110,11 @@ double *fEquiVals;																					// declare f_equivals (to store the equil
 #include "SetInit_1.cpp"																			// allows TrapezoidalRule, SetInit_LD, SetInit_4H, SetInit_2H & setInit_spectral to be used
 #include "conservationRoutines.cpp"         														// allows createCCtAndPivot & conserveAllMoments to be used
 #include "collisionRoutines_1.cpp"            														// allows generate_conv_weights, generate_conv_weights_linear, computeQ & RK4 to be used
+#include "MomentCalculations.cpp"																	// allows computeMass, computeMomentum, computeKiE, computeKiERatio, computeEleE to be used
+#include "EntropyCalculations.cpp"																	// allows computeEntropy, computeEntropy_wAvg & computeRelEntropy to be used
+#include "MarginalCreation.cpp"																		// allows PrintMarginalLoc & PrintMarginal to be used
+#include "EquilibriumSolution.cpp"																	// allows ExportRhoQuadVals, ComputeEquiVals & PrintEquiVals to be used
+#include "NegativityChecks.cpp"																		// allows computeCellAvg, FindNegVals & CheckNegVals to be used
 
 int main()
 {
