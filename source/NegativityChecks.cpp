@@ -1,9 +1,12 @@
-/* This is the source file which contains the subroutines necessary for checking where the solution loses positivity.
+/* This is the source file which contains the subroutines necessary for checking where the solution
+ * loses positivity.
  *
  * Functions included: computeCellAvg, FindNegVals, FindNegVals_old, CheckNegVals
  *
  *  Created on: Nov 15, 2017
  */
+
+#include "NegativityChecks.h"																										// NegativityChecks.h is where the prototypes for the functions contained in this file are declared
 
 double computeCellAvg(double *U, int i, int j1, int j2, int j3)																		// function to calculate the average value of the approximate function f (with DG coefficients in U) on the cell I_i x K_(j1,j2,j3), namely (1/cell_volume)*int_(I_i x K_(j1,j2,j3)) f dxdv = (1/(dx*dv^3))*int_(I_i x K_(j1,j2,j3)) f dxdv
 {

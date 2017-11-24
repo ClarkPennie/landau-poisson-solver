@@ -1,9 +1,12 @@
-/* This is the source file which contains the subroutines necessary for producing marginals of the solutions, suitable for plotting.
+/* This is the source file which contains the subroutines necessary for producing marginals of the
+ * solutions, suitable for plotting.
  *
  * Functions included: f_marg, PrintMarginalLoc, PrintMarginal
  *
  *  Created on: Nov 15, 2017
  */
+
+#include "MarginalCreation.h"																	// MarginalCreation.h is where the prototypes for the functions contained in this file are declared
 
 double f_marg(double *U, int i, int j1, double x, double v1)
 {

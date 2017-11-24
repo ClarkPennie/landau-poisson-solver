@@ -4,33 +4,18 @@
  *
  */
 
-#include <mpi.h>																					// allows all MPI routines to be used
-#include <stdio.h>																					// allows the object type FILE (an object suitable for storing information for a file stream) to be used, as well as the functions printf, sprintf, fopen, fread, fclose
-#include <malloc.h>																					// allows malloc to be used
-#include <math.h>																					// allows sqrt to be used as well as the value of M_PI
-#include <stdlib.h>																					// allows malloc & free to be used
-#include <omp.h>																					// allows all OpenMP routines to be used
-#include <fftw3.h>																					// allows the Fast Fourier Transform to be used
-#include <mkl_lapack.h>
+//***********************************************//
+//												 //
+//          MACROS LOCATED IN LP_ompi.h          //
+//												 //
+//		Use these to choose:					 //
+//		- whether or not to use MPI,			 //
+//		- the initial conditions,				 //
+//		- if this is the first run or not.		 //
+//												 //
+//***********************************************//
 
-//************************//
-//         MACROS         //
-//************************//
-
-// CHOOSE WHETHER OR NOT TO USE MPI:
-#define MPI 																						// define the macro MPI (UNCOMMENT IF THE CODE SHOULD UTILISE MPI)
-
-// CHOOSE WHICH VARIATION OF THE CODE TO RUN:
-//#define Damping																					// define the macro Damping (UNCOMMENT IF BEING RUN FOR THE LANDAU DAMPING PROBLEM)
-//#define FullandLinear 																			// define the macro FullandLinear (UNCOMMENT IF THE LINEAR ELE-ION COLLISION OPERATOR IS NEEDED; OTHERWISE, ONLY ELE-ELE COLLISIONS)
-//#define TwoStream																					// define the macro TwoStream (UNCOMMENT IF BEING RUN FOR THE TWO STREAM PROBLEM)
-#define FourHump																					// define the macro FourHump (UNCOMMENT IF BEING RUN FOR THE FOUR HUMP IC PROBLEM)
-//#define TwoHump																					// define the macro TwoHump (UNCOMMENT IF BEING RUN FOR THE TWO HUMP IC PROBLEM)
-
-// CHOOSE IF THIS IS THE INITIAL RUN OR A SUBSEQUENT RUN:
-#define First																						// define the macro First (UNCOMMENT IF RUNNING THE CODE FOR THE FIRST TIME)
-//#define Second																					// define the macro Second (UNCOMMENT IF PICKING UP DATA FROM A PREVIOUS RUN)
-
+#include "LP_ompi.h"																				// LP_ompi.h is where the libraries required by the program included, all macros (to decide the behaviour of a given run) are defined and all variables to be used throughout the various files are defined as external
 
 double PI=M_PI;																						// declare PI and set it to M_PI (the value stored in the library math.h)
 int M=5;																							// declare M (the number of collision invarients) and set it equal to 5
@@ -106,15 +91,15 @@ int *fNegVals;																						// declare fNegVals (to store where DG solut
 double *fAvgVals;																					// declare fAvgVals (to store the average values of f on each cell)
 double *fEquiVals;																					// declare f_equivals (to store the equilibrium solution)
 
-#include "advection_1.cpp"																			// allows computeMass, computeMomentum, computeKiE, computeEleE & RK3 to be used
-#include "SetInit_1.cpp"																			// allows TrapezoidalRule, SetInit_LD, SetInit_4H, SetInit_2H & setInit_spectral to be used
-#include "conservationRoutines.cpp"         														// allows createCCtAndPivot & conserveAllMoments to be used
-#include "collisionRoutines_1.cpp"            														// allows generate_conv_weights, generate_conv_weights_linear, computeQ & RK4 to be used
-#include "MomentCalculations.cpp"																	// allows computeMass, computeMomentum, computeKiE, computeKiERatio, computeEleE to be used
-#include "EntropyCalculations.cpp"																	// allows computeEntropy, computeEntropy_wAvg & computeRelEntropy to be used
-#include "MarginalCreation.cpp"																		// allows PrintMarginalLoc & PrintMarginal to be used
-#include "EquilibriumSolution.cpp"																	// allows ExportRhoQuadVals, ComputeEquiVals & PrintEquiVals to be used
-#include "NegativityChecks.cpp"																		// allows computeCellAvg, FindNegVals & CheckNegVals to be used
+#include "advection_1.h"																			// allows computeMass, computeMomentum, computeKiE, computeEleE & RK3 to be used
+#include "SetInit_1.h"																				// allows TrapezoidalRule, SetInit_LD, SetInit_4H, SetInit_2H & setInit_spectral to be used
+#include "conservationRoutines.h"         															// allows createCCtAndPivot & conserveAllMoments to be used
+#include "collisionRoutines_1.h"            														// allows generate_conv_weights, generate_conv_weights_linear, computeQ & RK4 to be used
+#include "MomentCalculations.h"																		// allows computeMass, computeMomentum, computeKiE, computeKiERatio, computeEleE to be used
+#include "EntropyCalculations.h"																	// allows computeEntropy, computeEntropy_wAvg & computeRelEntropy to be used
+#include "MarginalCreation.h"																		// allows PrintMarginalLoc & PrintMarginal to be used
+#include "EquilibriumSolution.h"																	// allows ExportRhoQuadVals, ComputeEquiVals & PrintEquiVals to be used
+#include "NegativityChecks.h"																		// allows computeCellAvg, FindNegVals & CheckNegVals to be used
 
 int main()
 {
@@ -437,7 +422,7 @@ int main()
 
 		FindNegVals(U, fNegVals, fAvgVals);															// find out in which cells the approximate solution goes negative and record it in fNegVals
 
-		ComputeEquiVals(fEquiVals);																// compute the values of the equilibrium solution, for use in Gaussian quadrature, and store them in f_equivals
+		ComputeEquiVals(fEquiVals);																	// compute the values of the equilibrium solution, for use in Gaussian quadrature, and store them in f_equivals
 
 		/* DEBUG TEST
 		for(int i=0;i<Nx;i++)
@@ -614,7 +599,7 @@ int main()
 	    	//if(t%400==0)fwrite(U,sizeof(double),size*6,fu);
 			if(t%20==0)
 			{
-				PrintMarginal(U, fmarg);																	// print the marginal distribution for the initial condition, using the DG coefficients in U, in the file tagged as fmarg
+				PrintMarginal(U, fmarg);															// print the marginal distribution for the initial condition, using the DG coefficients in U, in the file tagged as fmarg
 			}
 		}
 	

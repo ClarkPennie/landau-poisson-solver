@@ -1,13 +1,31 @@
-/* This is the source file which contains the subroutines necessary for enforcing conservation on the collision operator
+/* This is the source file which contains the subroutines necessary for enforcing conservation on the
+ * collision operator
  *
- * Functions included: solveWithCCt, conserveAllMoments, createCCtAndPivot
+ * Functions included: sinc, solveWithCCt, conserveAllMoments, createCCtAndPivot
  *
  */
 
-//#include "conservationRoutines.h"
+#include "conservationRoutines.h"																		// conservationRoutines.h is where the prototypes for the functions contained in this file are declared
+
 extern fftw_plan p_forward; 
 extern fftw_plan p_backward; 
 extern fftw_complex *temp;
+
+double sinc(double x)
+{
+  double result;
+
+  if(x==0.0)
+    {
+      result = 1.0;
+    }
+  else
+    {
+      result = sin(x)/x;
+    }
+
+  return result;
+}
 
 void solveWithCCt(int nElem, double *b)
 {

@@ -1,9 +1,12 @@
-/* This is the source file which contains the subroutines necessary for calculating the entropy of the solution.
+/* This is the source file which contains the subroutines necessary for calculating the entropy of the
+ * solution.
  *
  * Functions included: computeEntropy, computeEntropy_wAvg, computeRelEntropy
  *
  *  Created on: Nov 15, 2017
  */
+
+#include "EntropyCalculations.h"																									// EntropyCalculations.h is where the prototypes for the functions contained in this file are declared
 
 double computeEntropy(double *U)																									// function to compute the entropy for the given approximate solution, namely \int f log(f) dx dv, over Omega_x x Omega_v
 {

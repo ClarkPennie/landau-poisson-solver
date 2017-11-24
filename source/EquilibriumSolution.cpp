@@ -1,14 +1,17 @@
-/* This is the source file which contains the subroutines necessary for constructing an equilibrium solution (necessary for the relative entropy calculations).
+/* This is the source file which contains the subroutines necessary for constructing an
+ * equilibrium solution (necessary for the relative entropy calculations).
  *
  * Functions included: ExportRhoQuadVals, ComputeEquiVals, PrintEquiVals
  *
  *  Created on: Nov 15, 2017
  */
 
+#include "EquilibriumSolution.h"																// EquilibriumSolution.h is where the prototypes for the functions contained in this file are declared
+
 void ExportRhoQuadVals(double *U)																// function to export the values of the density rho suitable for Gaussian quadrature (should be done at equilibrium)
 {
 	int i, nx;																					// declare i (the index of the space cell) & nx (a counter for the space cell)
-	double x_0, x_val;																	// declare x_0 (to store the x coordinate in the middle of the current cell), x_val (to store the x value to be evaluated at) & rho_val (to store the value of the density rho evaluated at the current x value)
+	double x_0, x_val;																			// declare x_0 (to store the x coordinate in the middle of the current cell), x_val (to store the x value to be evaluated at) & rho_val (to store the value of the density rho evaluated at the current x value)
 	double *rho_vals;																			// declare a pointer to rho_vals (where the values of the density rho at equilibrium will be stored)
 	rho_vals = (double*)malloc(5*Nx*sizeof(double));											// allocate enough space at the pointer rho_vals for 5*Nx many double numbers
 
@@ -111,7 +114,7 @@ void PrintEquiVals(double *U, FILE *margfile)
 			{
 				for (nv=0; nv<np; nv++)
 				{
-					fprintf(margfile, "%11.8g  ", x_val);												// in the file tagged as fmarg, print the x coordinate
+					fprintf(margfile, "%11.8g  ", x_val);										// in the file tagged as fmarg, print the x coordinate
 				}
 			}
 		}
@@ -123,11 +126,11 @@ void PrintEquiVals(double *U, FILE *margfile)
 		{
 			for(j1=0; j1<Nv; j1++)
 			{
-				v1_0 = Gridv((double)j1 - 0.5);															// set v1_0 to the value of v1 at the left edge of the j1-th velocity cell in the v1 direction
+				v1_0 = Gridv((double)j1 - 0.5);													// set v1_0 to the value of v1 at the left edge of the j1-th velocity cell in the v1 direction
 				for (nv=0; nv<np; nv++)
 				{
-					v1_val = v1_0 + nv*ddv;																// set v1_val to v1_0 plus nv increments of width ddv
-					fprintf(margfile, "%11.8g  ", v1_val);												// in the file tagged as fmarg, print the v1 coordinate
+					v1_val = v1_0 + nv*ddv;														// set v1_val to v1_0 plus nv increments of width ddv
+					fprintf(margfile, "%11.8g  ", v1_val);										// in the file tagged as fmarg, print the v1 coordinate
 				}
 			}
 		}

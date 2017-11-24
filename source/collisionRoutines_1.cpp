@@ -1,10 +1,12 @@
-/* This is the source file which contains the subroutines necessary for solving the space homogeneous, collision problem
- * resulting from time-splitting, including FFT routines.
+/* This is the source file which contains the subroutines necessary for solving the space homogeneous,
+ * collision problem resulting from time-splitting, including FFT routines.
  *
- * Functions included: S1hat, S233hat, S213hat, gHat3, gHat3_linear, generate_conv_weights, generate_conv_weights_linear,
- * fft3D, ifft3D, FS, ComputeQ, IntModes, ProjectedNodeValue, RK4
+ * Functions included: S1hat, S233hat, S213hat, gHat3, gHat3_linear, generate_conv_weights,
+ * generate_conv_weights_linear, fft3D, ifft3D, FS, ComputeQ, IntModes, ProjectedNodeValue, RK4
  *
  */
+
+#include "collisionRoutines_1.h"																		// collisionRoutines_1.h is where the prototypes for the functions contained in this file are declared
 
 extern fftw_plan p_forward; 
 extern fftw_plan p_backward; 
@@ -98,7 +100,7 @@ double gHat3_linear(double eta1, double eta2, double eta3, double ki1, double ki
   	return result;	
 }
 
-/*#ifdef MPI
+/*#ifdef UseMPI
 void generate_conv_weights(double **conv_weights)
 {
   int t, i, j, k, l, m, n;
@@ -548,7 +550,7 @@ void ProjectedNodeValue(fftw_complex *qHat, double *Q_incremental) // incrementa
     }
 }	
 
-#ifdef MPI
+#ifdef UseMPI
 
 #ifdef FullandLinear
 void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear)

@@ -1,9 +1,12 @@
-/* This is the source file which contains the subroutines necessary for calculating the moments of the solution.
+/* This is the source file which contains the subroutines necessary for calculating the moments of the
+ * solution.
  *
  * Functions included: computeMass, computeMomentum, computeKiE, computeKiEratio, computeEleE
  *
  *  Created on: Nov 15, 2017
  */
+
+#include "MomentCalculations.h"																			// MomentCalculations.h is where the prototypes for the functions contained in this file are declared
 
 double computeMass(double *U)
 {

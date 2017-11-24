@@ -1,11 +1,13 @@
-/* This is the source file which contains the subroutines necessary for solving the collisionless advection problem
- * resulting from time-splitting, as well as some which are necessary for subroutines for calculating moments or
- * entropy, etc.
+/* This is the source file which contains the subroutines necessary for solving the collisionless advection
+ * problem resulting from time-splitting, as well as some which are necessary for subroutines for calculating
+ * moments or entropy, etc.
  *
  * Functions included: Gridv, Gridx, rho_x, rho, computePhi_x_0, computePhi, PrintPhiVals, computeC_rho, Int_Int_rho
  * Int_Int_rho1st, Int_E, Int_E1st, Int_E2nd, Int_fE, I1, I2, I3, I5, computeH, RK3
  *
  */
+
+#include "advection_1.h"																					// advection_1.h is where the prototypes for the functions contained in this file are declared and any variables defined here to be used throughout the other files are declared as external
 
 double wt[5]={0.5688888888888889, 0.4786286704993665, 0.4786286704993665,0.2369268850561891, 0.2369268850561891};				// weights for Gaussian quadrature
 double vt[5]={0., -0.5384693101056831,0.5384693101056831,-0.9061798459386640,0.9061798459386640};								// node values for Gaussian quadrature over the interval [-1,1]
@@ -449,7 +451,8 @@ double I5(double *U, int k, int l) 	// Calculate the difference of the fifth and
   	return result;
 }
 
-#ifdef MPI
+#ifdef UseMPI
+/*
 void computeH(double *H, double *U)// H_k(i,j)(f, E, phi_l)  
 {
   int k, l; // k=i*Nv^3 + (j1*Nv*Nv + j2*Nv + j3)
@@ -467,6 +470,7 @@ void computeH(double *H, double *U)// H_k(i,j)(f, E, phi_l)
 	}	
   }  
 }
+*/
 
 void RK3(double *U) // RK3 for f_t = H(f)
 {
@@ -631,6 +635,7 @@ ce = computePhi_x_0(U1);
 
 
 #else
+/*
 void computeH(double *U)// H_k(i,j)(f, E, phi_l)  
 {
   int i, k, l; // k=i*Nv^3 + (j1*Nv*Nv + j2*Nv + j3)
@@ -657,7 +662,7 @@ void computeH(double *U)// H_k(i,j)(f, E, phi_l)
    // {
       /*for(l=0;l<6;l++){
 	tp[l]=I1(U,k,l)-I2(U,k,l)-I3(U,k,l)+I5(U,k,l);		
-      } */
+      } *//*
    // }
     tp0=I1(U,k,0)-I2(U,k,0)-I3(U,k,0)+I5(U,k,0);
     tp1=I1(U,k,1)-I2(U,k,1)-I3(U,k,1)+I5(U,k,1);
@@ -674,6 +679,7 @@ void computeH(double *U)// H_k(i,j)(f, E, phi_l)
   }
   
 }
+*/
 
 void RK3(double *U) // RK3 for f_t = H(f)
 {
@@ -683,6 +689,7 @@ void RK3(double *U) // RK3 for f_t = H(f)
   //double **U1 = (double **)malloc(size*sizeof(double *));
   //for (l=0;l<size;l++) U1[l] = (double*)malloc(6*sizeof(double));
   
+  /*
   computeH(U);
    #pragma omp parallel for private(k,l) shared(U)
   for(k=0;k<size;k++){				  
@@ -700,6 +707,7 @@ void RK3(double *U) // RK3 for f_t = H(f)
   for(k=0;k<size;k++){						  
 	for(l=0;l<6;l++) U[k*6+l] = U[k*6+l]/3. + U1[k*6+l]*2./3. + dt*H[k*6+l]*2./3.;			
   }
+  */
   //free(H); free(U1);
 }
 #endif
