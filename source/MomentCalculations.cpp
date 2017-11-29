@@ -23,7 +23,7 @@ void computeMomentum(double *U, double *a)
   int k, i, j,j1,j2,j3; //k=i*Nv*Nv*Nv + (j1*Nv*Nv + j2*Nv + j3);
   double tmp1=0., tmp2=0., tmp3=0.;
   a[0]=0.; a[1]=0.; a[2]=0.; // the three momentum
-  #pragma omp parallel for shared(U) reduction(+:tmp1, tmp2, tmp3)  //reduction directive may change the result a little bit
+  #pragma omp parallel for private(k,i,j,j1,j2,j3) shared(U) reduction(+:tmp1, tmp2, tmp3)  //reduction directive may change the result a little bit
   for(k=0;k<Nx*size_v;k++){
     j=k%size_v; i=(k-j)/size_v;
     j3=j%Nv; j2=((j-j3)%(Nv*Nv))/Nv; j1=(j-j3-j2*Nv)/(Nv*Nv);

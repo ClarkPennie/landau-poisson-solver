@@ -67,7 +67,7 @@ extern fftw_complex *Q1_fft_linear, *Q2_fft_linear, *Q3_fft_linear;									// d
 #endif
 
 extern fftw_complex *fftIn, *fftOut;																// declare pointers to the FFT variables fftIn (a vector to be to have the FFT applied to it) & fftOut (the output of an FFT)
-extern double IntM[10];																				// declare an array IntM to hold 10 double variables
+//extern double IntM[10];																				// declare an array IntM to hold 10 double variables
 //#pragma omp threadprivate(IntM)																	// start the OpenMP parallel construct to start the threads which will run in parallel, passing IntM to each thread as private variables which will have their contents deleted when the threads finish (doesn't seem to be doing anything since no {} afterwards???)
 
 extern double ce, *cp, *intE, *intE1, *intE2;														// declare ce and pointers to cp, intE, intE1 & intE2 (precomputed quantities for advections)

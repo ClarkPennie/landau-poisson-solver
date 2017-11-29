@@ -760,7 +760,7 @@ void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights)
   fft3D(fftIn, fftOut);
   
   //printf("fft done\n");
-  #pragma omp parallel for schedule(dynamic) private(j,k,l,m,n,x,y,z,start_i,start_j,start_k,end_i,end_j,end_k,tempD, tmp0, tmp1) shared(qHat, fftOut, conv_weights)
+  #pragma omp parallel for schedule(dynamic) private(i,j,k,l,m,n,x,y,z,start_i,start_j,start_k,end_i,end_j,end_k,tempD) shared(qHat, fftOut, conv_weights) reduction(+:tmp0, tmp1)
   for(i=0;i<N;i++) {
     for(j=0;j<N;j++){
       for(k=0;k<N;k++)
@@ -869,7 +869,7 @@ void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U,
   ComputeQ(f1, Q3_fft, conv_weights); //collides
   conserveAllMoments(Q3_fft);                //conserves k4
 
-  #pragma omp parallel for schedule(dynamic) private(j1,j2,j3,i,j,k,k_v,k_eta,kk,Q_re, Q_im, tp0, tp2,tp3,tp4, tp5) shared(l, l_local, qHat,U, dU)   // calculate the fourth step of RK4 (still in Fourier space though?!) - reduction(+: tmp0, tmp2, tmp3, tmp4, tmp5)
+  #pragma omp parallel for schedule(dynamic) private(j1,j2,j3,i,j,k,k_v,k_eta,kk,Q_re, Q_im) shared(l, l_local, qHat,U, dU) reduction(+:tp0, tp2,tp3,tp4, tp5)  // calculate the fourth step of RK4 (still in Fourier space though?!) - reduction(+: tmp0, tmp2, tmp3, tmp4, tmp5)
   for(int kt=0;kt<size_v;kt++){
     j3 = kt % Nv; j2 = ((kt-j3)/Nv) % Nv; j1 = (kt - j3 - Nv*j2)/(Nv*Nv);
     tp0=0.; tp2=0.; tp3=0.; tp4=0.; tp5=0.;
