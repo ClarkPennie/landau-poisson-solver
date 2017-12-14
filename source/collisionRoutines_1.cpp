@@ -12,6 +12,10 @@ extern fftw_plan p_forward;
 extern fftw_plan p_backward; 
 extern fftw_complex *temp;
 
+double IntM[10];																					// declare an array IntM to hold 10 double variables
+#pragma omp threadprivate(IntM)																		// start the OpenMP parallel construct to start the threads which will run in parallel, passing IntM to each thread as private variables which will have their contents deleted when the threads finish (doesn't seem to be doing anything since no {} afterwards???)
+//#include "ThreadPriv.h"																				// allows IntM to be declared as a global threadprivate variable
+
 double S1hat(double ki1,double ki2,double ki3)
 {
   if(ki1==0. && ki2==0. && ki3==0.) return sqrt(1./(2*PI))*R_v*R_v;
@@ -369,9 +373,22 @@ void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights)
 void IntModes(int k1, int k2,  int k3, int j1, int j2, int j3, double *result) // \int_Ij exp(i\xi_k \cdot v) \phi_l(v) dv; l=0..4: 1, (v1-w_j1)/dv, (v2-w_j2)/dv, (v3-w_j3)/dv, square sum of last three components
 {
   double tmp_re, tmp_im, tmp1_re, tmp1_im, tmp2_re, tmp2_im, tmp3_re, tmp3_im, tem1_re, tem1_im, tem2_re, tem2_im, tem3_re, tem3_im, tp1_re, tp1_im, tp2_re, tp2_im, tp3_re, tp3_im, a_re, a_im;
+
+  double v1, v2, v3;																	// define v1, v2 & v3 (where v_k is the center of the current velocity cell in the kth direction)
+  double v1_l, v1_r, v2_l, v2_r, v3_l, v3_r;											// define v1_l, v1_r, v2_l, v2_r, v3_l & v3_r (where vk_l & vk_r are the values of v_(j_k) at the left and right edges of the velocity cell j in the kth direction)
+  v1 = Gridv((double)j1);																		// calculate v1 by the formula -Lv+(j1+0.5)*dv
+  v2 = Gridv((double)j2);																		// calculate v2 by the formula -Lv+(j2+0.5)*dv
+  v3 = Gridv((double)j3);																		// calculate v3 by the formula -Lv+(j3+0.5)*dv
+  v1_l = Gridv(j1-0.5);																	// calculate v1_l by the formula -Lv+j1*dv
+  v1_r = Gridv(j1+0.5);																	// calculate v1_r by the formula -Lv+(j1+1)*dv
+  v2_l = Gridv(j2-0.5);																	// calculate v2_l by the formula -Lv+j2*dv
+  v2_r = Gridv(j2+0.5);																	// calculate v2_r by the formula -Lv+(j2+1)*dv
+  v3_l = Gridv(j3-0.5);																	// calculate v3_l by the formula -Lv+j3*dv
+  v3_r = Gridv(j3+0.5);																	// calculate v3_r by the formula -Lv+(j3+1)*dv
+
   if(eta[k1] != 0.){
-    tmp1_re = (sin(eta[k1]*Gridv(j1+0.5)) - sin(eta[k1]*Gridv(j1-0.5)))/eta[k1];
-    tmp1_im = (cos(eta[k1]*Gridv(j1-0.5)) - cos(eta[k1]*Gridv(j1+0.5)))/eta[k1];
+    tmp1_re = (sin(eta[k1]*v1_r) - sin(eta[k1]*v1_l))/eta[k1];
+    tmp1_im = (cos(eta[k1]*v1_l) - cos(eta[k1]*v1_r))/eta[k1];
   }
   else 
   {
@@ -380,8 +397,8 @@ void IntModes(int k1, int k2,  int k3, int j1, int j2, int j3, double *result) /
   }
   
   if(eta[k2] != 0.){
-    tmp2_re = (sin(eta[k2]*Gridv(j2+0.5)) - sin(eta[k2]*Gridv(j2-0.5)))/eta[k2];
-    tmp2_im = (cos(eta[k2]*Gridv(j2-0.5)) - cos(eta[k2]*Gridv(j2+0.5)))/eta[k2];
+    tmp2_re = (sin(eta[k2]*v2_r) - sin(eta[k2]*v2_l))/eta[k2];
+    tmp2_im = (cos(eta[k2]*v2_l) - cos(eta[k2]*v2_r))/eta[k2];
   }
   else 
   {
@@ -390,8 +407,8 @@ void IntModes(int k1, int k2,  int k3, int j1, int j2, int j3, double *result) /
   }
   
   if(eta[k3] != 0.){
-    tmp3_re = (sin(eta[k3]*Gridv(j3+0.5)) - sin(eta[k3]*Gridv(j3-0.5)))/eta[k3];
-    tmp3_im = (cos(eta[k3]*Gridv(j3-0.5)) - cos(eta[k3]*Gridv(j3+0.5)))/eta[k3];
+    tmp3_re = (sin(eta[k3]*v3_r) - sin(eta[k3]*v3_l))/eta[k3];
+    tmp3_im = (cos(eta[k3]*v3_l) - cos(eta[k3]*v3_r))/eta[k3];
   }
   else 
   {
@@ -408,8 +425,8 @@ void IntModes(int k1, int k2,  int k3, int j1, int j2, int j3, double *result) /
   /////////////////////////////////////////////////////////////////////////////////////////////////////
   
   if(eta[k1] != 0.){
-    tmp1_re = ((Gridv(j1+0.5)*sin(eta[k1]*Gridv(j1+0.5)) - Gridv(j1-0.5)*sin(eta[k1]*Gridv(j1-0.5)))/eta[k1] + (cos(eta[k1]*Gridv(j1+0.5)) - cos(eta[k1]*Gridv(j1-0.5)))/eta[k1]/eta[k1] -Gridv((double)j1)*tem1_re)/dv;
-    tmp1_im = ((sin(eta[k1]*Gridv(j1+0.5)) - sin(eta[k1]*Gridv(j1-0.5)))/eta[k1]/eta[k1] + (Gridv(j1-0.5)*cos(eta[k1]*Gridv(j1-0.5)) - Gridv(j1+0.5)*cos(eta[k1]*Gridv(j1+0.5)))/eta[k1] -Gridv((double)j1)*tem1_im)/dv;
+    tmp1_re = ((v1_r*sin(eta[k1]*v1_r) - v1_l*sin(eta[k1]*v1_l))/eta[k1] + (cos(eta[k1]*v1_r) - cos(eta[k1]*v1_l))/eta[k1]/eta[k1] -v1*tem1_re)/dv;
+    tmp1_im = ((sin(eta[k1]*v1_r) - sin(eta[k1]*v1_l))/eta[k1]/eta[k1] + (v1_l*cos(eta[k1]*v1_l) - v1_r*cos(eta[k1]*v1_r))/eta[k1] -v1*tem1_im)/dv;
   }
   else
   {
@@ -424,8 +441,8 @@ void IntModes(int k1, int k2,  int k3, int j1, int j2, int j3, double *result) /
 
 	  
   if(eta[k2] != 0.){
-    tmp2_re = ((Gridv(j2+0.5)*sin(eta[k2]*Gridv(j2+0.5)) - Gridv(j2-0.5)*sin(eta[k2]*Gridv(j2-0.5)))/eta[k2] + (cos(eta[k2]*Gridv(j2+0.5)) - cos(eta[k2]*Gridv(j2-0.5)))/eta[k2]/eta[k2] -Gridv((double)j2)*tem2_re)/dv;
-    tmp2_im = ((sin(eta[k2]*Gridv(j2+0.5)) - sin(eta[k2]*Gridv(j2-0.5)))/eta[k2]/eta[k2] + (Gridv(j2-0.5)*cos(eta[k2]*Gridv(j2-0.5)) - Gridv(j2+0.5)*cos(eta[k2]*Gridv(j2+0.5)))/eta[k2] -Gridv((double)j2)*tem2_im)/dv;
+    tmp2_re = ((v2_r*sin(eta[k2]*v2_r) - v2_l*sin(eta[k2]*v2_l))/eta[k2] + (cos(eta[k2]*v2_r) - cos(eta[k2]*v2_l))/eta[k2]/eta[k2] -v2*tem2_re)/dv;
+    tmp2_im = ((sin(eta[k2]*v2_r) - sin(eta[k2]*v2_l))/eta[k2]/eta[k2] + (v2_l*cos(eta[k2]*v2_l) - v2_r*cos(eta[k2]*v2_r))/eta[k2] -v2*tem2_im)/dv;
   }
   else
   {
@@ -439,8 +456,8 @@ void IntModes(int k1, int k2,  int k3, int j1, int j2, int j3, double *result) /
   /////////////////////////////////////////////////////////////////////////////////////////////////////
   
   if(eta[k3] != 0.){
-    tmp3_re = ((Gridv(j3+0.5)*sin(eta[k3]*Gridv(j3+0.5)) - Gridv(j3-0.5)*sin(eta[k3]*Gridv(j3-0.5)))/eta[k3] + (cos(eta[k3]*Gridv(j3+0.5)) - cos(eta[k3]*Gridv(j3-0.5)))/eta[k3]/eta[k3] -Gridv((double)j3)*tem3_re)/dv;;
-    tmp3_im = ((sin(eta[k3]*Gridv(j3+0.5)) - sin(eta[k3]*Gridv(j3-0.5)))/eta[k3]/eta[k3] + (Gridv(j3-0.5)*cos(eta[k3]*Gridv(j3-0.5)) - Gridv(j3+0.5)*cos(eta[k3]*Gridv(j3+0.5)))/eta[k3] -Gridv((double)j3)*tem3_im)/dv;;
+    tmp3_re = ((v3_r*sin(eta[k3]*v3_r) - v3_l*sin(eta[k3]*v3_l))/eta[k3] + (cos(eta[k3]*v3_r) - cos(eta[k3]*v3_l))/eta[k3]/eta[k3] -v3*tem3_re)/dv;;
+    tmp3_im = ((sin(eta[k3]*v3_r) - sin(eta[k3]*v3_l))/eta[k3]/eta[k3] + (v3_l*cos(eta[k3]*v3_l) - v3_r*cos(eta[k3]*v3_r))/eta[k3] -v3*tem3_im)/dv;;
   }
   else
   {
@@ -454,11 +471,11 @@ void IntModes(int k1, int k2,  int k3, int j1, int j2, int j3, double *result) /
   /////////////////////////////////////////////////////////////////////////////////////////////////////
   //BUG: wrote one cos as sin in the following tmp1_im, tmp2_im, tmp3_im !!
   if(eta[k1] != 0.){
-    a_re = (Gridv(j1+0.5)*sin(eta[k1]*Gridv(j1+0.5)) - Gridv(j1-0.5)*sin(eta[k1]*Gridv(j1-0.5)))/eta[k1] + (cos(eta[k1]*Gridv(j1+0.5)) - cos(eta[k1]*Gridv(j1-0.5)))/eta[k1]/eta[k1]; // real part of \int exp(i\xi1.v1) v1 dv1
-    a_im = (sin(eta[k1]*Gridv(j1+0.5)) - sin(eta[k1]*Gridv(j1-0.5)))/eta[k1]/eta[k1] + (Gridv(j1-0.5)*cos(eta[k1]*Gridv(j1-0.5)) - Gridv(j1+0.5)*cos(eta[k1]*Gridv(j1+0.5)))/eta[k1];
+    a_re = (v1_r*sin(eta[k1]*v1_r) - v1_l*sin(eta[k1]*v1_l))/eta[k1] + (cos(eta[k1]*v1_r) - cos(eta[k1]*v1_l))/eta[k1]/eta[k1]; // real part of \int exp(i\xi1.v1) v1 dv1
+    a_im = (sin(eta[k1]*v1_r) - sin(eta[k1]*v1_l))/eta[k1]/eta[k1] + (v1_l*cos(eta[k1]*v1_l) - v1_r*cos(eta[k1]*v1_r))/eta[k1];
     
-    tmp1_re = ((Gridv(j1+0.5)*Gridv(j1+0.5)*sin(eta[k1]*Gridv(j1+0.5)) - Gridv(j1-0.5)*Gridv(j1-0.5)*sin(eta[k1]*Gridv(j1-0.5)) - 2*a_im)/eta[k1] - 2*Gridv((double)j1)*a_re + Gridv((double)j1)*Gridv((double)j1)*tem1_re)/dv/dv;
-    tmp1_im = ((Gridv(j1-0.5)*Gridv(j1-0.5)*cos(eta[k1]*Gridv(j1-0.5)) - Gridv(j1+0.5)*Gridv(j1+0.5)*cos(eta[k1]*Gridv(j1+0.5)) + 2*a_re)/eta[k1] - 2*Gridv((double)j1)*a_im + Gridv((double)j1)*Gridv((double)j1)*tem1_im)/dv/dv;
+    tmp1_re = ((v1_r*v1_r*sin(eta[k1]*v1_r) - v1_l*v1_l*sin(eta[k1]*v1_l) - 2*a_im)/eta[k1] - 2*v1*a_re + v1*v1*tem1_re)/dv/dv;
+    tmp1_im = ((v1_l*v1_l*cos(eta[k1]*v1_l) - v1_r*v1_r*cos(eta[k1]*v1_r) + 2*a_re)/eta[k1] - 2*v1*a_im + v1*v1*tem1_im)/dv/dv;
   }
   else
   {
@@ -471,11 +488,11 @@ void IntModes(int k1, int k2,  int k3, int j1, int j2, int j3, double *result) /
   ////////////////////////////////////////////////
 
   if(eta[k2] != 0.){
-    a_re = (Gridv(j2+0.5)*sin(eta[k2]*Gridv(j2+0.5)) - Gridv(j2-0.5)*sin(eta[k2]*Gridv(j2-0.5)))/eta[k2] + (cos(eta[k2]*Gridv(j2+0.5)) - cos(eta[k2]*Gridv(j2-0.5)))/eta[k2]/eta[k2];
-    a_im = (sin(eta[k2]*Gridv(j2+0.5)) - sin(eta[k2]*Gridv(j2-0.5)))/eta[k2]/eta[k2] + (Gridv(j2-0.5)*cos(eta[k2]*Gridv(j2-0.5)) - Gridv(j2+0.5)*cos(eta[k2]*Gridv(j2+0.5)))/eta[k2];
+    a_re = (v2_r*sin(eta[k2]*v2_r) - v2_l*sin(eta[k2]*v2_l))/eta[k2] + (cos(eta[k2]*v2_r) - cos(eta[k2]*v2_l))/eta[k2]/eta[k2];
+    a_im = (sin(eta[k2]*v2_r) - sin(eta[k2]*v2_l))/eta[k2]/eta[k2] + (v2_l*cos(eta[k2]*v2_l) - v2_r*cos(eta[k2]*v2_r))/eta[k2];
     
-    tmp2_re = ((Gridv(j2+0.5)*Gridv(j2+0.5)*sin(eta[k2]*Gridv(j2+0.5)) - Gridv(j2-0.5)*Gridv(j2-0.5)*sin(eta[k2]*Gridv(j2-0.5)) - 2*a_im)/eta[k2] - 2*Gridv((double)j2)*a_re + Gridv((double)j2)*Gridv((double)j2)*tem2_re)/dv/dv;
-    tmp2_im = ((Gridv(j2-0.5)*Gridv(j2-0.5)*cos(eta[k2]*Gridv(j2-0.5)) - Gridv(j2+0.5)*Gridv(j2+0.5)*cos(eta[k2]*Gridv(j2+0.5)) + 2*a_re)/eta[k2] - 2*Gridv((double)j2)*a_im + Gridv((double)j2)*Gridv((double)j2)*tem2_im)/dv/dv;
+    tmp2_re = ((v2_r*v2_r*sin(eta[k2]*v2_r) - v2_l*v2_l*sin(eta[k2]*v2_l) - 2*a_im)/eta[k2] - 2*v2*a_re + v2*v2*tem2_re)/dv/dv;
+    tmp2_im = ((v2_l*v2_l*cos(eta[k2]*v2_l) - v2_r*v2_r*cos(eta[k2]*v2_r) + 2*a_re)/eta[k2] - 2*v2*a_im + v2*v2*tem2_im)/dv/dv;
   }
   else
   {
@@ -488,11 +505,11 @@ void IntModes(int k1, int k2,  int k3, int j1, int j2, int j3, double *result) /
   ////////////////////////////////////////////////  
 	  
   if(eta[k3] != 0.){
-    a_re = (Gridv(j3+0.5)*sin(eta[k3]*Gridv(j3+0.5)) - Gridv(j3-0.5)*sin(eta[k3]*Gridv(j3-0.5)))/eta[k3] + (cos(eta[k3]*Gridv(j3+0.5)) - cos(eta[k3]*Gridv(j3-0.5)))/eta[k3]/eta[k3];
-    a_im = (sin(eta[k3]*Gridv(j3+0.5)) - sin(eta[k3]*Gridv(j3-0.5)))/eta[k3]/eta[k3] + (Gridv(j3-0.5)*cos(eta[k3]*Gridv(j3-0.5)) - Gridv(j3+0.5)*cos(eta[k3]*Gridv(j3+0.5)))/eta[k3];
+    a_re = (v3_r*sin(eta[k3]*v3_r) - v3_l*sin(eta[k3]*v3_l))/eta[k3] + (cos(eta[k3]*v3_r) - cos(eta[k3]*v3_l))/eta[k3]/eta[k3];
+    a_im = (sin(eta[k3]*v3_r) - sin(eta[k3]*v3_l))/eta[k3]/eta[k3] + (v3_l*cos(eta[k3]*v3_l) - v3_r*cos(eta[k3]*v3_r))/eta[k3];
     
-    tmp3_re = ((Gridv(j3+0.5)*Gridv(j3+0.5)*sin(eta[k3]*Gridv(j3+0.5)) - Gridv(j3-0.5)*Gridv(j3-0.5)*sin(eta[k3]*Gridv(j3-0.5)) - 2*a_im)/eta[k3] - 2*Gridv((double)j3)*a_re + Gridv((double)j3)*Gridv((double)j3)*tem3_re)/dv/dv;
-    tmp3_im = ((Gridv(j3-0.5)*Gridv(j3-0.5)*cos(eta[k3]*Gridv(j3-0.5)) - Gridv(j3+0.5)*Gridv(j3+0.5)*cos(eta[k3]*Gridv(j3+0.5)) + 2*a_re)/eta[k3] - 2*Gridv((double)j3)*a_im + Gridv((double)j3)*Gridv((double)j3)*tem3_im)/dv/dv;
+    tmp3_re = ((v3_r*v3_r*sin(eta[k3]*v3_r) - v3_l*v3_l*sin(eta[k3]*v3_l) - 2*a_im)/eta[k3] - 2*v3*a_re + v3*v3*tem3_re)/dv/dv;
+    tmp3_im = ((v3_l*v3_l*cos(eta[k3]*v3_l) - v3_r*v3_r*cos(eta[k3]*v3_r) + 2*a_re)/eta[k3] - 2*v3*a_im + v3*v3*tem3_im)/dv/dv;
   }
   else
   {
