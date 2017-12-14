@@ -5,6 +5,17 @@
  *
  */
 
+//************************//
+//     INCLUDE GUARDS     //
+//************************//
+
+#ifndef ADVECTION_1_H_
+#define ADVECTION_1_H_
+
+//************************//
+//        INCLUDES        //
+//************************//
+
 #include "LP_ompi.h"																					// allows the libraries included, macros defined and external variables declared in LP_ompi.h to be used in the advection_1 functions
 
 //************************//
@@ -57,3 +68,5 @@ double I5(double *U, int k, int l);
 void computeH(double *U);
 
 void RK3(double *U);
+
+#endif /* ADVECTION_1_H_ */

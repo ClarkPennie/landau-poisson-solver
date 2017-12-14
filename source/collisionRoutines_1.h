@@ -4,13 +4,20 @@
  *
  */
 
+//************************//
+//     INCLUDE GUARDS     //
+//************************//
+
+#ifndef COLLISIONROUTINES_H_
+#define COLLISIONROUTINES_H_
+
+//************************//
+//        INCLUDES        //
+//************************//
+
 #include "LP_ompi.h"																					// allows the libraries included, macros defined and external variables declared in LP_ompi.h to be used in the collisionRoutines_1 functions
 #include "advection_1.h"																				// allows the external variables and function prototypes declared in advection_1.h to be used in the collitionRoutines_1 functions
 #include "conservationRoutines.h"																		// allows the function prototypes declared in conservationRoutines.h to be used in the collisionRoutines_1 functions
-
-//extern double IntM[10];																				// declare an array IntM to hold 10 double variables
-//#pragma omp threadprivate(IntM)																	// start the OpenMP parallel construct to start the threads which will run in parallel, passing IntM to each thread as private variables which will have their contents deleted when the threads finish (doesn't seem to be doing anything since no {} afterwards???)
-
 
 //************************//
 //   FUNCTION PROTOTYPES  //
@@ -63,3 +70,5 @@ void ProjectedNodeValue(fftw_complex *qHat, double *Q_incremental);
 	void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U);
 	#endif
 #endif  
+
+#endif /* COLLISIONROUTINES_H_ */

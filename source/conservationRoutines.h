@@ -4,6 +4,17 @@
  *
  */
 
+//************************//
+//     INCLUDE GUARDS     //
+//************************//
+
+#ifndef CONSERVATIONROUTINES_H_
+#define CONSERVATIONROUTINES_H_
+
+//************************//
+//        INCLUDES        //
+//************************//
+
 #include "LP_ompi.h"																					// allows the libraries included, macros defined and external variables declared in LP_ompi.h to be used in the conservationRoutines functions
 
 //************************//
@@ -21,3 +32,5 @@ void conserveAllMoments(fftw_complex *qHat);
 #endif
 
 void createCCtAndPivot();
+
+#endif /* CONSERVATIONROUTINES_H_ */

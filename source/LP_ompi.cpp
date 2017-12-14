@@ -74,8 +74,6 @@ fftw_complex *Q1_fft_linear, *Q2_fft_linear, *Q3_fft_linear;										// declare
 #endif
 
 fftw_complex *fftIn, *fftOut;																		// declare pointers to the FFT variables fftIn (a vector to be to have the FFT applied to it) & fftOut (the output of an FFT)
-//double IntM[10];																					// declare an array IntM to hold 10 double variables
-//#pragma omp threadprivate(IntM)																		// start the OpenMP parallel construct to start the threads which will run in parallel, passing IntM to each thread as private variables which will have their contents deleted when the threads finish (doesn't seem to be doing anything since no {} afterwards???)
 
 double ce, *cp, *intE, *intE1, *intE2;																// declare ce and pointers to cp, intE, intE1 & intE2 (precomputed quantities for advections)
 
@@ -90,16 +88,6 @@ int chunksize_dg, chunksize_ft, chunk_Nx;															// declare chunksize_dg 
 int *fNegVals;																						// declare fNegVals (to store where DG solution goes negative - a 1 if negative and a 0 if positive)
 double *fAvgVals;																					// declare fAvgVals (to store the average values of f on each cell)
 double *fEquiVals;																					// declare f_equivals (to store the equilibrium solution)
-
-#include "advection_1.h"																			// allows computeMass, computeMomentum, computeKiE, computeEleE & RK3 to be used
-#include "SetInit_1.h"																				// allows TrapezoidalRule, SetInit_LD, SetInit_4H, SetInit_2H & setInit_spectral to be used
-#include "conservationRoutines.h"         															// allows createCCtAndPivot & conserveAllMoments to be used
-#include "collisionRoutines_1.h"            														// allows generate_conv_weights, generate_conv_weights_linear, computeQ & RK4 to be used
-#include "MomentCalculations.h"																		// allows computeMass, computeMomentum, computeKiE, computeKiERatio, computeEleE to be used
-#include "EntropyCalculations.h"																	// allows computeEntropy, computeEntropy_wAvg & computeRelEntropy to be used
-#include "MarginalCreation.h"																		// allows PrintMarginalLoc & PrintMarginal to be used
-#include "EquilibriumSolution.h"																	// allows ExportRhoQuadVals, ComputeEquiVals & PrintEquiVals to be used
-#include "NegativityChecks.h"																		// allows computeCellAvg, FindNegVals & CheckNegVals to be used
 
 int main()
 {

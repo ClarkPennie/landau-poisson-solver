@@ -4,6 +4,17 @@
  *
  */
 
+//************************//
+//     INCLUDE GUARDS     //
+//************************//
+
+#ifndef MOMENTCALCULATIONS_H_
+#define MOMENTCALCULATIONS_H_
+
+//************************//
+//        INCLUDES        //
+//************************//
+
 #include "LP_ompi.h"																					// allows the libraries included, macros defined and external variables declared in LP_ompi.h to be used in the MomentCalculations functions
 #include "advection_1.h"																				// allows the external variables and function prototypes declared in advection_1.h to be used in the MomentCalculations functions
 
@@ -20,3 +31,5 @@ double computeKiE(double *U);
 double computeKiEratio(double *U, int *NegVals);
 
 double computeEleE(double *U);
+
+#endif /* MOMENTCALCULATIONS_H_ */

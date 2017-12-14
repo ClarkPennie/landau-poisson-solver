@@ -14,7 +14,6 @@ extern fftw_complex *temp;
 
 double IntM[10];																					// declare an array IntM to hold 10 double variables
 #pragma omp threadprivate(IntM)																		// start the OpenMP parallel construct to start the threads which will run in parallel, passing IntM to each thread as private variables which will have their contents deleted when the threads finish (doesn't seem to be doing anything since no {} afterwards???)
-//#include "ThreadPriv.h"																				// allows IntM to be declared as a global threadprivate variable
 
 double S1hat(double ki1,double ki2,double ki3)
 {

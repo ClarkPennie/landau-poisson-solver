@@ -5,6 +5,26 @@
  */
 
 //************************//
+//     INCLUDE GUARDS     //
+//************************//
+
+#ifndef LP_OMPI_H_
+#define LP_OMPI_H_
+
+//************************//
+//        LIBRARIES       //
+//************************//
+
+#include <mpi.h>																					// allows all MPI routines to be used
+#include <stdio.h>																					// allows the object type FILE (an object suitable for storing information for a file stream) to be used, as well as the functions printf, sprintf, fopen, fread, fclose
+#include <malloc.h>																					// allows malloc to be used
+#include <math.h>																					// allows sqrt to be used as well as the value of M_PI
+#include <stdlib.h>																					// allows malloc & free to be used
+#include <omp.h>																					// allows all OpenMP routines to be used
+#include <fftw3.h>																					// allows the Fast Fourier Transform to be used
+#include <mkl_lapack.h>
+
+//************************//
 //         MACROS         //
 //************************//
 
@@ -22,18 +42,6 @@
 #define First																						// define the macro First (UNCOMMENT IF RUNNING THE CODE FOR THE FIRST TIME)
 //#define Second																					// define the macro Second (UNCOMMENT IF PICKING UP DATA FROM A PREVIOUS RUN)
 
-//************************//
-//        LIBRARIES       //
-//************************//
-
-#include <mpi.h>																					// allows all MPI routines to be used
-#include <stdio.h>																					// allows the object type FILE (an object suitable for storing information for a file stream) to be used, as well as the functions printf, sprintf, fopen, fread, fclose
-#include <malloc.h>																					// allows malloc to be used
-#include <math.h>																					// allows sqrt to be used as well as the value of M_PI
-#include <stdlib.h>																					// allows malloc & free to be used
-#include <omp.h>																					// allows all OpenMP routines to be used
-#include <fftw3.h>																					// allows the Fast Fourier Transform to be used
-#include <mkl_lapack.h>
 
 //************************//
 //   EXTERNAL VARIABLES   //
@@ -84,3 +92,19 @@ extern double *fAvgVals;																			// declare fAvgVals (to store the ave
 extern double *fEquiVals;																			// declare f_equivals (to store the equilibrium solution)
 
 //extern double a[3];
+
+//************************//
+//        INCLUDES        //
+//************************//
+
+#include "advection_1.h"																			// allows computeMass, computeMomentum, computeKiE, computeEleE & RK3 to be used
+#include "SetInit_1.h"																				// allows TrapezoidalRule, SetInit_LD, SetInit_4H, SetInit_2H & setInit_spectral to be used
+#include "conservationRoutines.h"         															// allows createCCtAndPivot & conserveAllMoments to be used
+#include "collisionRoutines_1.h"            														// allows generate_conv_weights, generate_conv_weights_linear, computeQ & RK4 to be used
+#include "MomentCalculations.h"																		// allows computeMass, computeMomentum, computeKiE, computeKiERatio, computeEleE to be used
+#include "EntropyCalculations.h"																	// allows computeEntropy, computeEntropy_wAvg & computeRelEntropy to be used
+#include "MarginalCreation.h"																		// allows PrintMarginalLoc & PrintMarginal to be used
+#include "EquilibriumSolution.h"																	// allows ExportRhoQuadVals, ComputeEquiVals & PrintEquiVals to be used
+#include "NegativityChecks.h"																		// allows computeCellAvg, FindNegVals & CheckNegVals to be used
+
+#endif /* LP_OMPI_H_ */

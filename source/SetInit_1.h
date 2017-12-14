@@ -4,6 +4,17 @@
  *
  */
 
+//************************//
+//     INCLUDE GUARDS     //
+//************************//
+
+#ifndef SETINIT_1_H_
+#define SETINIT_1_H_
+
+//************************//
+//        INCLUDES        //
+//************************//
+
 #include "LP_ompi.h"																					// allows the libraries included, macros defined and external variables declared in LP_ompi.h to be used in the SetInit_1 functions
 #include "advection_1.h"																				// allows the external variables and function prototypes declared in advection_1.h to be used in the SetInit_1 functions
 
@@ -34,3 +45,5 @@ void setInit_spectral(double *U, double **f);
 #else
 void setInit_spectral(double *U, double **f);
 #endif
+
+#endif /* SETINIT_1_H_ */

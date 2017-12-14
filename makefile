@@ -65,6 +65,6 @@ wts: $(objects_wt)
 
 clean:
 	$(RM) $(OBJDIR)/*.o 
-	$(RM) $(EXECDIR)/*.out
+	#$(RM) $(EXECDIR)/*.out
 
 # icpc -O2 -openmp LP_main.cpp -I$TACC_FFTW3_INC -I$TACC_MKL_INC -L$TACC_FFTW3_LIB -lfftw3_threads -lfftw3 -lpthread -lm -Wl,-rpath,$TACC_MKL_LIB -L$TACC_MKL_LIB -Wl,--start-group -lmkl_core -lmkl_intel_lp64 -lmkl_intel_thread -Wl,--end-group -liomp5 -lpthread

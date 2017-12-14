@@ -4,6 +4,17 @@
  *
  */
 
+//************************//
+//     INCLUDE GUARDS     //
+//************************//
+
+#ifndef ENTROPYCALCULATIONS_H_
+#define ENTROPYCALCULATIONS_H_
+
+//************************//
+//        INCLUDES        //
+//************************//
+
 #include "LP_ompi.h"																					// allows the libraries included, macros defined and external variables declared in LP_ompi.h to be used in the EntropyCalculations functions
 #include "advection_1.h"																				// allows the external variables and function prototypes declared in advection_1.h to be used in the EntropyCalculations functions
 
@@ -16,3 +27,5 @@ double computeEntropy(double *U);
 double computeEntropy_wAvg(double *AvgVals);
 
 double computeRelEntropy(double *U, double *f_equi);
+
+#endif /* ENTROPYCALCULATIONS_H_ */
