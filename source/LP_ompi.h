@@ -97,7 +97,7 @@ extern double *fEquiVals;																			// declare f_equivals (to store the 
 //        INCLUDES        //
 //************************//
 
-#include "advection_1.h"																			// allows computeMass, computeMomentum, computeKiE, computeEleE & RK3 to be used
+#include "advection_1.h"																			// allows RK3 to be used
 #include "SetInit_1.h"																				// allows TrapezoidalRule, SetInit_LD, SetInit_4H, SetInit_2H & setInit_spectral to be used
 #include "conservationRoutines.h"         															// allows createCCtAndPivot & conserveAllMoments to be used
 #include "collisionRoutines_1.h"            														// allows generate_conv_weights, generate_conv_weights_linear, computeQ & RK4 to be used
@@ -106,5 +106,6 @@ extern double *fEquiVals;																			// declare f_equivals (to store the 
 #include "MarginalCreation.h"																		// allows PrintMarginalLoc & PrintMarginal to be used
 #include "EquilibriumSolution.h"																	// allows ExportRhoQuadVals, ComputeEquiVals & PrintEquiVals to be used
 #include "NegativityChecks.h"																		// allows computeCellAvg, FindNegVals & CheckNegVals to be used
+#include "FieldCalculations.h"																		// allows PrintPhiVals to be used
 
 #endif /* LP_OMPI_H_ */

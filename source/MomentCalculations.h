@@ -16,7 +16,8 @@
 //************************//
 
 #include "LP_ompi.h"																					// allows the libraries included, macros defined and external variables declared in LP_ompi.h to be used in the MomentCalculations functions
-#include "advection_1.h"																				// allows the external variables and function prototypes declared in advection_1.h to be used in the MomentCalculations functions
+//#include "advection_1.h"																				// allows the external variables and function prototypes declared in advection_1.h to be used in the MomentCalculations functions
+#include "FieldCalculations.h"																			// allows the function prototypes declared in FieldCalculations.h to be used in the advection_1 functions
 
 //************************//
 //   FUNCTION PROTOTYPES  //
