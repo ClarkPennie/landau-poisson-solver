@@ -85,7 +85,7 @@ void SetInit_LD(double *U)																						// function to calculate the DG 
     				{
     					for(m3=0;m3<nt;m3++)
     					{
-							#ifdef Damping
+							#if defined(Damping) || defined(Doping)
 							tp = wt[m1]*wt[m2]*wt[m3]*Mw(Gridv((double)j1)+0.5*dv*vt[m1], Gridv((double)j2)+0.5*dv*vt[m2], Gridv((double)j3)+0.5*dv*vt[m3]);		// calculate w_m1*w_m2*w_m3*Mw(v_m1,v_m2,v_m3), which appears in all quadrature integral approximations
 							#endif
 

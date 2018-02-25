@@ -13,6 +13,6 @@
 set -x
 export OMP_NUM_THREADS=16
 
-ibrun tacc_affinity ./bin/LPsolver_nu005_TestFieldFile.out
+ibrun tacc_affinity ./bin/LPsolver_nu005_TestNewDoping.out
 
 #./fpl.out

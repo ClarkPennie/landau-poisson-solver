@@ -58,6 +58,22 @@ double h_eta, h_v;																					// declare h_eta (the Fourier stepsize) &
 double nu=0.05, dt=0.01, nthread=16; 																// declare nu (1/knudson#) and set it to 0.02, dt (the timestep) and set it to 0.004 & nthread (the number of OpenMP threads) and set it to 16
 #endif
 
+#ifdef Doping																						// only do this if Damping was defined
+double A_amp=0.2, k_wave=0.5;																		// declare A_amp (the amplitude of the perturbing wave) & k_wave (the wave number of the perturbing wave) and set their values
+double Lx=2*PI/k_wave, Lv=5.25;																		// declare Lx (for 0 < x < Lx) and set it to & Lv (for -Lv < v < Lv in the advection problem) and set their values
+double dv=2.*Lv/Nv, dx=Lx/Nx; 																		// declare dv (the velocity stepsize) and set it to 2Lv/Nv & dx (the space stepsize) and set it to Lx/Nx
+double L_v=Lv, R_v=Lv, L_eta;																		// declare L_v (for -Lv < v < Lv in the collision problem) and set it to Lv, R_v (for v in B_(R_v) in the collision problem) and set it to Lv & L_eta (for Fourier space, -L_eta < eta < L_eta)
+double h_eta, h_v;																					// declare h_eta (the Fourier stepsize) & h_v (also the velocity stepsize but for the collision problem)
+double nu=0.05, dt=0.01, nthread=16; 																// declare nu (1/knudson#) and set it to 0.02, dt (the timestep) and set it to 0.004 & nthread (the number of OpenMP threads) and set it to 16
+double NL = 0.1;																					// declare NL (the density of ions in the middle of the well, the Lower value) and set its value
+double NH = 1;																						// declare NH (the density of ions on the edges of the well, the Higher value) and set its value
+int a_i = Nx/3-1;																					// declare a_i (the index such that ND(x) = NH, for x <= x_{a_i-1/2}, & ND(x) = NL, for x > x_{a_i+1/2}) and set its value
+int b_i = 2*Nx/3-1;																					// declare b_i (the index such that ND(x) = NL, for x <= x_{b_i-1/2}, & ND(x) = NH, for x > x_{b_i+1/2}) and set its value
+#endif
+
+/* DATA FOR THE DOPING PROFILE - TURN INTO MACRO AT SOME POINT */
+
+
 double *v, *eta;																					// declare v (the velocity variable) & eta (the Fourier space variable)
 double *wtN;																						// declare wtN (the trapezoidal rule weights to be used)
 double scale, scale3, scaleL=8*Lv*Lv*Lv, scalev=dv*dv*dv;											// declare scale (the 1/sqrt(2pi) factor appearing in Gaussians), scale (the 1/(sqrt(2pi))^3 factor appearing in the Maxwellian), scaleL (the volume of the velocity domain) and set it to 8Lv^3 & scalev (the volume of a discretised velocity element) and set it to dv^3
@@ -322,7 +338,7 @@ int main()
 									buffer_phi[100], buffer_marg[100], buffer_ent[100];				// declare the arrays buffer_moment (to store the name of the file where the moments are printed), buffer_u (to store the name of the file where the solution U is printed), buffer_ufull (to store the name of the file where the solution U is printed in the TwoStream), buffer_flags (to store the flag added to the end of the filenames), buffer_phi (to store the name of the file where the values of phi are printed), buffer_marg (to store the name of the file where the marginals are printed) & buffer_ent (to store the name of the file where the entropy values are printed)
 
 	// EVERY TIME THE CODE IS RUN, CHANGE THE FLAG TO A NAME THAT IDENTIFIES THE CASE RUNNING FOR OR WHAT TIME RUN UP TO:
-	sprintf(buffer_flags,"TestFieldFile");																// store the string "OMPfixTest" in buffer_flags
+	sprintf(buffer_flags,"InitialNDTest");															// store a string in buffer_flags, so that files associated to this run can be identified
 	sprintf(buffer_moment,"Data/Moments_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
 					nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is Moments_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
 	sprintf(buffer_u,"Data/U_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
@@ -348,6 +364,9 @@ int main()
 		#endif
 		#ifdef TwoHump																				// only do this if TwoHump was defined
 		SetInit_2H(U);																				// set initial DG solution with the 2Hump IC. For the first time run t=0, use this to give init solution (otherwise, comment out)
+		#endif
+		#ifdef Doping																				// only do this if Damping was defined
+		SetInit_LD(U);																				// set initial DG solution for Landau Damping. For the first time run t=0, use this to give init solution (otherwise, comment out)
 		#endif
 	#endif
 
@@ -376,6 +395,12 @@ int main()
 		printf("2HumpIC. %s. nu=%g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
 				"N=%d, dt=%g, nT=%d\nchunk_Nx=%d, nprocs_Nx=%d\n",
 				buffer_flags, nu, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT,chunk_Nx,nprocs_Nx);			// display in the output file that this is the calculation with the 2Hump IC, as well as the contents of the string buffer_flags and the values of nu, A_amp,k_wave, Nx, Lv, Nv, N, dt, nT, chunk_Nx & nprocs_Nx
+		#endif
+
+		#ifdef Doping																				// only do this if Damping was defined
+		printf("Non-constant Doping Profile. %s. nu=%g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
+				"N=%d, dt=%g, nT=%d\nchunk_Nx=%d, nprocs_Nx=%d\n",
+				buffer_flags, nu, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT,chunk_Nx,nprocs_Nx);			// display in the output file that this is the Damping calculation, as well as the contents of the string buffer_flags and the values of nu, A_amp,k_wave, Nx, Lv, Nv, N, dt, nT, chunk_Nx & nprocs_Nx
 		#endif
 	
 		#ifdef Second																				// only do this Second was defined (picking up data from a previous run)

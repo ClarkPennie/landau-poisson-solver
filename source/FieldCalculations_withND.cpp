@@ -7,7 +7,21 @@
  *
  */
 
-#include "FieldCalculations.h"																					// FieldCalculations.h is where the prototypes for the functions contained in this file are declared
+#include "FieldCalculations.h"																	// FieldCalculations.h is where the prototypes for the functions contained in this file are declared
+
+double DopingProfile(int i)																		// function to return a step function doping profile, based on what cell a given x is in
+{
+	double DP;																					// declare DP (the value of the doping profile in the current space cell to be returned)
+	if(i <= a_i || i > b_i)																// if the space cell i is either in the lower or upper third of all cells then set the value of DP to 1
+	{
+		DP = NH;
+	}
+	else																						// if the space cell i is either in the middle third of all cells then set the value of DP to 0.1
+	{
+		DP = NL;
+	}
+	return DP;																					// return the value of DP
+}
 
 double rho_x(double x, double *U, int i) // for x in I_i
 {
@@ -35,10 +49,12 @@ double rho(double *U, int i) //  \int f(x,v) dxdv in I_i * K_j
   return dx*dv*dv*dv*tmp;
 }
 
-double computePhi_x_0(double *U) // compute the constant coefficient of x in phi, which is actually phi_x(0) (Calculate C_E in the paper -between eq. 52 & 53?)
+double computePhi_x_0(double *U) /* DIFFERENT FOR withND */																// compute the constant coefficient of x in phi, which is actually phi_x(0) (Calculate C_E in the paper -between eq. 52 & 53?), with doping profile given by ND above
 {
 	int i, j, k, m, q;
 	double tmp=0.;
+	double a_val = (a_i+1)*dx;
+	double b_val = (b_i+1)*dx;
 
 	//#pragma omp parallel for private(j,q,m,k) shared(U) reduction(+:tmp) //reduction may change the final result a little bit
 	for(j=0;j<size_v;j++){
@@ -54,17 +70,19 @@ double computePhi_x_0(double *U) // compute the constant coefficient of x in phi
 	}
 	tmp = tmp*scalev*dx*dx;
 
-	return 0.5*Lx - tmp/Lx;
+	return 0.5*NH*Lx + (NL-NH)*(b_val-a_val) - (0.5*(NL-NH)*(b_val*b_val - a_val*a_val) + tmp)/Lx;
 }
 
-double computePhi(double *U, double x, int ix)											// function to compute the potential Phi at a position x, contained in [x_(ix-1/2), x_(ix+1/2)]
+double computePhi(double *U, double x, int ix)	/* DIFFERENT FOR withND */											// function to compute the potential Phi at a position x, contained in [x_(ix-1/2), x_(ix+1/2)]
 {
 	int i_out, i, j1, j2, j3, iNNN, j1NN, j2N, k;										// declare counters i_out (for the outer sum of i values), i, j1, j2, j3 for summing the contribution from cell I_i x K_(j1, j2, j3), iNNN (the value of i*Nv^3), j1NN (the value of j1*Nv^2), j2N (the value of j2*N) & k (the location in U of the cell I_i x K_(j1, j2, j3))
 	double retn, sum1, sum3, sum4, x_diff, x_diff_mid, x_diff_sq, x_eval, C_E;			// declare retn (the value of Phi returned at the end), sum1 (the value of the first two sums), sum3 (the value of the third sum), sum4 (the value of the fourth sum), x_diff (the value of x - x_(ix-1/2)), x_diff_mid (the value of x - x_ix), x_diff_sq (the value of x_diff^2), x_eval (the value associated to the integral of (x - x_i)^2) & C_E (the value of the constant in the formula for phi)
+	double ND;																			// declare ND (the value of the doping profile at the given x)
 	sum1 = 0;
 	sum3 = 0;
 	sum4 = 0;
 	retn = 0;
+	ND = DopingProfile(ix);																// set ND to the value of the doping profile at ix
 	x_diff = x - Gridx(ix-0.5);
 	x_diff_mid = x - Gridx(ix);
 	x_diff_sq = x_diff*x_diff;
@@ -139,11 +157,21 @@ double computePhi(double *U, double x, int ix)											// function to compute 
 	}
 
 	C_E = computePhi_x_0(U);
-	retn = (sum1 + sum3 + sum4)*dv*dv*dv - x*x/2 - C_E*x;
-	return retn;
+	retn = (sum1 + sum3 + sum4)*dv*dv*dv - ND*x*x/2. - C_E*x;
+	if(ix > a_i)																						// if x > a then there is an extra term to add
+	{
+		double a_val = (a_i+1)*dx;																		// declare a_val and set it to the value of x at the edge of the ai-th space cell
+		retn += (NH-NL)*a_val*(x - 0.5*a_val);															// add (NH-NL)a(x-a/2) to retn
+	}
+	if(ix > b_i)																						// if x > b then there is an extra term to add
+	{
+		double b_val = (b_i+1)*dx;																		// declare b_val and set it to the value of x at the edge of the bi-th space cell
+		retn += (NL-NH)*b_val*(x - 0.5*b_val);															// add (NL-NH)b(x-b/2) to retn
+	}
+	return retn;																						// return the value of phi at x
 }
 
-void PrintPhiVals(double *U, FILE *phifile)														// function to print the values of the potential and the density in the file tagged as phifile at the given timestep
+void PrintPhiVals(double *U, FILE *phifile)		/* DIFFERENT FOR withND */						// function to print the values of the potential and the density in the file tagged as phifile at the given timestep
 {
 	int i, np, nx, nv;																			// declare i (the index of the space cell), np (the number of points to evaluate in a given space/velocity cell), nx (a counter for the points in the space cell) & nv (a counter for the points in the velocity cell)
 	double x_0, x_val, phi_val, rho_val, M_0, ddx;												// declare x_0 (the x value at the left edge of a given cell), x_val (the x value to be evaluated at), phi_val (the value of phi evaluated at x_val), rho_val (the value of rho evaluated at x_val) & ddx (the space between x values)
@@ -231,10 +259,13 @@ double Int_Cumulativerho_sqr(double **U, int i)// \int_{I_i} [ \int^{x}_{0} rho(
   return retn;  
 }*/
 
-double Int_E(double *U, int i) // \int_i E dx      // Function to calculate the integral of E_h w.r.t. x over the interval I_i = [x_(i-1/2), x_(i+1/2))
+double Int_E(double *U, int i) 		/* DIFFERENT FOR withND */ 						      // Function to calculate the integral of E_h w.r.t. x over the interval I_i = [x_(i-1/2), x_(i+1/2))
 {
 	int m, j, k;
 	double tmp=0., result;
+	double ND;																			// declare ND (the value of the doping profile at the given x)
+	ND = DopingProfile(i);																// set ND to the value of the doping profile at ix
+
 	//#pragma omp parallel for shared(U) reduction(+:tmp)
 	for(j=0;j<size_v;j++){
 		for(m=0;m<i;m++){	
@@ -246,15 +277,27 @@ double Int_E(double *U, int i) // \int_i E dx      // Function to calculate the 
 	}
 
 	//ce = computePhi_x_0(U);
-	result = -ce*dx - tmp*dx*dx*scalev + Gridx((double)i)*dx;
+	result = -ce*dx - tmp*dx*dx*scalev + ND*Gridx((double)i)*dx;
+	if(i > a_i)																							// if x > a then there is an extra term to add
+	{
+		double a_val = (a_i+1)*dx;																		// declare a_val and set it to the value of x at the edge of the ai-th space cell
+		result += (NH-NL)*a_val*dx;																		// add (NH-NL)a*dx to result
+	}
+	if(i > b_i)																							// if x > b then there is an extra term to add
+	{
+		double b_val = (b_i+1)*dx;																		// declare b_val and set it to the value of x at the edge of the bi-th space cell
+		result += (NL-NH)*b_val*dx;																		// add (NL-NH)b*dx to result
+	}
 
 	return result;
 }
 
-double Int_E1st(double *U, int i) // \int_i E*(x-x_i)/delta_x dx
+double Int_E1st(double *U, int i) 	/* DIFFERENT FOR withND */					// \int_i E*(x-x_i)/delta_x dx
 {
 	int j, k;
 	double tmp=0., result;
+	double ND;																			// declare ND (the value of the doping profile at the given x)
+	ND = DopingProfile(i);																// set ND to the value of the doping profile at ix
 	//#pragma omp parallel for reduction(+:tmp)
 	for(j=0;j<size_v;j++){
 		k=i*size_v + j;
@@ -262,7 +305,7 @@ double Int_E1st(double *U, int i) // \int_i E*(x-x_i)/delta_x dx
 	}
 	tmp = tmp*scalev;
 	
-	result = (1-tmp)*dx*dx/12.;
+	result = (ND-tmp)*dx*dx/12.;
 
 	return result;
 }
@@ -278,10 +321,12 @@ double Int_fE(double *U, int i, int j) // \int f * E(f) dxdv on element I_i * K_
 	return retn*scalev;
 }
 
-double Int_E2nd(double *U, int i) // \int_i E* [(x-x_i)/delta_x]^2 dx
+double Int_E2nd(double *U, int i) 	/* DIFFERENT FOR withND */							// \int_i E* [(x-x_i)/delta_x]^2 dx
 {
     int m, j, j1, j2, j3, k;
     double c1=0., c2=0., result;
+	double ND;																			// declare ND (the value of the doping profile at the given x)
+	ND = DopingProfile(i);																// set ND to the value of the doping profile at ix
   
     //cp = computeC_rho(U,i); ce = computePhi_x_0(U);
 
@@ -292,7 +337,19 @@ double Int_E2nd(double *U, int i) // \int_i E* [(x-x_i)/delta_x]^2 dx
     }
     c2 *= dx/2.;				
     
-    result = (-cp[i] - ce+scalev*(c1*Gridx(i-0.5) + 0.25*c2))*dx/12. + (1-scalev*c1)*dx*Gridx((double)i)/12. - scalev*c2*dx/80.; //BUG: missed -cp
+    result = (-cp[i] - ce+scalev*(c1*Gridx(i-0.5) + 0.25*c2))*dx/12. + (ND-scalev*c1)*dx*Gridx((double)i)/12. - scalev*c2*dx/80.; //BUG: missed -cp
+
+    if(i > a_i)																							// if x > a then there is an extra term to add
+	{
+		double a_val = (a_i+1)*dx;																		// declare a_val and set it to the value of x at the edge of the ai-th space cell
+		result += (NH-NL)*a_val*dx/12.;																	// add (NH-NL)a*dx/12 to result
+	}
+	if(i > b_i)																							// if x > b then there is an extra term to add
+	{
+		double b_val = (b_i+1)*dx;																		// declare b_val and set it to the value of x at the edge of the bi-th space cell
+		result += (NL-NH)*b_val*dx/12.;																	// add (NL-NH)b*dx/12 to result
+	}
+
 
     return result;
 }

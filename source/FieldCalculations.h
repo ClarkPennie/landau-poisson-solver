@@ -23,6 +23,10 @@
 //   FUNCTION PROTOTYPES  //
 //************************//
 
+#ifdef doping
+double DopingProfile(int i);
+#endif
+
 double rho_x(double x, double *U, int i);
 
 double rho(double *U, int i);

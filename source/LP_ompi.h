@@ -35,8 +35,9 @@
 //#define Damping																					// define the macro Damping (UNCOMMENT IF BEING RUN FOR THE LANDAU DAMPING PROBLEM)
 //#define FullandLinear 																			// define the macro FullandLinear (UNCOMMENT IF THE LINEAR ELE-ION COLLISION OPERATOR IS NEEDED; OTHERWISE, ONLY ELE-ELE COLLISIONS)
 //#define TwoStream																					// define the macro TwoStream (UNCOMMENT IF BEING RUN FOR THE TWO STREAM PROBLEM)
-#define FourHump																					// define the macro FourHump (UNCOMMENT IF BEING RUN FOR THE FOUR HUMP IC PROBLEM)
+//#define FourHump																					// define the macro FourHump (UNCOMMENT IF BEING RUN FOR THE FOUR HUMP IC PROBLEM)
 //#define TwoHump																					// define the macro TwoHump (UNCOMMENT IF BEING RUN FOR THE TWO HUMP IC PROBLEM)
+#define Doping																						// define the macro Doping (UNCOMMENT IF BEING RUN FOR THE NON-CONSTANT DOPING PROFILE PROBLEM)
 
 // CHOOSE IF THIS IS THE INITIAL RUN OR A SUBSEQUENT RUN:
 #define First																						// define the macro First (UNCOMMENT IF RUNNING THE CODE FOR THE FIRST TIME)
@@ -58,6 +59,13 @@ extern double dv, dx; 																				// declare dv (the velocity stepsize) 
 extern double L_v, R_v, L_eta;																		// declare L_v (for -Lv < v < Lv in the collision problem) and set it to Lv, R_v (for v in B_(R_v) in the collision problem) and set it to Lv & L_eta (for Fourier space, -L_eta < eta < L_eta)
 extern double h_eta, h_v;																			// declare h_eta (the Fourier stepsize) & h_v (also the velocity stepsize but for the collision problem)
 extern double nu, dt, nthread; 																		// declare nu (1/knudson#) and set it to 0.1, dt (the timestep) and set it to 0.004 & nthread (the number of OpenMP threads) and set it to 16
+
+#ifdef Doping
+extern double NL;																					// declare NL (the density of ions in the middle of the well, the Lower value) and set its value
+extern double NH;																					// declare NH (the density of ions on the edges of the well, the Higher value) and set its value
+extern int a_i;																						// declare a_i (the index such that ND(x) = NH, for x <= x_{a_i-1/2}, & ND(x) = NL, for x > x_{a_i+1/2}) and set its value
+extern int b_i;																						// declare b_i (the index such that ND(x) = NL, for x <= x_{b_i-1/2}, & ND(x) = NH, for x > x_{b_i+1/2}) and set its value
+#endif
 
 extern double *v, *eta;																				// declare v (the velocity variable) & eta (the Fourier space variable)
 extern double *wtN;																					// declare wtN (the trapezoidal rule weights to be used)
