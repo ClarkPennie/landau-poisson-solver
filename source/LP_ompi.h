@@ -23,6 +23,9 @@
 #include <omp.h>																					// allows all OpenMP routines to be used
 #include <fftw3.h>																					// allows the Fast Fourier Transform to be used
 #include <mkl_lapack.h>
+#include <vector>
+using std::vector;
+
 
 //************************//
 //         MACROS         //
@@ -61,10 +64,12 @@ extern double h_eta, h_v;																			// declare h_eta (the Fourier stepsi
 extern double nu, dt, nthread; 																		// declare nu (1/knudson#) and set it to 0.1, dt (the timestep) and set it to 0.004 & nthread (the number of OpenMP threads) and set it to 16
 
 #ifdef Doping
-extern double NL;																					// declare NL (the density of ions in the middle of the well, the Lower value) and set its value
-extern double NH;																					// declare NH (the density of ions on the edges of the well, the Higher value) and set its value
-extern int a_i;																						// declare a_i (the index such that ND(x) = NH, for x <= x_{a_i-1/2}, & ND(x) = NL, for x > x_{a_i+1/2}) and set its value
-extern int b_i;																						// declare b_i (the index such that ND(x) = NL, for x <= x_{b_i-1/2}, & ND(x) = NH, for x > x_{b_i+1/2}) and set its value
+extern double NL;																					// declare NL (the density of ions in the middle of the well, the Lower value)
+extern double NH;																					// declare NH (the density of ions on the edges of the well, the Higher value)
+extern int a_i;																						// declare a_i (the index such that ND(x) = NH, for x <= x_{a_i-1/2}, & ND(x) = NL, for x > x_{a_i+1/2})
+extern int b_i;																						// declare b_i (the index such that ND(x) = NL, for x <= x_{b_i-1/2}, & ND(x) = NH, for x > x_{b_i+1/2})
+extern double T_R;																					// declare T_R (the temperature at the right edge of space)
+extern double T_L;																					// declare T_L (the temperature at the left edge of space)
 #endif
 
 extern double *v, *eta;																				// declare v (the velocity variable) & eta (the Fourier space variable)

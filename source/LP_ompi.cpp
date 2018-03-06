@@ -19,7 +19,7 @@
 
 double PI=M_PI;																						// declare PI and set it to M_PI (the value stored in the library math.h)
 int M=5;																							// declare M (the number of collision invarients) and set it equal to 5
-int Nx=24, Nv=24, nT=1, N=16; 											 							// declare Nx (no. of x discretised points), Nv (no. of v discretised point), nT (no. of time discretised points) & N (no. of nodes in the spectral method) and setting all their values
+int Nx=24, Nv=24, nT=200, N=16; 											 							// declare Nx (no. of x discretised points), Nv (no. of v discretised point), nT (no. of time discretised points) & N (no. of nodes in the spectral method) and setting all their values
 int size_v=Nv*Nv*Nv, size=Nx*size_v, size_ft=N*N*N; 												// declare size_v (no. of total v discretised points in 3D) and set it to Nv^3, size (the total no. of discretised points) and set it to size_v*Nx & size_ft (total no. of spectral discretised points in 3D) and set it to N*N*N
 
 #ifdef TwoStream																					// only do this if TwoStream was defined
@@ -59,16 +59,18 @@ double nu=0.05, dt=0.01, nthread=16; 																// declare nu (1/knudson#) 
 #endif
 
 #ifdef Doping																						// only do this if Damping was defined
-double A_amp=0.2, k_wave=0.5;																		// declare A_amp (the amplitude of the perturbing wave) & k_wave (the wave number of the perturbing wave) and set their values
-double Lx=2*PI/k_wave, Lv=5.25;																		// declare Lx (for 0 < x < Lx) and set it to & Lv (for -Lv < v < Lv in the advection problem) and set their values
+double A_amp=0.2, k_wave=0.5;																			// declare A_amp & k_wave and set their values to zero as they're not used here
+double Lx=2*PI/k_wave, Lv=5.25;																					// declare Lx (for 0 < x < Lx) and set it to & Lv (for -Lv < v < Lv in the advection problem) and set their values
 double dv=2.*Lv/Nv, dx=Lx/Nx; 																		// declare dv (the velocity stepsize) and set it to 2Lv/Nv & dx (the space stepsize) and set it to Lx/Nx
 double L_v=Lv, R_v=Lv, L_eta;																		// declare L_v (for -Lv < v < Lv in the collision problem) and set it to Lv, R_v (for v in B_(R_v) in the collision problem) and set it to Lv & L_eta (for Fourier space, -L_eta < eta < L_eta)
 double h_eta, h_v;																					// declare h_eta (the Fourier stepsize) & h_v (also the velocity stepsize but for the collision problem)
-double nu=0.05, dt=0.01, nthread=16; 																// declare nu (1/knudson#) and set it to 0.02, dt (the timestep) and set it to 0.004 & nthread (the number of OpenMP threads) and set it to 16
-double NL = 0.1;																					// declare NL (the density of ions in the middle of the well, the Lower value) and set its value
+double nu=0, dt=0.01, nthread=32;																	// declare nu (1/knudson#) and set it to 0.02, dt (the timestep) and set it to 0.004 & nthread (the number of OpenMP threads) and set it to 16
+double NL = 0.001;																					// declare NL (the density of ions in the middle of the well, the Lower value) and set its value
 double NH = 1;																						// declare NH (the density of ions on the edges of the well, the Higher value) and set its value
 int a_i = Nx/3-1;																					// declare a_i (the index such that ND(x) = NH, for x <= x_{a_i-1/2}, & ND(x) = NL, for x > x_{a_i+1/2}) and set its value
 int b_i = 2*Nx/3-1;																					// declare b_i (the index such that ND(x) = NL, for x <= x_{b_i-1/2}, & ND(x) = NH, for x > x_{b_i+1/2}) and set its value
+double T_R = 0.4;																					// declare T_R (the temperature at the right edge of space) and set its value
+double T_L = 0.1;																						// declare T_L (the temperature at the left edge of space) and set its value
 #endif
 
 /* DATA FOR THE DOPING PROFILE - TURN INTO MACRO AT SOME POINT */
@@ -335,10 +337,10 @@ int main()
 	}
 
 	char buffer_moment[100], buffer_u[100], buffer_ufull[100], buffer_flags[100],
-									buffer_phi[100], buffer_marg[100], buffer_ent[100];				// declare the arrays buffer_moment (to store the name of the file where the moments are printed), buffer_u (to store the name of the file where the solution U is printed), buffer_ufull (to store the name of the file where the solution U is printed in the TwoStream), buffer_flags (to store the flag added to the end of the filenames), buffer_phi (to store the name of the file where the values of phi are printed), buffer_marg (to store the name of the file where the marginals are printed) & buffer_ent (to store the name of the file where the entropy values are printed)
+						buffer_phi[100], buffer_E[100], buffer_marg[100], buffer_ent[100];			// declare the arrays buffer_moment (to store the name of the file where the moments are printed), buffer_u (to store the name of the file where the solution U is printed), buffer_ufull (to store the name of the file where the solution U is printed in the TwoStream), buffer_flags (to store the flag added to the end of the filenames), buffer_phi (to store the name of the file where the values of phi are printed), buffer_marg (to store the name of the file where the marginals are printed) & buffer_ent (to store the name of the file where the entropy values are printed)
 
 	// EVERY TIME THE CODE IS RUN, CHANGE THE FLAG TO A NAME THAT IDENTIFIES THE CASE RUNNING FOR OR WHAT TIME RUN UP TO:
-	sprintf(buffer_flags,"InitialNDTest");															// store a string in buffer_flags, so that files associated to this run can be identified
+	sprintf(buffer_flags,"NonUniND_TestDC");																// store a string in buffer_flags, so that files associated to this run can be identified
 	sprintf(buffer_moment,"Data/Moments_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
 					nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is Moments_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
 	sprintf(buffer_u,"Data/U_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
@@ -348,6 +350,8 @@ int main()
 	sprintf(buffer_marg,"Data/Marginals_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
 					nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is Marginals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
 	sprintf(buffer_phi,"Data/PhiVals_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
+					nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is PhiVals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
+	sprintf(buffer_E,"Data/FieldVals_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
 					nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is PhiVals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
 	sprintf(buffer_ent,"Data/EntropyVals_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
 					nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is EntropyVals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
@@ -366,11 +370,11 @@ int main()
 		SetInit_2H(U);																				// set initial DG solution with the 2Hump IC. For the first time run t=0, use this to give init solution (otherwise, comment out)
 		#endif
 		#ifdef Doping																				// only do this if Damping was defined
-		SetInit_LD(U);																				// set initial DG solution for Landau Damping. For the first time run t=0, use this to give init solution (otherwise, comment out)
+		SetInit_ND(U);																				// set initial DG solution appropriate for the non-constant doping profile. For the first time run t=0, use this to give init solution (otherwise, comment out)
 		#endif
 	#endif
 
-	FILE *fmom, *fu, *fufull, *fmarg, *fphi, *fent;													// declare pointers to the files fmom (which will store the moments), fu (which will store the solution U), fufull (which will store the solution U in the TwoStream case), fmarg (which will store the values of the marginals), fphi (which will store the values of the potential phi) & fent (which will store the values fo the entropy)
+	FILE *fmom, *fu, *fufull, *fmarg, *fphi, *fE, *fent;											// declare pointers to the files fmom (which will store the moments), fu (which will store the solution U), fufull (which will store the solution U in the TwoStream case), fmarg (which will store the values of the marginals), fphi (which will store the values of the potential phi) & fent (which will store the values fo the entropy)
 
 	if(myrank_mpi==0)																				// only the process with rank 0 will do this
 	{
@@ -399,8 +403,10 @@ int main()
 
 		#ifdef Doping																				// only do this if Damping was defined
 		printf("Non-constant Doping Profile. %s. nu=%g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
-				"N=%d, dt=%g, nT=%d\nchunk_Nx=%d, nprocs_Nx=%d\n",
-				buffer_flags, nu, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT,chunk_Nx,nprocs_Nx);			// display in the output file that this is the Damping calculation, as well as the contents of the string buffer_flags and the values of nu, A_amp,k_wave, Nx, Lv, Nv, N, dt, nT, chunk_Nx & nprocs_Nx
+				"N=%d, dt=%g, nT=%d\nchunk_Nx=%d, nprocs_Nx=%d\n"
+				"Doping Data: a_i = %d, b_i = %d, NH = %g, NL = %g, T_L = %g, T_R = %g \n",
+				buffer_flags, nu, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT,chunk_Nx,nprocs_Nx,
+				a_i, b_i, NH, NL, T_L, T_R);														// display in the output file that this is the Damping calculation, as well as the contents of the string buffer_flags and the values of nu, A_amp,k_wave, Nx, Lv, Nv, N, dt, nT, chunk_Nx & nprocs_Nx
 		#endif
 	
 		#ifdef Second																				// only do this Second was defined (picking up data from a previous run)
@@ -431,6 +437,7 @@ int main()
 		fu=fopen(buffer_u, "w");																	// set fu to be a file with the name stored in buffer_u and set the file access mode of fu to w (which creates an empty file and allows it to be written to)
 		fmarg=fopen(buffer_marg,"w");																// set fmarg to be a file with the name stored in buffer_marg and set the file access mode of fmarg to w (which creates an empty file and allows it to be written to)
 		fphi=fopen(buffer_phi,"w");																	// set fphi to be a file with the name stored in buffer_phi and set the file access mode of fphi to w (which creates an empty file and allows it to be written to)
+		fE=fopen(buffer_E,"w");																		// set fE to be a file with the name stored in buffer_E and set the file access mode of fphi to w (which creates an empty file and allows it to be written to)
 		fent=fopen(buffer_ent,"w");																	// set fent to be a file with the name stored in buffer_ent and set the file access mode of fent to w (which creates an empty file and allows it to be written to)
 
 		FindNegVals(U, fNegVals, fAvgVals);															// find out in which cells the approximate solution goes negative and record it in fNegVals
@@ -488,6 +495,9 @@ int main()
 
 		PrintMarginalLoc(fmarg);																	// print the values of x & v1 that the marginal will be evaluated at in the file tagged as fmarg
 		PrintMarginal(U, fmarg);																	// print the marginal distribution for the initial condition, using the DG coefficients in U, in the file tagged as fmarg
+
+		PrintFieldLoc(fphi, fE);																	// print the values of x that phi & E will be evaluated at in the files tagged as fphi & fE, respectively
+		PrintFieldData(U, fphi, fE);																// print the values of phi & E for the initial condition, using the DG coefficients in U, in the files tagged as fphi & fE, respectively
 	}
   
 	MPI_Bcast(U, size*6, MPI_DOUBLE, 0, MPI_COMM_WORLD);   											// send the contents of U, which will be 6*size entries of datatype MPI_DOUBLE, from the process with rank 0 to all processes, using the communicator MPI_COMM_WORLD
@@ -610,9 +620,10 @@ int main()
       
 
 	    	//if(t%400==0)fwrite(U,sizeof(double),size*6,fu);
-			if(t%20==0)
+			if(t%20==0)		// DEGUG CHECK: PRINTING MARGINALS EVERY STEP INSTEAD OF EVERY 20
 			{
-				PrintMarginal(U, fmarg);															// print the marginal distribution for the initial condition, using the DG coefficients in U, in the file tagged as fmarg
+				PrintMarginal(U, fmarg);															// print the marginal distribution, using the DG coefficients in U, in the file tagged as fmarg
+				PrintFieldData(U, fphi, fE);														// print the values of phi & E, using the DG coefficients in U, in the files tagged as fphi & fE, respectively
 			}
 		}
 	
@@ -627,7 +638,7 @@ int main()
 		printf("time duration for %d time steps is %gs\n",nT, MPIelapsed);							// display in the output file how long it took to calculate nT time-steps
     
 		fwrite(U,sizeof(double),size*6,fu);															// write the coefficients of the DG approximation at the end, stored in U, which is 6*size entires, each of the size of a double datatype, in the file tagged as fu
-		PrintPhiVals(U, fphi);																		// print the values of the potential in the file tagged as filephi at the given timestep
+		//PrintPhiVals(U, fphi);																		// print the values of the potential in the file tagged as filephi at the given timestep
 	
 		fclose(fu);  																				// remove the tag fu to close the file
 	}
@@ -638,6 +649,7 @@ int main()
 		fclose(fmom);  																				// remove the tag fmom to close the file
 		fclose(fmarg);  																			// remove the tag fmarg to close the file
 		fclose(fphi);  																				// remove the tag fphi to close the file
+		fclose(fE);  																				// remove the tag fE to close the file
 		fclose(fent);  																				// remove the tag fent to close the file
 		#ifdef TwoStream																			// only do this if TwoStream was defined
 		//fclose(fufull);

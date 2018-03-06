@@ -5,7 +5,7 @@ OBJDIR:=$(DIR)/build
 SRCDIR:=$(DIR)/source
 
 # Files
-EXEC :=  LPsolver_nu005_TestNewDoping.out 
+EXEC :=  LPsolver_nu005_NonUniND_DC_e.001.out 
 SRC  :=  $(wildcard $(SRCDIR)/*.cpp) 
 OBJ  :=  $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SRC))
 
@@ -16,10 +16,10 @@ CC=icc
 CPP=icpc
 
 # Intel MPI compiler for C++
-MPICC=mpicxx -g -p
+MPICC=mpicxx
 
 # Compiler flags: crashed when compiling with -O0
-CFLAGS = -O2 -qopenmp  -I$(TACC_FFTW3_INC) -I$(TACC_MKL_INC) -I$(SRCDIR)
+CFLAGS = -O2 -ipo -qopenmp  -I$(TACC_FFTW3_INC) -I$(TACC_MKL_INC) -I$(SRCDIR)
 FFTFLAGS = -L$(TACC_FFTW3_LIB) -lfftw3_threads -lfftw3 -lpthread -lm 
 FFTINC = -I$(TACC_FFTW3_INC)
 MKLFLAGS = -Wl,-rpath,$(TACC_MKL_LIB) -L$(TACC_MKL_LIB) -Wl,--start-group -lmkl_core -lmkl_intel_lp64 -lmkl_intel_thread -Wl,--end-group -liomp5 -lpthread
@@ -42,11 +42,12 @@ FPL: $(objects_FPL)
 	$(CPP) $(objects_FPL) $(CFLAGS)  -o fpl.out $(MKLFLAGS) $(FFTFLAGS)
 
 LP: $(OBJ)
-	@echo "Building Landau-Poisson solver"
-	$(MPICC) $(CFLAGS) -o $(EXECDIR)/$(EXEC) $^	$(FFTFLAGS) $(MKLFLAGS)
+	@echo "Building Landau-Poisson solver - linking objects"
+	@$(MPICC) $(CFLAGS) -o $(EXECDIR)/$(EXEC) $^	$(FFTFLAGS) $(MKLFLAGS)
 	
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp 
-	$(MPICC) $(CFLAGS) $(FFTINC) -c -o $@ $<
+	@echo "Building $<"
+	@$(MPICC) $(CFLAGS) $(FFTINC) -c -o $@ $<
 	
 $(OBJDIR)/LP_ompi.o: $(SRCDIR)/LP_ompi.h $(SRCDIR)/advection_1.h $(SRCDIR)/collisionRoutines_1.h $(SRCDIR)/conservationRoutines.h $(SRCDIR)/EntropyCalculations.h $(SRCDIR)/EquilibriumSolution.h $(SRCDIR)/MarginalCreation.h $(SRCDIR)/MomentCalculations.h $(SRCDIR)/NegativityChecks.h $(SRCDIR)/FieldCalculations.h $(SRCDIR)/SetInit_1.h 
 $(OBJDIR)/advection_1.o: $(SRCDIR)/advection_1.h  $(SRCDIR)/LP_ompi.h $(SRCDIR)/FieldCalculations.h

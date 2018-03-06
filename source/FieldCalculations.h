@@ -23,7 +23,7 @@
 //   FUNCTION PROTOTYPES  //
 //************************//
 
-#ifdef doping
+#ifdef Doping
 double DopingProfile(int i);
 #endif
 
@@ -36,6 +36,10 @@ double computePhi_x_0(double *U);
 double computePhi(double *U, double x, int ix);
 
 void PrintPhiVals(double *U, FILE *phifile);
+
+void PrintFieldLoc(FILE *phifile, FILE *Efile);
+
+void PrintFieldData(double* U, FILE *phifile, FILE *Efile);
 
 double computeC_rho(double *U, int i);
 

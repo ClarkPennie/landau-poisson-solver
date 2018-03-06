@@ -18,6 +18,7 @@
 
 #include "LP_ompi.h"																					// allows the libraries included, macros defined and external variables declared in LP_ompi.h to be used in the advection_1 functions
 #include "FieldCalculations.h"																			// allows the function prototypes declared in FieldCalculations.h to be used in the advection_1 functions
+#include "SetInit_1.h"																					// allows the function prototypes declared in SetInit_1.h to be used in the advection_1 functions
 
 //************************//
 //   EXTERNAL VARIABLES   //
@@ -34,9 +35,13 @@ double Gridv(double m);
 
 double Gridx(double m);
 
+void DirichletBC(vector<double>& Ub_vals, int i, int j1, int j2, int j3);
+
 double I1(double *U, int k, int l);
 
 double I2(double *U, int k, int l);
+
+double I3_B(double *U, int k, int l);
 
 double I3(double *U, int k, int l);
 

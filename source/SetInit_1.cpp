@@ -39,10 +39,9 @@ double f_2Gauss(double v1, double v2, double v3)
   return retn;
 }
 
-double Mw(double v1, double v2, double v3)																		// function to return a Maxwellian in v-space
+double Mw(double v1, double v2, double v3, double T)															// function to return a Maxwellian in v-space
 {
-	double r2, T, retn;																							// declare r2 (the squared magnitude of v for the given v = (v1,v2,v3)), T (the temperature) and retn (the value of the Maxwellian evaluated at (v1,v2,v3) to be returned)
-	T=0.4; 																										// set T to 0.9 (when testing the nonlinear damping, T was chosen too small that the "effective grid" is  not fine enough)
+	double r2, retn;																							// declare r2 (the squared magnitude of v for the given v = (v1,v2,v3)), T (the temperature) and retn (the value of the Maxwellian evaluated at (v1,v2,v3) to be returned)
 	r2=v1*v1+v2*v2+v3*v3;																						// calculate r2 for the given (v1,v2,v3)
 	retn = exp(-r2/(2*T))/(2*PI*T*sqrt(2*T*PI));																// calculate the value of the Maxwellian at the given point (v1,v2,v3)
 	return retn;																								// return the result
@@ -71,6 +70,7 @@ void SetInit_LD(double *U)																						// function to calculate the DG 
     int i, j1, j2, j3, k, m1,m2,m3,nt=5;																		// declare i (to represent cell i in x-space), j1, j2, j3 (to represent cell (j1,j2,j3) in v-space), k (the index of cell (i,j1,j2,j3) in U), m1, m2, m3 (counters for the Gaussian quadrature in 3D) & nt (the number of points in the quadrature)
     double a=A_amp, c=k_wave;																					// declare a (the amplitude of cosine wave) and set it to A_amp & c (the frequency of the cosine wave) and set it to k_wave
     double tp, tp0, tp5, tmp0, tmp1, tmp2, tmp3, tmp4;															// declare tp, tp0, tmp0, tmp1, tmp2, tmp3, tmp4 (temporary values while calculating the quadrature for the integral w.r.t. v)
+	double T0 = 0.4;																							// declare T0 (the temperature of the Maxwellian in the initial condition) and set its value
     //#pragma omp parallel for private(k,j1,j2,j3,i,tmp0, tmp1, tmp2, tmp3, tmp4, tp0, tp5, tp) shared(U)
     for(j1=0;j1<Nv;j1++)																						// loop through all the velocity cells
     {
@@ -86,7 +86,7 @@ void SetInit_LD(double *U)																						// function to calculate the DG 
     					for(m3=0;m3<nt;m3++)
     					{
 							#if defined(Damping) || defined(Doping)
-							tp = wt[m1]*wt[m2]*wt[m3]*Mw(Gridv((double)j1)+0.5*dv*vt[m1], Gridv((double)j2)+0.5*dv*vt[m2], Gridv((double)j3)+0.5*dv*vt[m3]);		// calculate w_m1*w_m2*w_m3*Mw(v_m1,v_m2,v_m3), which appears in all quadrature integral approximations
+							tp = wt[m1]*wt[m2]*wt[m3]*Mw(Gridv((double)j1)+0.5*dv*vt[m1], Gridv((double)j2)+0.5*dv*vt[m2], Gridv((double)j3)+0.5*dv*vt[m3], T0);	// calculate w_m1*w_m2*w_m3*Mw(v_m1,v_m2,v_m3), which appears in all quadrature integral approximations
 							#endif
 
 							#ifdef TwoStream
@@ -120,10 +120,63 @@ void SetInit_LD(double *U)																						// function to calculate the DG 
 	}
 }
 
+void SetInit_ND(double *U)																						// function to calculate the DG coefficients for the initial condition for Landau Damping
+{
+    int i, j1, j2, j3, k, m1,m2,m3,nt=5;																		// declare i (to represent cell i in x-space), j1, j2, j3 (to represent cell (j1,j2,j3) in v-space), k (the index of cell (i,j1,j2,j3) in U), m1, m2, m3 (counters for the Gaussian quadrature in 3D) & nt (the number of points in the quadrature)
+    double a=A_amp, c=k_wave;																					// declare a (the amplitude of cosine wave) and set it to A_amp & c (the frequency of the cosine wave) and set it to k_wave
+    double tp, tp0, tp5, tmp0, tmp1, tmp2, tmp3, tmp4;															// declare tp, tp0, tmp0, tmp1, tmp2, tmp3, tmp4 (temporary values while calculating the quadrature for the integral w.r.t. v)
+	double ND;																									// declare ND (the value of the doping profile at the given x)
+	double T0 = T_R;																							// declare T0 (the temperature of the Maxwellian in the initial condition) and set its value
+	//#pragma omp parallel for private(k,j1,j2,j3,i,tmp0, tmp1, tmp2, tmp3, tmp4, tp0, tp5, tp) shared(U)
+    for(j1=0;j1<Nv;j1++)																						// loop through all the velocity cells
+    {
+    	for(j2=0;j2<Nv;j2++)
+    	{
+    		for(j3=0;j3<Nv;j3++)
+    		{
+    			tmp0=0.; tmp1=0.; tmp2=0.; tmp3=0.; tmp4=0.;													// initialise tmp0, tmp1, tmp2, tmp3 & tmp4 at 0 for a new quadrature integral to calculate int_Kj Mw(v)*phi_(6k+l) dv, for l = 0, 2, 4, 5, 6
+    			for(m1=0;m1<nt;m1++)																			// loop through the quadrature sum
+    			{
+    				for(m2=0;m2<nt;m2++)
+    				{
+    					for(m3=0;m3<nt;m3++)
+    					{
+							tp = wt[m1]*wt[m2]*wt[m3]*Mw(Gridv((double)j1)+0.5*dv*vt[m1], Gridv((double)j2)+0.5*dv*vt[m2], Gridv((double)j3)+0.5*dv*vt[m3], T0);	// calculate w_m1*w_m2*w_m3*Mw(v_m1,v_m2,v_m3), which appears in all quadrature integral approximations
+
+							tmp0 += tp;																																// add tp to tmp0 (for the integral int_Kj Mw(v)*phi_6k dv)
+							tmp1 += tp*0.5*vt[m1];																													// add tp*v_m1/2 to tmp1 (for the integral int_Kj Mw(v)*phi_(6k+2) dv)
+							tmp2 += tp*0.5*vt[m2];																													// add tp*v_m2/2 to tmp2 (for the integral int_Kj Mw(v)*phi_(6k+3) dv)
+							tmp3 += tp*0.5*vt[m3];																													// add tp*v_m3/2 to tmp3 (for the integral int_Kj Mw(v)*phi_(6k+4) dv)
+							tmp4 += tp*0.25*(vt[m1]*vt[m1] + vt[m2]*vt[m2]+ vt[m3]*vt[m3]);																			// add tp*((v_m1/2)^2 + (v_m2/2)^2 + (v_m3/2)^2) to tmp4 (for the integral int_Kj Mw(v)*phi_(6k+5) dv)
+    					}
+    				}
+    			}
+    			tmp0 = tmp0*0.5*0.5*0.5; tmp1 = tmp1*0.5*0.5*0.5; tmp2 = tmp2*0.5*0.5*0.5; tmp3 = tmp3*0.5*0.5*0.5; tmp4 = tmp4*0.5*0.5*0.5;						// multiply tmp0, tmp1, tmp2, tmp3 & tmp4 by (1/2)^3 to represent the fact that quadrature isn't done over [-1, 1] (should also multiply by dv^3 but this cancels with 1/dv^3 later)
+    			for(i=0;i<Nx;i++)																																	// loop through the space cells
+    			{
+    				ND = DopingProfile(i);																															// set ND to the value of the doping profile at ix
+
+    				k=i*size_v + (j1*Nv*Nv + j2*Nv + j3);																											// calculate the index of cell (i,j1,j2,j3) in U
+    				tp0 = ND*tmp0;																																	// calculate b_6k = (int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_6k(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
+    				tp5 = ND*tmp4;																																	// calculate b_(6k+5) = (int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_(6k+5)(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
+    				U[k*6+0] = 19*tp0/4. - 15*tp5;																													// calculate the coefficient U[6k]
+    				U[k*6+5] = 60*tp5 - 15*tp0;																														// calculate the coefficient U[6k+5]
+
+    				U[k*6+1] = 0; 																																	// calculate the coefficient U[6k+1] = 12*b_(6k+1) = 12*(int_Ii ND(x)*phi_(6k+1)(x) dx)*(int_Kj Mw(v) dv) (NOTE: int_(Omega_i) ND(x)*phi_(6k+1)(x) dx = 0 (as ND is assumed constant on each cell))
+    				U[k*6+2] = ND*tmp1*12;																															// calculate the coefficient U[6k+2] = 12*b_(6k+2) = 12*(int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_(6k+2)(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
+    				U[k*6+3] = ND*tmp2*12;																															// calculate the coefficient U[6k+3] = 12*b_(6k+3) = 12*(int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_(6k+3)(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
+    				U[k*6+4] = ND*tmp3*12;																															// calculate the coefficient U[6k+4] = 12*b_(6k+4) = 12*(int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_(6k+4)(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
+    			}
+    		}
+    	}
+	}
+}
+
 void SetInit_4H(double *U)																							// function to calculate the DG coefficients for the initial condition with four humps, found by adding four Maxwellians
 {
     int i, j1, j2, j3, k, m,m1,m2,m3,nt=5, p;																		// declare i (to represent cell i in x-space), j1, j2, j3 (to represent cell (j1,j2,j3) in v-space), k (the index of cell (i,j1,j2,j3) in U), m (counter for the Gaussian quadrature in x-space), m1, m2, m3 (counters for the Gaussian quadrature in v-space), nt (the number of points in the quadrature) & p (to loop through the four Maxwellians)
     double tp, tpx, tp0, tp5, tmpx0, tmpx1, tmp0, tmp1, tmp2, tmp3, tmp4;											// declare tp, tpx, tp0, tmpx0, tmpx1, tmp0, tmp1, tmp2, tmp3, tmp4 (temporary values while calculating the quadrature for the integral w.r.t. v)
+	double T0 = 0.4;																							// declare T0 (the temperature of the Maxwellian in the initial condition) and set its value
     //#pragma omp parallel for private(k,j1,j2,j3,i,tmp0, tmp1, tmp2, tmp3, tmp4, tp0, tp5, tp) shared(U)
     for(p=0;p<4;p++)																								// loop through the four Maxwellians
     {
@@ -140,7 +193,7 @@ void SetInit_4H(double *U)																							// function to calculate the DG
     					{
     						for(m3=0;m3<nt;m3++)
     						{
-    							tp = wt[m1]*wt[m2]*wt[m3]*Mw(Gridv((double)j1)+0.5*dv*vt[m1] + pow(-1,p), Gridv((double)j2)+0.5*dv*vt[m2] + pow(-1,p), Gridv((double)j3)+0.5*dv*vt[m3] + pow(-1,p));		// calculate w_m1*w_m2*w_m3*Mw(v_m1+(-1)^p,v_m2+(-1)^p,v_m3+(-1)^p), a Maxwellian shifted to center at v_j = (-1)^p, which appears in all quadrature integral approximations
+    							tp = wt[m1]*wt[m2]*wt[m3]*Mw(Gridv((double)j1)+0.5*dv*vt[m1] + pow(-1,p), Gridv((double)j2)+0.5*dv*vt[m2] + pow(-1,p), Gridv((double)j3)+0.5*dv*vt[m3] + pow(-1,p), T0);		// calculate w_m1*w_m2*w_m3*Mw(v_m1+(-1)^p,v_m2+(-1)^p,v_m3+(-1)^p), a Maxwellian shifted to center at v_j = (-1)^p, which appears in all quadrature integral approximations
 
     							tmp0 += tp;																			// add tp to tmp0 (for the integral int_Kj Mw(v) dv)
     							tmp1 += tp*0.5*vt[m1];																// add tp*v_m1/2 to tmp1 (for the integral int_Kj Mw(v)*phi_(6k+2)(v) dv)
@@ -201,6 +254,7 @@ void SetInit_2H(double *U)																							// function to calculate the DG
 {
     int i, j1, j2, j3, k, m,m1,m2,m3,nt=5;																			// declare i (to represent cell i in x-space), j1, j2, j3 (to represent cell (j1,j2,j3) in v-space), k (the index of cell (i,j1,j2,j3) in U), m (counter for the Gaussian quadrature in x-space), m1, m2, m3 (counters for the Gaussian quadrature in v-space) & nt (the number of points in the quadrature)
     double tp, tpx, tp0, tp5, tmpx0, tmpx1, tmp0, tmp1, tmp2, tmp3, tmp4;											// declare tp, tpx, tp0, tmpx0, tmpx1, tmp0, tmp1, tmp2, tmp3, tmp4 (temporary values while calculating the quadrature for the integral w.r.t. v)
+	double T0 = 0.4;																							// declare T0 (the temperature of the Maxwellian in the initial condition) and set its value
     //#pragma omp parallel for private(k,j1,j2,j3,i,tmp0, tmp1, tmp2, tmp3, tmp4, tp0, tp5, tp) shared(U)
     for(j1=0;j1<Nv;j1++)																							// loop through all the velocity cells
     {
@@ -215,7 +269,7 @@ void SetInit_2H(double *U)																							// function to calculate the DG
     				{
     					for(m3=0;m3<nt;m3++)
     					{
-							tp = wt[m1]*wt[m2]*wt[m3]*Mw(Gridv((double)j1)+0.5*dv*vt[m1], Gridv((double)j2)+0.5*dv*vt[m2], Gridv((double)j3)+0.5*dv*vt[m3]);		// calculate w_m1*w_m2*w_m3*Mw(v_m1,v_m2,v_m3), which appears in all quadrature integral approximations
+							tp = wt[m1]*wt[m2]*wt[m3]*Mw(Gridv((double)j1)+0.5*dv*vt[m1], Gridv((double)j2)+0.5*dv*vt[m2], Gridv((double)j3)+0.5*dv*vt[m3], T0);		// calculate w_m1*w_m2*w_m3*Mw(v_m1,v_m2,v_m3), which appears in all quadrature integral approximations
 
 							tmp0 += tp;																				// add tp to tmp0 (for the integral int_Kj Mw(v) dv)
 							tmp1 += tp*0.5*vt[m1];																	// add tp*v_m1/2 to tmp1 (for the integral int_Kj Mw(v)*phi_(6k+2)(v) dv)

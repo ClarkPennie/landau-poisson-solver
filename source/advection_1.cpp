@@ -20,6 +20,53 @@ double Gridx(double m){ // x in [0,Lx]  (returns the x value at the mth discrete
 	return (m+0.5)*dx;
 }
 
+void DirichletBC(vector<double>& Ub_vals, int i, int j1, int j2, int j3)
+{
+    int m1,m2,m3,nt=5;																				// declare m1, m2, m3 (counters for the Gaussian quadrature in 3D) & nt (the number of points in the quadrature)
+    double tp, tp0, tp5, tmp0, tmp1, tmp2, tmp3, tmp4;												// declare tp, tp0, tmp0, tmp1, tmp2, tmp3, tmp4 (temporary values while calculating the quadrature for the integral w.r.t. v)
+	double ND;																						// declare ND (the value of the doping profile at the given x)
+	double T_B;																						// declare T_B (the temperature of the Maxwellian at the given boundary)
+
+	ND = DopingProfile(i);																			// set ND to the value of the doping profile at the given edge																												// set ND to the value of the doping profile at ix
+	if(i==0)																						// if i=0 (so this is the left edge) set the temperature T_B to T_L
+	{
+		T_B = T_L;
+	}
+	else																							// otherwise (since this is the right edge) set the temperature T_B to T_R
+	{
+		T_B = T_R;
+	}
+
+	tmp0=0.; tmp1=0.; tmp2=0.; tmp3=0.; tmp4=0.;													// initialise tmp0, tmp1, tmp2, tmp3 & tmp4 at 0 for a new quadrature integral to calculate int_Kj Mw(v)*phi_(6k+l) dv, for l = 0, 2, 4, 5, 6
+	for(m1=0;m1<nt;m1++)																			// loop through the quadrature sum
+	{
+		for(m2=0;m2<nt;m2++)
+		{
+			for(m3=0;m3<nt;m3++)
+			{
+				tp = wt[m1]*wt[m2]*wt[m3]*Mw(Gridv((double)j1)+0.5*dv*vt[m1], Gridv((double)j2)+0.5*dv*vt[m2], Gridv((double)j3)+0.5*dv*vt[m3], T_B);	// calculate w_m1*w_m2*w_m3*Mw(v_m1,v_m2,v_m3), which appears in all quadrature integral approximations
+
+				tmp0 += tp;																																// add tp to tmp0 (for the integral int_Kj Mw(v)*phi_6k dv)
+				tmp1 += tp*0.5*vt[m1];																													// add tp*v_m1/2 to tmp1 (for the integral int_Kj Mw(v)*phi_(6k+2) dv)
+				tmp2 += tp*0.5*vt[m2];																													// add tp*v_m2/2 to tmp2 (for the integral int_Kj Mw(v)*phi_(6k+3) dv)
+				tmp3 += tp*0.5*vt[m3];																													// add tp*v_m3/2 to tmp3 (for the integral int_Kj Mw(v)*phi_(6k+4) dv)
+				tmp4 += tp*0.25*(vt[m1]*vt[m1] + vt[m2]*vt[m2]+ vt[m3]*vt[m3]);																			// add tp*((v_m1/2)^2 + (v_m2/2)^2 + (v_m3/2)^2) to tmp4 (for the integral int_Kj Mw(v)*phi_(6k+5) dv)
+			}
+		}
+	}
+	tmp0 = tmp0*0.5*0.5*0.5; tmp1 = tmp1*0.5*0.5*0.5; tmp2 = tmp2*0.5*0.5*0.5; tmp3 = tmp3*0.5*0.5*0.5; tmp4 = tmp4*0.5*0.5*0.5;						// multiply tmp0, tmp1, tmp2, tmp3 & tmp4 by (1/2)^3 to represent the fact that quadrature isn't done over [-1, 1] (should also multiply by dv^3 but this cancels with 1/dv^3 later)
+
+	tp0 = ND*tmp0;																																	// calculate b_6k = (int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_6k(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
+	tp5 = ND*tmp4;																																	// calculate b_(6k+5) = (int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_(6k+5)(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
+	Ub_vals[0] = 19*tp0/4. - 15*tp5;																													// calculate the coefficient U[6k]
+	Ub_vals[5] = 60*tp5 - 15*tp0;																														// calculate the coefficient U[6k+5]
+
+	Ub_vals[1] = 0; 																																	// calculate the coefficient U[6k+1] = 12*b_(6k+1) = 12*(int_Ii ND(x)*phi_(6k+1)(x) dx)*(int_Kj Mw(v) dv) (NOTE: int_(Omega_i) ND(x)*phi_(6k+1)(x) dx = 0 (as ND is assumed constant on each cell))
+	Ub_vals[2] = ND*tmp1*12;																															// calculate the coefficient U[6k+2] = 12*b_(6k+2) = 12*(int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_(6k+2)(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
+	Ub_vals[3] = ND*tmp2*12;																															// calculate the coefficient U[6k+3] = 12*b_(6k+3) = 12*(int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_(6k+3)(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
+	Ub_vals[4] = ND*tmp3*12;																															// calculate the coefficient U[6k+4] = 12*b_(6k+4) = 12*(int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_(6k+4)(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
+}
+
 double I1(double *U, int k, int l) // Calculate the first inegtral in H_(i,j), namely \int v1*f*phi_x dxdv
 {
   double result;
@@ -53,7 +100,7 @@ double I2(double *U, int k, int l) // Calculate the fourth integral in H_(i,j), 
   return result;
 }
 
-double I3(double *U, int k, int l) 																			// Calculate the difference of the second and third integrals in H_(i,j), namely \int_j v1*gh*phi dv at interface x=x_i+1/2 - \int_j v1*gh*phi dv at interface x=x_i-1/2
+double I3_PB(double *U, int k, int l) 																		// Calculate the difference of the second and third integrals in H_(i,j), namely \int_j v1*gh*phi dv at interface x=x_i+1/2 - \int_j v1*gh*phi dv at interface x=x_i-1/2, with periodic BCs
 {
 	double result, ur, ul;																					// declare result (the result of the integral to be returned), ur (used in the evaluation of gh^+/- on the right space cell edge) & ul (used in the evaluation of gh^+/- on the left space cell edge)
 	int i, j1, j2, j3, iil, iir, kkl, kkr; 																	// declare i (the space cell coordinate), j1, j2, j3 (the coordinates of the velocity cell), iil (the cell from which the flux is flowing on the left of cell i in space), iir (the cell from which the flux is flowing on the right of cell i in space), kkl (the global index of the cell with coordinate (iil, j1, j2, j3)) & kkr (the global index of the cell with coordinate (iir, j1, j2, j3))
@@ -81,7 +128,7 @@ double I3(double *U, int k, int l) 																			// Calculate the differenc
 		ur = U[kkr*6+1];																					// set ur to the value of the coefficient of the basis function with shape l which is non-zero in the cell with global index kkr (which corresponds to the evaluation of gh^- at the right boundary and +ve since v_1 >= 0 in here)
 		ul = U[kkl*6+1];																					// set ul to the value of the coefficient of the basis function with shape l which is non-zero in the cell with global index kkl (which corresponds to the evalutaion of gh^- at the left boundary and +ve since v_r >= 0 in here)
 	}
-  
+
 	if(l==0)result = dv*dv*dv*( (U[kkr*6+0]+0.5*ur - U[kkl*6+0]-0.5*ul)*Gridv((double)j1) + (U[kkr*6+2]-U[kkl*6+2])*dv/12. + (U[kkr*6+5]-U[kkl*6+5])*Gridv((double)j1)/4.);					// calculate \int_j v1*gh*phi dv at interface x=x_i+1/2 - \int_j v1*gh*phi dv at interface x=x_i-1/2 for the basis function with shape 0 (i.e. constant) which is non-zero in the cell with global index k
 	if(l==1)result = 0.5*dv*dv*dv*( (U[kkr*6+0]+0.5*ur + U[kkl*6+0]+0.5*ul)*Gridv((double)j1) + (U[kkr*6+2]+U[kkl*6+2])*dv/12. + (U[kkr*6+5]+U[kkl*6+5])*Gridv((double)j1)/4.);				// calculate \int_j v1*gh*phi dv at interface x=x_i+1/2 - \int_j v1*gh*phi dv at interface x=x_i-1/2 for the basis function with shape 1 (i.e. linear in x) which is non-zero in the cell with global index k
 	if(l==2)result = dv*dv*(( (U[kkr*6+0]-U[kkl*6+0])*dv*dv + (ur-ul)*0.5*dv*dv + (U[kkr*6+2]-U[kkl*6+2])*dv*Gridv((double)j1))/12. + (U[kkr*6+5]-U[kkl*6+5])*dv*dv*19./720.);				// calculate \int_j v1*gh*phi dv at interface x=x_i+1/2 - \int_j v1*gh*phi dv at interface x=x_i-1/2 for the basis function with shape 2 (i.e. linear in v_1) which is non-zero in the cell with global index k
@@ -91,6 +138,135 @@ double I3(double *U, int k, int l) 																			// Calculate the differenc
 
 	return result;
 }
+
+double I3_PB2(double *U, int k, int l) 																		// Calculate the difference of the second and third integrals in H_(i,j), namely \int_j v1*gh*phi dv at interface x=x_i+1/2 - \int_j v1*gh*phi dv at interface x=x_i-1/2, with periodic BCs
+{
+	vector<double> Ul(6), Ur(6);																			// declare Ul & Ur (the coefficients from U on the left and right edge of the current space cell, respectively)
+	double result, ur, ul;																					// declare result (the result of the integral to be returned), ur (used in the evaluation of gh^+/- on the right space cell edge) & ul (used in the evaluation of gh^+/- on the left space cell edge)
+	int i, j1, j2, j3, iil, iir, kkl, kkr; 																	// declare i (the space cell coordinate), j1, j2, j3 (the coordinates of the velocity cell), iil (the cell from which the flux is flowing on the left of cell i in space), iir (the cell from which the flux is flowing on the right of cell i in space), kkl (the global index of the cell with coordinate (iil, j1, j2, j3)) & kkr (the global index of the cell with coordinate (iir, j1, j2, j3))
+	int j_mod = k%size_v;																					// declare and calculate j_mod (the remainder when k is divided by size_v = Nv^3 - used to help determine the values of i, j1, j2 & j3 from the value of k)
+	j3 = j_mod%Nv;																							// calculate j3 for the given k
+	j2 = ((j_mod-j3)%(Nv*Nv))/Nv;																			// calculate j2 for the given k
+	j1 = (j_mod-j3-j2*Nv)/(Nv*Nv);																			// calculate j1 for the given k
+	i = (k-j_mod)/size_v;																					// calculate i for the given k
+
+	if(j1<Nv/2)																								// do this if j1 < Nv/2 (so that the velocity in the v1 direction is negative)
+	{
+		iir=i+1; iil=i; 																					// set iir to the value of i+1 and iil to the value of i (as here the flow of information is from right to left so that gh^+ must be used at the cell edges)
+		if(iir==Nx)iir=0; //periodic bc																		// if iir = Nx (the maximum value that can be obtained, since i = 0,1,...,Nx-1) and so this cell is at the right boundary, requiring information from the non-existent cell with space index Nx, since there are periodic boundary conditions, set iir = 0 and use the cell with space index 0 (i.e. the cell at the left boundary)
+		kkr=iir*size_v + j_mod; 																			// calculate the value of kkr for this value of iir
+		kkl=k;																								// set kkl to k (since iil = i)
+		for(int p = 0; p < 6; p++)
+		{
+			Ur[p] = U[6*kkr + p];
+		}
+		for(int p = 0; p < 6; p++)																			// as information is coming from the right here, the coefficients in Ul will always come from the current approximate solution U
+		{
+			Ul[p] = U[6*kkl + p];
+		}
+
+		ur = -Ur[1]; 																						// set ur to the negative of the coefficient of the basis function with shape l which is non-zero in the cell with global index kkr (which corresponds to the evaluation of gh^+ at the right boundary and -ve since v_1 < 0 in here)
+		ul = -Ul[1];																						// set ul to the negative of the coefficient of the basis function with shape l which is non-zero in the cell with global index kkl	(which corresponds to the evaluation of gh^+ at the left boundary and -ve since phi < 0 here)
+	}
+	else																									// do this if j1 >= Nv/2 (so that the velocity in the v1 direction is non-negative)
+	{
+		iir=i; iil=i-1;																						// set iir to the value of i and iil to the value of i-1 (as here the flow of information is from left to right so that gh^- must be used at the cell edges)
+		if(iil==-1)iil=Nx-1; // periodic bc																	// if iil = -1 (the minimum value that can be obtained, since i = 0,1,...,Nx-1) and so this cell is at the left boundary, requiring information from the non-existent cell with space index -1, since there are periodic boundary conditions, set iil = Nx-1 and use the cell with space index Nx-1 (i.e. the cell at the right boundary)
+		kkr=k; 																								// set kkr to k (since iir = i)
+		kkl=iil*size_v + j_mod; 																			// calculate the value of kkl for this value of iil
+		for(int p = 0; p < 6; p++)
+		{
+			Ur[p] = U[6*kkr + p];
+		}
+		for(int p = 0; p < 6; p++)																			// as information is coming from the right here, the coefficients in Ul will always come from the current approximate solution U
+		{
+			Ul[p] = U[6*kkl + p];
+		}
+
+		ur = Ur[1]; 																						// set ur to the negative of the coefficient of the basis function with shape l which is non-zero in the cell with global index kkr (which corresponds to the evaluation of gh^+ at the right boundary and -ve since v_1 < 0 in here)
+		ul = Ul[1];																						// set ul to the negative of the coefficient of the basis function with shape l which is non-zero in the cell with global index kkl	(which corresponds to the evaluation of gh^+ at the left boundary and -ve since phi < 0 here)
+	}
+
+	if(l==0)result = dv*dv*dv*( (Ur[0]+0.5*ur - Ul[0]-0.5*ul)*Gridv((double)j1) + (Ur[2]-Ul[2])*dv/12. + (Ur[5]-Ul[5])*Gridv((double)j1)/4.);					// calculate \int_j v1*gh*phi dv at interface x=x_i+1/2 - \int_j v1*gh*phi dv at interface x=x_i-1/2 for the basis function with shape 0 (i.e. constant) which is non-zero in the cell with global index k
+	if(l==1)result = 0.5*dv*dv*dv*( (Ur[0]+0.5*ur + Ul[0]+0.5*ul)*Gridv((double)j1) + (Ur[2]+Ul[2])*dv/12. + (Ur[5]+Ul[5])*Gridv((double)j1)/4.);				// calculate \int_j v1*gh*phi dv at interface x=x_i+1/2 - \int_j v1*gh*phi dv at interface x=x_i-1/2 for the basis function with shape 1 (i.e. linear in x) which is non-zero in the cell with global index k
+	if(l==2)result = dv*dv*(( (Ur[0]-Ul[0])*dv*dv + (ur-ul)*0.5*dv*dv + (Ur[2]-Ul[2])*dv*Gridv((double)j1))/12. + (Ur[5]-Ul[5])*dv*dv*19./720.);				// calculate \int_j v1*gh*phi dv at interface x=x_i+1/2 - \int_j v1*gh*phi dv at interface x=x_i-1/2 for the basis function with shape 2 (i.e. linear in v_1) which is non-zero in the cell with global index k
+	if(l==3)result = (Ur[3]-Ul[3])*Gridv((double)j1)*dv*dv*dv/12.;																												// calculate \int_j v1*gh*phi dv at interface x=x_i+1/2 - \int_j v1*gh*phi dv at interface x=x_i-1/2 for the basis function with shape 3 (i.e. linear in v_2) which is non-zero in the cell with global index k
+	if(l==4)result = (Ur[4]-Ul[4])*Gridv((double)j1)*dv*dv*dv/12.;																												// calculate \int_j v1*gh*phi dv at interface x=x_i+1/2 - \int_j v1*gh*phi dv at interface x=x_i-1/2 for the basis function with shape 4 (i.e. linear in v_3) which is non-zero in the cell with global index k
+	if(l==5)result = dv*dv*dv*((Ur[0] + 0.5*ur - Ul[0]-0.5*ul)*Gridv((double)j1)/4. + (Ur[2]-Ul[2])*dv*19./720. + (Ur[5]-Ul[5])*Gridv((double)j1)*19./240.);	// calculate \int_j v1*gh*phi dv at interface x=x_i+1/2 - \int_j v1*gh*phi dv at interface x=x_i-1/2 for the basis function with shape 5 (i.e. modulus of v) which is non-zero in the cell with global index k
+
+	return result;
+}
+
+double I3(double *U, int k, int l) 																			// Calculate the difference of the second and third integrals in H_(i,j), namely \int_j v1*gh*phi dv at interface x=x_i+1/2 - \int_j v1*gh*phi dv at interface x=x_i-1/2, with Dirichlet BCs
+{
+	vector<double> Ul(6), Ur(6);																			// declare Ul & Ur (the coefficients from U on the left and right edge of the current space cell, respectively)
+	double result, ur, ul;																					// declare result (the result of the integral to be returned), ur (used in the evaluation of gh^+/- on the right space cell edge) & ul (used in the evaluation of gh^+/- on the left space cell edge)
+	int i, j1, j2, j3, iil, iir, kkl, kkr; 																	// declare i (the space cell coordinate), j1, j2, j3 (the coordinates of the velocity cell), iil (the cell from which the flux is flowing on the left of cell i in space), iir (the cell from which the flux is flowing on the right of cell i in space), kkl (the global index of the cell with coordinate (iil, j1, j2, j3)) & kkr (the global index of the cell with coordinate (iir, j1, j2, j3))
+	int j_mod = k%size_v;																					// declare and calculate j_mod (the remainder when k is divided by size_v = Nv^3 - used to help determine the values of i, j1, j2 & j3 from the value of k)
+	j3 = j_mod%Nv;																							// calculate j3 for the given k
+	j2 = ((j_mod-j3)%(Nv*Nv))/Nv;																			// calculate j2 for the given k
+	j1 = (j_mod-j3-j2*Nv)/(Nv*Nv);																			// calculate j1 for the given k
+	i = (k-j_mod)/size_v;																					// calculate i for the given k
+
+	if(j1<Nv/2)																								// do this if j1 < Nv/2 (so that the velocity in the v1 direction is negative)
+	{
+		iir=i+1; iil=i; 																					// set iir to the value of i+1 and iil to the value of i (as here the flow of information is from right to left so that gh^+ must be used at the cell edges)
+		kkr=iir*size_v + j_mod; 																			// calculate the value of kkr for this value of iir
+		kkl=k;																								// set kkl to k (since iil = i)
+		if(iir==Nx)																							// if iir=Nx, then information is coming from the right boundary, so set Ur to the coefficients for the Dirichlet BC at the right
+		{
+			DirichletBC(Ur, Nx-1, j1, j2, j3);
+		}
+		else																								// otherwise, the coefficients in Ur come from the current approximate solution U
+		{
+			for(int p = 0; p < 6; p++)
+			{
+				Ur[p] = U[6*kkr + p];
+			}
+		}
+		for(int p = 0; p < 6; p++)																			// as information is coming from the right here, the coefficients in Ul will always come from the current approximate solution U
+		{
+			Ul[p] = U[6*kkl + p];
+		}
+
+		ur = -Ur[1]; 																						// set ur to the negative of the coefficient of the basis function with shape l which is non-zero in the cell with global index kkr (which corresponds to the evaluation of gh^+ at the right boundary and -ve since v_1 < 0 in here)
+		ul = -Ul[1];																						// set ul to the negative of the coefficient of the basis function with shape l which is non-zero in the cell with global index kkl	(which corresponds to the evaluation of gh^+ at the left boundary and -ve since phi < 0 here)
+	}
+	else																									// do this if j1 >= Nv/2 (so that the velocity in the v1 direction is non-negative)
+	{
+		iir=i; iil=i-1;																						// set iir to the value of i and iil to the value of i-1 (as here the flow of information is from left to right so that gh^- must be used at the cell edges)
+		kkr=k; 																								// set kkr to k (since iir = i)
+		kkl=iil*size_v + j_mod; 																			// calculate the value of kkl for this value of iil
+		if(iil==-1)																							// if iil=-1, then information is coming from the left boundary, so set Ul to the coefficients for the Dirichlet BC at the left
+		{
+			DirichletBC(Ul, 0, j1, j2, j3);
+		}
+		else																								// otherwise, the coefficients in Ul come from the current approximate solution U
+		{
+			for(int p = 0; p < 6; p++)
+			{
+				Ul[p] = U[6*kkl + p];
+			}
+		}
+		for(int p = 0; p < 6; p++)																			// as information is coming from the right here, the coefficients in Ul will always come from the current approximate solution U
+		{
+			Ur[p] = U[6*kkr + p];
+		}
+
+		ur = Ur[1]; 																						// set ur to the negative of the coefficient of the basis function with shape l which is non-zero in the cell with global index kkr (which corresponds to the evaluation of gh^+ at the right boundary and -ve since v_1 < 0 in here)
+		ul = Ul[1];																						// set ul to the negative of the coefficient of the basis function with shape l which is non-zero in the cell with global index kkl	(which corresponds to the evaluation of gh^+ at the left boundary and -ve since phi < 0 here)
+	}
+  
+	if(l==0)result = dv*dv*dv*( (Ur[0]+0.5*ur - Ul[0]-0.5*ul)*Gridv((double)j1) + (Ur[2]-Ul[2])*dv/12. + (Ur[5]-Ul[5])*Gridv((double)j1)/4.);					// calculate \int_j v1*gh*phi dv at interface x=x_i+1/2 - \int_j v1*gh*phi dv at interface x=x_i-1/2 for the basis function with shape 0 (i.e. constant) which is non-zero in the cell with global index k
+	if(l==1)result = 0.5*dv*dv*dv*( (Ur[0]+0.5*ur + Ul[0]+0.5*ul)*Gridv((double)j1) + (Ur[2]+Ul[2])*dv/12. + (Ur[5]+Ul[5])*Gridv((double)j1)/4.);				// calculate \int_j v1*gh*phi dv at interface x=x_i+1/2 - \int_j v1*gh*phi dv at interface x=x_i-1/2 for the basis function with shape 1 (i.e. linear in x) which is non-zero in the cell with global index k
+	if(l==2)result = dv*dv*(( (Ur[0]-Ul[0])*dv*dv + (ur-ul)*0.5*dv*dv + (Ur[2]-Ul[2])*dv*Gridv((double)j1))/12. + (Ur[5]-Ul[5])*dv*dv*19./720.);				// calculate \int_j v1*gh*phi dv at interface x=x_i+1/2 - \int_j v1*gh*phi dv at interface x=x_i-1/2 for the basis function with shape 2 (i.e. linear in v_1) which is non-zero in the cell with global index k
+	if(l==3)result = (Ur[3]-Ul[3])*Gridv((double)j1)*dv*dv*dv/12.;																												// calculate \int_j v1*gh*phi dv at interface x=x_i+1/2 - \int_j v1*gh*phi dv at interface x=x_i-1/2 for the basis function with shape 3 (i.e. linear in v_2) which is non-zero in the cell with global index k
+	if(l==4)result = (Ur[4]-Ul[4])*Gridv((double)j1)*dv*dv*dv/12.;																												// calculate \int_j v1*gh*phi dv at interface x=x_i+1/2 - \int_j v1*gh*phi dv at interface x=x_i-1/2 for the basis function with shape 4 (i.e. linear in v_3) which is non-zero in the cell with global index k
+	if(l==5)result = dv*dv*dv*((Ur[0] + 0.5*ur - Ul[0]-0.5*ul)*Gridv((double)j1)/4. + (Ur[2]-Ul[2])*dv*19./720. + (Ur[5]-Ul[5])*Gridv((double)j1)*19./240.);	// calculate \int_j v1*gh*phi dv at interface x=x_i+1/2 - \int_j v1*gh*phi dv at interface x=x_i-1/2 for the basis function with shape 5 (i.e. modulus of v) which is non-zero in the cell with global index k
+
+	return result;
+}
+
 
 double I5(double *U, int k, int l) 	// Calculate the difference of the fifth and sixth integrals in H_(i,j), namely \int_i E*f*phi dx at interface v1==v_j+1/2 - \int_i E*f*phi dx at interface v1==v_j-1/2
 {
@@ -200,7 +376,12 @@ void RK3(double *U) // RK3 for f_t = H(f)
   for(i=0;i<Nx;i++){
     intE2[i] = Int_E2nd(U,i); // BUG: Int_E2nd() require knowldege of cp 
   }
-  
+  /*
+  for(i=0;i<Nx;i++)
+  {
+	  printf("intE[%d] = %g, intE1[%d] = %g, intE2[%d] = %g. \n", i, intE[i], i, intE1[i], i, intE2[i]);
+  }
+   */
   #pragma omp parallel for schedule(dynamic)  private(H,k, k_local, l, tp0, tp1, tp2, tp3, tp4, tp5) shared(U, Utmp)
   for(k=chunksize_dg*myrank_mpi;k<chunksize_dg*(myrank_mpi+1);k++){ 
     k_local = k%chunksize_dg;

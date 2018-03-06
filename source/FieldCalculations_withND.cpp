@@ -7,6 +7,8 @@
  *
  */
 
+double eps = 0.01;
+
 #include "FieldCalculations.h"																	// FieldCalculations.h is where the prototypes for the functions contained in this file are declared
 
 double DopingProfile(int i)																		// function to return a step function doping profile, based on what cell a given x is in
@@ -55,6 +57,7 @@ double computePhi_x_0(double *U) /* DIFFERENT FOR withND */																// co
 	double tmp=0.;
 	double a_val = (a_i+1)*dx;
 	double b_val = (b_i+1)*dx;
+	double Phi_Lx = 1;																									// declare Phi_Lx (the Dirichlet BC, Phi(t, L_x) = Phi_Lx) and set its value
 
 	//#pragma omp parallel for private(j,q,m,k) shared(U) reduction(+:tmp) //reduction may change the final result a little bit
 	for(j=0;j<size_v;j++){
@@ -70,7 +73,7 @@ double computePhi_x_0(double *U) /* DIFFERENT FOR withND */																// co
 	}
 	tmp = tmp*scalev*dx*dx;
 
-	return 0.5*NH*Lx + (NL-NH)*(b_val-a_val) - (0.5*(NL-NH)*(b_val*b_val - a_val*a_val) + tmp)/Lx;
+	return Phi_Lx/Lx + 0.5*NH*Lx/eps + (NL-NH)*(b_val-a_val)/eps - (0.5*(NL-NH)*(b_val*b_val - a_val*a_val) + tmp)/(Lx*eps);
 }
 
 double computePhi(double *U, double x, int ix)	/* DIFFERENT FOR withND */											// function to compute the potential Phi at a position x, contained in [x_(ix-1/2), x_(ix+1/2)]
@@ -90,23 +93,8 @@ double computePhi(double *U, double x, int ix)	/* DIFFERENT FOR withND */							
 
 	for(i_out = 0; i_out < ix; i_out++)
 	{
-		for(i = 0; i < i_out; i++)
-		{
-			iNNN = i*Nv*Nv*Nv;
-			for(j1 = 0; j1 < Nv; j1++)
-			{
-				j1NN = j1*Nv*Nv;
-				for(j2 = 0; j2 < Nv; j2++)
-				{
-					j2N = j2*Nv;
-					for(j3 = 0; j3 < Nv; j3++)
-					{
-						k = iNNN + j1NN + j2N + j3;
-						sum1 += U[6*k] + U[6*k+5]/4.;
-					}
-				}
-			}
-		}
+		sum1 += computeC_rho(U, i_out);
+
 		iNNN = i_out*Nv*Nv*Nv;
 		for(j1 = 0; j1 < Nv; j1++)
 		{
@@ -117,30 +105,16 @@ double computePhi(double *U, double x, int ix)	/* DIFFERENT FOR withND */							
 				for(j3 = 0; j3 < Nv; j3++)
 				{
 					k = iNNN + j1NN + j2N + j3;
-					sum1 += U[6*k]/2 - U[6*k+1]/12. +  U[6*k+5]/8;
+					sum1 += (U[6*k]/2 - U[6*k+1]/12. +  U[6*k+5]/8)*dx*scalev;
 				}
 			}
 		}
 	}
-	sum1 = sum1*dx*dx;
-	for(i = 0; i < i_out; i++)
-	{
-		iNNN = i*Nv*Nv*Nv;
-		for(j1 = 0; j1 < Nv; j1++)
-		{
-			j1NN = j1*Nv*Nv;
-			for(j2 = 0; j2 < Nv; j2++)
-			{
-				j2N = j2*Nv;
-				for(j3 = 0; j3 < Nv; j3++)
-				{
-					k = iNNN + j1NN + j2N + j3;
-					sum3 += (U[6*k] + U[6*k+5]/4.);
-				}
-			}
-		}
-	}
-	sum3 = sum3*dx*x_diff;
+	sum1 = sum1*dx;//*dx;
+
+	sum3 = computeC_rho(U, ix);
+
+	sum3 = sum3*x_diff;
 	iNNN = ix*Nv*Nv*Nv;
 	for(j1 = 0; j1 < Nv; j1++)
 	{
@@ -155,20 +129,104 @@ double computePhi(double *U, double x, int ix)	/* DIFFERENT FOR withND */							
 			}
 		}
 	}
+	sum4 = sum4*scalev;
 
 	C_E = computePhi_x_0(U);
-	retn = (sum1 + sum3 + sum4)*dv*dv*dv - ND*x*x/2. - C_E*x;
+	retn = sum1 + sum3 + sum4 - ND*x*x/2.;// + C_E*x;
 	if(ix > a_i)																						// if x > a then there is an extra term to add
 	{
 		double a_val = (a_i+1)*dx;																		// declare a_val and set it to the value of x at the edge of the ai-th space cell
-		retn += (NH-NL)*a_val*(x - 0.5*a_val);															// add (NH-NL)a(x-a/2) to retn
+		retn -= (NH-NL)*a_val*(x - 0.5*a_val);															// add (NH-NL)a(x-a/2) to retn
 	}
 	if(ix > b_i)																						// if x > b then there is an extra term to add
 	{
 		double b_val = (b_i+1)*dx;																		// declare b_val and set it to the value of x at the edge of the bi-th space cell
-		retn += (NL-NH)*b_val*(x - 0.5*b_val);															// add (NL-NH)b(x-b/2) to retn
+		retn -= (NL-NH)*b_val*(x - 0.5*b_val);															// add (NL-NH)b(x-b/2) to retn
 	}
+
+	retn = retn/eps + C_E*x;
 	return retn;																						// return the value of phi at x
+}
+
+double computeE(double *U, double x, int ix)	/* DIFFERENT FOR withND */								// function to compute the field E at a position x, contained in [x_(ix-1/2), x_(ix+1/2)]
+{
+	int iNNN, j, k;																						// declare j (a counter for summing the contribution from the velocity cells), iNNN (the value of i*Nv^3) & k (the location in U of the cell I_ix x K_(j1, j2, j3))
+	double retn, sum, x_diff, x_diff_mid, x_eval, C_E;													// declare retn (the value of E returned at the end), sum (the value of the sum to calculate the integral of rho), x_diff (the value of x - x_(ix-1/2)), x_diff_mid (the value of x - x_ix), x_eval (the value associated to the integral of (x - x_i)^2) & C_E (the value of the constant in the formula for E)
+	double ND;																							// declare ND (the value of the doping profile at the given x)
+	sum = 0;																							// initialise the sum at 0
+	ND = DopingProfile(ix);																				// set ND to the value of the doping profile at ix
+	C_E = computePhi_x_0(U);
+	x_diff = x - Gridx(ix-0.5);
+	x_diff_mid = x - Gridx(ix);
+	x_eval = x_diff_mid*x_diff_mid/(2.*dx) - dx/8.;
+
+	iNNN = ix*size_v;
+	for(j=0;j<size_v;j++)
+	{
+		k = iNNN + j;
+		sum += U[6*k+0]*x_diff + U[6*k+1]*x_eval + U[6*k+5]*x_diff/4.;
+	}
+	sum = sum*scalev;
+	sum += computeC_rho(U, ix);
+
+	retn = ND*x - sum;//- C_E;
+	if(ix > a_i)																						// if x > a then there is an extra term to add
+	{
+		double a_val = (a_i+1)*dx;																		// declare a_val and set it to the value of x at the edge of the ai-th space cell
+		retn += (NH-NL)*a_val;																			// add (NH-NL)a to retn
+	}
+	if(ix > b_i)																						// if x > b then there is an extra term to add
+	{
+		double b_val = (b_i+1)*dx;																		// declare b_val and set it to the value of x at the edge of the bi-th space cell
+		retn += (NL-NH)*b_val;																			// add (NL-NH)b to retn
+	}
+
+	retn = retn/eps - C_E;
+	return retn;																						// return the value of phi at x
+
+}
+
+void PrintFieldLoc(FILE *phifile, FILE *Efile)							// function to print the values of x & v1 which the marginal will be evaluated at in the first two rows of the file with tag margfile (subsequent rows will be the values of the marginal at given timesteps)
+{
+	double x_0, x_val, ddx;												// declare x_0 (the x value at the left edge of a given cell), x_val (the x value to be evaluated at) & ddx (the space between x values)
+	int np = 4;															// declare np (the number of points to evaluate in a given space cell) and set its value
+
+	ddx = dx/np;														// set ddx to the space cell width divided by np
+	for(int i=0; i<Nx; i++)
+	{
+		x_0 = Gridx((double)i - 0.5);									// set x_0 to the value of x at the left edge of the i-th space cell
+		for(int nx=0; nx<np; nx++)
+		{
+			x_val = x_0 + nx*ddx;										// set x_val to x_0 plus nx increments of width ddx
+			fprintf(phifile, "%11.8g  ", x_val);						// in the file tagged as phifile, print the x coordinate
+			fprintf(Efile, "%11.8g  ", x_val);							// in the file tagged as Efile, print the x coordinate
+		}
+	}
+	fprintf(phifile, "\n");												// print a new line in the file tagged as phifile
+	fprintf(Efile, "\n");												// print a new line in the file tagged as Efile
+}
+
+void PrintFieldData(double* U_vals, FILE *phifile, FILE *Efile)							// function to print the values of the potential and the field in the x1 & x2 directions in the file tagged as phifile, Ex1file & Ex2file, respectively, at the given timestep
+{
+	double x_0, x_val, phi_val, E_val, ddx;								// declare x_0 (the x value at the left edge of a given cell), x_val (the x value to be evaluated at), phi_val (the value of phi evaluated at x_val), E_val (the value of E evaluated at x_val) & ddx (the space between x values)
+	int np = 4;															// declare np (the number of points to evaluate in a given space cell) and set its value
+
+	ddx = dx/np;														// set ddx to the space cell width divided by np
+	for(int i=0; i<Nx; i++)
+	{
+		x_0 = Gridx((double)i - 0.5);									// set x_0 to the value of x at the left edge of the i-th space cell
+		for (int nx=0; nx<np; nx++)
+		{
+			x_val = x_0 + nx*ddx;										// set x_val to x_0 plus nx increments of width ddx
+
+			phi_val = computePhi(U_vals, x_val, i);							// calculate the value of phi, evaluated at x_val by using the function in the space cell i
+			E_val = computeE(U_vals, x_val, i);								// calculate the value of E, evaluated at x_val by using the function in the space cell i
+			fprintf(phifile, "%11.8g ", phi_val);						// in the file tagged as phifile, print the value of the potential phi(t, x_val)
+			fprintf(Efile, "%11.8g ", E_val);							// in the file tagged as Efile, print the value of the field E(t, x_val)
+		}
+	}
+	fprintf(phifile, "\n");												// in the file tagged as phifile, print a new line
+	fprintf(Efile, "\n");												// in the file tagged as Efile, print a new line
 }
 
 void PrintPhiVals(double *U, FILE *phifile)		/* DIFFERENT FOR withND */						// function to print the values of the potential and the density in the file tagged as phifile at the given timestep
@@ -277,7 +335,7 @@ double Int_E(double *U, int i) 		/* DIFFERENT FOR withND */ 						      // Funct
 	}
 
 	//ce = computePhi_x_0(U);
-	result = -ce*dx - tmp*dx*dx*scalev + ND*Gridx((double)i)*dx;
+	result = - tmp*dx*dx*scalev + ND*Gridx((double)i)*dx;// -ce*dx;
 	if(i > a_i)																							// if x > a then there is an extra term to add
 	{
 		double a_val = (a_i+1)*dx;																		// declare a_val and set it to the value of x at the edge of the ai-th space cell
@@ -289,6 +347,7 @@ double Int_E(double *U, int i) 		/* DIFFERENT FOR withND */ 						      // Funct
 		result += (NL-NH)*b_val*dx;																		// add (NL-NH)b*dx to result
 	}
 
+	result = result/eps - ce*dx;
 	return result;
 }
 
@@ -305,7 +364,7 @@ double Int_E1st(double *U, int i) 	/* DIFFERENT FOR withND */					// \int_i E*(x
 	}
 	tmp = tmp*scalev;
 	
-	result = (ND-tmp)*dx*dx/12.;
+	result = (ND-tmp)*dx*dx/(12.*eps);
 
 	return result;
 }
@@ -337,7 +396,7 @@ double Int_E2nd(double *U, int i) 	/* DIFFERENT FOR withND */							// \int_i E*
     }
     c2 *= dx/2.;				
     
-    result = (-cp[i] - ce+scalev*(c1*Gridx(i-0.5) + 0.25*c2))*dx/12. + (ND-scalev*c1)*dx*Gridx((double)i)/12. - scalev*c2*dx/80.; //BUG: missed -cp
+    result = (-cp[i] +scalev*(c1*Gridx(i-0.5) + 0.25*c2))*dx/12. + (ND-scalev*c1)*dx*Gridx((double)i)/12. - scalev*c2*dx/80.;// - ce*dx/12. //BUG: missed -cp
 
     if(i > a_i)																							// if x > a then there is an extra term to add
 	{
@@ -350,6 +409,7 @@ double Int_E2nd(double *U, int i) 	/* DIFFERENT FOR withND */							// \int_i E*
 		result += (NL-NH)*b_val*dx/12.;																	// add (NL-NH)b*dx/12 to result
 	}
 
+	result = result/eps - ce*dx/12.;
 
     return result;
 }
