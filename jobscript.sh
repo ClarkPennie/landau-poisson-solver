@@ -13,6 +13,6 @@
 set -x
 export OMP_NUM_THREADS=32
 
-ibrun tacc_affinity ./bin/LPsolver_nu005_NonUniND_DC_e.001.out
+ibrun tacc_affinity ./bin/LPsolver_nu005_NonUniND_TestMassCons.out
 
 #./fpl.out
