@@ -7,8 +7,6 @@
  *
  */
 
-double eps = 0.01;
-
 #include "FieldCalculations.h"																	// FieldCalculations.h is where the prototypes for the functions contained in this file are declared
 
 double DopingProfile(int i)																		// function to return a step function doping profile, based on what cell a given x is in

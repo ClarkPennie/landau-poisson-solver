@@ -33,9 +33,13 @@ double gHat3(double eta1, double eta2, double eta3, double ki1, double ki2, doub
 
 double gHat3_linear(double eta1, double eta2, double eta3, double ki1, double ki2, double ki3 );
 
+double gHat3_2(double eta1, double eta2, double eta3, double ki1, double ki2, double ki3, int id);
+
 void generate_conv_weights(double **conv_weights);
 
 void generate_conv_weights_linear(double **conv_weights_linear);
+
+void generate_conv_weights2(double **conv_weights, int id);
 
 void fft3D(fftw_complex *in, fftw_complex *out);
 
@@ -60,6 +64,12 @@ void ProjectedNodeValue(fftw_complex *qHat, double *Q_incremental);
 	void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights);
 
 	void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U, double *dU);
+
+	void ComputeDFTofMaxwellian(double *UMaxwell, double **fMaxwell, fftw_complex **DFTMax);
+
+	void ComputeQLinear(double *f, fftw_complex *Maxwell_fftOut, fftw_complex *qHat, double **conv_weights);
+
+	void RK4Linear(double *f, fftw_complex *MaxwellHat, int l, fftw_complex *qHat, double **conv_weights, double *U, double *dU);
 	#endif
 #else
 	#ifdef FullandLinear

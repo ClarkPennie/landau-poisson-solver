@@ -61,7 +61,8 @@ extern double Lx, Lv;																				// declare Lx (for 0 < x < Lx) and set 
 extern double dv, dx; 																				// declare dv (the velocity stepsize) and set it to 2Lv/Nv & dx (the space stepsize) and set it to Lx/Nx
 extern double L_v, R_v, L_eta;																		// declare L_v (for -Lv < v < Lv in the collision problem) and set it to Lv, R_v (for v in B_(R_v) in the collision problem) and set it to Lv & L_eta (for Fourier space, -L_eta < eta < L_eta)
 extern double h_eta, h_v;																			// declare h_eta (the Fourier stepsize) & h_v (also the velocity stepsize but for the collision problem)
-extern double nu, dt, nthread; 																		// declare nu (1/knudson#) and set it to 0.1, dt (the timestep) and set it to 0.004 & nthread (the number of OpenMP threads) and set it to 16
+extern double nu, dt, nthread; 																		// declare nu (1/knudson#) and set it to 0.1, dt (the timestep) and set it to 0.004 & nthread (the number of OpenMP threads)
+extern double eps;																					// declare eps (the dielectric constant in Poisson's equation: div(eps*grad(Phi)) = R(x,t))
 
 #ifdef Doping
 extern double NL;																					// declare NL (the density of ions in the middle of the well, the Lower value)
@@ -91,7 +92,8 @@ extern fftw_complex *Q1_fft_linear, *Q2_fft_linear, *Q3_fft_linear;									// d
 #endif
 
 extern fftw_complex *fftIn, *fftOut;																// declare pointers to the FFT variables fftIn (a vector to be to have the FFT applied to it) & fftOut (the output of an FFT)
-//extern double IntM[10];																				// declare an array IntM to hold 10 double variables
+//extern fftw_complex *fftOutMaxwell;																	// declare a pointer to the FFT variables fftOutMaxwell (the output of the FFT of the initial Maxwellian)
+//extern double IntM[10];																			// declare an array IntM to hold 10 double variables
 //#pragma omp threadprivate(IntM)																	// start the OpenMP parallel construct to start the threads which will run in parallel, passing IntM to each thread as private variables which will have their contents deleted when the threads finish (doesn't seem to be doing anything since no {} afterwards???)
 
 extern double ce, *cp, *intE, *intE1, *intE2;														// declare ce and pointers to cp, intE, intE1 & intE2 (precomputed quantities for advections)

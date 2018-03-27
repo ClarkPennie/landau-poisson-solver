@@ -76,6 +76,36 @@ double gHat3(double eta1, double eta2, double eta3, double ki1, double ki2, doub
   	return result;	
 }
 
+double gHat3_2( double eta1, double eta2, double eta3, double ki1, double ki2, double ki3, int id)
+{
+	double result1 = 0., result2=0.;
+	double ki[3]={ki1,ki2,ki3}, zeta[3]={eta1,eta2,eta3};// corresponding to the notes, ki=w, eta=xi
+	double Shat[3][3];
+	double r=sqrt(ki1*ki1+ki2*ki2+ki3*ki3);
+	double eta_ki=ki1*eta1+ki2*eta2+ki3*eta3;
+	int i,j;
+
+	Shat[0][0]=S1hat(ki1,ki2,ki3)-S233hat(ki2,ki3,ki1);
+	Shat[1][1]=S1hat(ki1,ki2,ki3)-S233hat(ki1,ki3,ki2);
+	Shat[2][2]=S1hat(ki1,ki2,ki3)-S233hat(ki1,ki2,ki3);
+	Shat[0][1]=-S213hat(ki1,ki3,ki2);
+	Shat[0][2]=-S213hat(ki1,ki2,ki3);
+	Shat[1][2]=-S213hat(ki2,ki1,ki3);
+	Shat[1][0]=Shat[0][1]; Shat[2][0]=Shat[0][2]; Shat[2][1]=Shat[1][2];
+
+	for(i=0;i<3;i++){
+	  for(j=0;j<3;j++){
+	    result2 += Shat[i][j]*zeta[j]*zeta[i];
+	  }
+	}
+	if(r==0.)result1 = 0.;
+	else result1 = sqrt(8./PI)*eta_ki*(R_v*r-sin(R_v*r))/(R_v*r*r*r);
+
+	if(id==0) return result1;
+	else return -result2;
+
+}
+
 double gHat3_linear(double eta1, double eta2, double eta3, double ki1, double ki2, double ki3 ) 
 {
 	double result = 0.;
@@ -134,6 +164,26 @@ void generate_conv_weights(double **conv_weights)
 	  for(m=0;m<N;m++){
 	    for(n=0;n<N;n++) {
 	     conv_weights[k + N*(j + N*i)][n + N*(m + N*l)] = gHat3(eta[i], eta[j], eta[k], eta[l], eta[m], eta[n]); // in the notes, correspondingly, (i,j,k)-kxi, (l,m,n)-w	      	      
+	    }
+	  }
+	}
+      }
+    }
+  }
+}
+
+void generate_conv_weights2(double **conv_weights, int id)
+{
+  int i, j, k, l, m, n;
+
+   #pragma omp parallel for  private(i,j,k,l,m,n) shared(conv_weights)
+  for(i=0;i<N;i++){
+    for(j=0;j<N;j++){
+      for(k=0;k<N;k++){
+	for(l=0;l<N;l++){
+	  for(m=0;m<N;m++){
+	    for(n=0;n<N;n++) {
+	      conv_weights[k + N*(j + N*i)][n + N*(m + N*l)] =gHat3_2(eta[i], eta[j], eta[k], eta[l], eta[m], eta[n], id);
 	    }
 	  }
 	}
@@ -757,89 +807,200 @@ int i,j,k, j1, j2, j3, k_v, k_eta, kk, l_local;
   }
 }
 #else
-void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights)
+void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights)				// function to calculate the discrete Fourier transform of the collision operator Q at a given f(Hat)
 {
-  int i, j, k, l, m, n, x, y, z;
-  int start_i, start_j, start_k, end_i, end_j, end_k;
-  //fftw_complex *fftIn, *fftOut;
-  double tempD, tmp0, tmp1;
-  double prefactor = h_eta*h_eta*h_eta; // we dont have scale3 here.
-
-  //fftIn = (fftw_complex *)fftw_malloc(N*N*N*sizeof(fftw_complex));
-  //fftOut = (fftw_complex *)fftw_malloc(N*N*N*sizeof(fftw_complex));
+	int i, j, k, l, m, n, x, y, z;												// declare (i,j,k) (the indices for a given value of given ki = ki_(i,j,k)), (l,m,n) (counters for the quadrature to calculate the integral w.r.t. eta in the evaluation of qHat and so also represent the indices of a given eta = eta_(l,m,n)) & (x,y,z) (the indices for the value of a subtraction in the calculation, namely eta_(x,y,z) = ki_(i,j,k) - eta_(l,m,n))
+	int start_i, start_j, start_k, end_i, end_j, end_k;							// declare start_i, start_j & start_k (the indices for the values of the lower bounds of integration in computation of the convolution, corresponding to the lowest point where both functions are non-zero, in each velocity direction) and end_i, end_j & end_k (the indices for the values of the upper bounds of integration in computation of the convolution, corresponding to the highest point where both functions are non-zero, in each velocity direction)
+	double tempD, tmp0, tmp1;													// declare tempD (the value of the convolution weight at a given ki & eta), tmp0 (which will become the real part of qHat) & tmp1 (which will become the imaginary part of qHat)
+	double prefactor = h_eta*h_eta*h_eta; 										// declare prefactor (the value of h_eta^3, as no scale3 in Fourier space) and set its value
   
-  for(i=0;i<size_ft;i++){
-    fftIn[i][0] = f[i];
-    fftIn[i][1] = 0.;
-  }
-
-  fft3D(fftIn, fftOut);
-  
-  //printf("fft done\n");
-  #pragma omp parallel for schedule(dynamic) private(i,j,k,l,m,n,x,y,z,start_i,start_j,start_k,end_i,end_j,end_k,tempD) shared(qHat, fftOut, conv_weights) reduction(+:tmp0, tmp1)
-  for(i=0;i<N;i++) {
-    for(j=0;j<N;j++){
-      for(k=0;k<N;k++)
+	for(i=0;i<size_ft;i++)														// initialise the input of the FFT
 	{
-	  //figure out the windows for the convolutions (i.e. where xi(l) and eta(i)-xi(l) are in the domain)
-	  if( i < N/2 ) {
-	    start_i = 0;
-	    end_i = i + N/2 + 1; 
-	  }
-	  else {
-	    start_i = i - N/2 + 1;
-	    end_i = N;
-	  }
-	  
-	  if( j < N/2 ) {
-	    start_j = 0;
-	    end_j = j + N/2 + 1; 
-	  }
-	  else {
-	    start_j = j - N/2 + 1;
-	    end_j = N;
-	  }
-	  
-	  if( k < N/2 ) {
-	    start_k = 0;
-	    end_k = k + N/2 + 1; 
-	  }
-	  else {
-	    start_k = k - N/2 + 1;
-	    end_k = N;
-	  }
-	  tmp0=0.; tmp1=0.;
-	  for(l=start_i;l<end_i;l++) {
-	    for(m=start_j;m<end_j;m++) {
-	      for(n=start_k;n<end_k;n++)
-		{
-		
-		  x = i + N/2 - l;
-		  y = j + N/2 - m;
-		  z = k + N/2 - n;
-		  //printf("%d, %d, %d; %d, %d, %d\n",i,j,k,l,m,n);
-		 // printf("tempD=%g\n",conv_weights[k + N*(j+ N*i)][n + N*(m + N*l)]);
-		  //get convolution weight		   
-		  tempD = conv_weights[k + N*(j+ N*i)][n + N*(m + N*l)]; 
-		  //tempD = gHat3(eta[i], eta[j], eta[k], eta[l], eta[m], eta[n]); //computing weights on the fly
-		  tmp0 += prefactor*wtN[l]*wtN[m]*wtN[n]*tempD*(fftOut[n + N*(m + N*l)][0]*fftOut[z + N*(y + N*x)][0] - fftOut[n + N*(m + N*l)][1]*fftOut[z + N*(y + N*x)][1]);
-		  
-		  tmp1 += prefactor*wtN[l]*wtN[m]*wtN[n]*tempD*(fftOut[n + N*(m + N*l)][0]*fftOut[z + N*(y + N*x)][1] + fftOut[n + N*(m + N*l)][1]*fftOut[z + N*(y + N*x)][0]);
-		 // printf(" tempD=%g, prefactor=%g, fftOut=[%g,%g] at %d, %d, %d; %d, %d, %d; %d, %d, %d\n",tempD, prefactor, fftOut[z + N*(y + N*x)][0], fftOut[z + N*(y + N*x)][1],i,j,k,l,m,n, x,y,z);
-		}
-	    }
-	  }
-	// printf("%d, %d, %d done\n", i,j,k);
-	 qHat[k + N*(j + N*i)][0] = tmp0;  
-	 qHat[k + N*(j + N*i)][1] = tmp1;
-	 // printf("%d, %d, %d write-in done\n", i,j,k);
+		fftIn[i][0] = f[i];														// set the real part to the sampling of the solution stored in f
+		fftIn[i][1] = 0.;														// set the imaginary part to zero
 	}
-    }
-  }
 
- // fftw_free(fftIn);
- // fftw_free(fftOut);
+	fft3D(fftIn, fftOut);														// perform the FFT of fftIn and store the result in fftOut
+  
+	//printf("fft done\n");
+	#pragma omp parallel for schedule(dynamic) private(i,j,k,l,m,n,x,y,z,start_i,start_j,start_k,end_i,end_j,end_k,tempD) shared(qHat, fftOut, conv_weights) reduction(+:tmp0, tmp1)
+	for(i=0;i<N;i++) 															// loop through all points in the ki_1
+	{
+		for(j=0;j<N;j++)														// loop through all points in the ki_2
+		{
+			for(k=0;k<N;k++)													// loop through all points in the ki_3
+			{
+				//figure out the windows for the convolutions (i.e. where eta(l,m,n) and ki(i,j,k)-eta(l,m,n) are in the domain)
+				if( i < N/2 ) 													// if ki_1(i) < 0 then the values of l for which f(ki_1(i)-eta_1(l))*f(eta_1(l)) give a non-zero product range need -Lv < eta_1 <= ki_1 + Lv/2, due to the support of f being -Lv to Lv
+				{
+					start_i = 0;												// set start_i to 0 to represent -Lv as the lower bound of integration
+					end_i = i + N/2 + 1;										// set end_i to i + N/2 + 1 to represent eta_1(i+N/2+1/2) as the upper bound of integration (with +1 there so that all cells less than index end_i are integrated over)
+				}
+				else 															// if ki_1(i) >= 0 then the values of l for which f(ki_1(i)-eta_1(l))*f(eta_1(l)) give a non-zero product range need ki_1 - Lv/2 < eta_1 <= Lv, due to the support of f being -Lv to Lv
+				{
+					start_i = i - N/2 + 1;										// set start_i to i - N/2 + 1 to represent eta_1(i) - Lv as the lower bound of integration (with +1 since ki_1[i-N/2] - eta_1[i] actually overlaps with eta_1[-1/2] = -Lv, where f(-Lv)=0, so start at the next index)
+					end_i = N;													// set end_i to N to represent Lv as the upper bound of integration (i.e. integrate over all cells with index less than N)
+				}
+	  
+				if( j < N/2 )													// if ki_2(j) < 0 then the values of m for which f(ki_2(j)-eta_2(m))*f(eta_2(m)) give a non-zero product range need -Lv < eta_2 <= ki_2 + Lv/2, due to the support of f being -Lv to Lv
+				{
+					start_j = 0;												// set start_j to 0 to represent -Lv as the lower bound of integration
+					end_j = j + N/2 + 1;										// set end_j to j + N/2 + 1 to represent eta_2(j+N/2+1/2) as the upper bound of integration (with +1 there so that all cells less than index end_i are integrated over)
+				}
+				else															// if ki_2(j) >= 0 then the values of m for which f(ki_2(j)-eta_2(m))*f(eta_2(m)) give a non-zero product range need ki_2 - Lv/2 < eta_2 <= Lv, due to the support of f being -Lv to Lv
+				{
+					start_j = j - N/2 + 1;										// set start_j to j - N/2 + 1 to represent eta_2(j) - Lv as the lower bound of integration (with +1 since ki_2[j-N/2] - eta_2[j] actually overlaps with eta_2[-1/2] = -Lv, where f(-Lv)=0, so start at the next index)
+					end_j = N;													// set end_j to N to represent Lv as the upper bound of integration (i.e. integrate over all cells with index less than N)
+				}
+	  
+				if( k < N/2 )													// if ki_3(k) < 0 then the values of n for which f(ki_3(k)-eta_3(n))*f(eta_3(n)) give a non-zero product range need -Lv < eta_3 <= ki_3 + Lv/2, due to the support of f being -Lv to Lv
+				{
+					start_k = 0;												// set start_k to 0 to represent -Lv as the lower bound of integration
+					end_k = k + N/2 + 1;										// set end_k to k + N/2 + 1 to represent eta_3(k+N/2+1/2) as the upper bound of integration (with +1 there so that all cells less than index end_i are integrated over)
+				}
+				else															// if ki_3(k) >= 0 then the values of n for which f(ki_3(k)-eta_3(n))*f(eta_3(n)) give a non-zero product range need ki_3 - Lv/2 < eta_3 <= Lv, due to the support of f being -Lv to Lv
+				{
+					start_k = k - N/2 + 1;										// set start_k to k - N/2 + 1 to represent eta_3(k) - Lv as the lower bound of integration (with +1 since ki_3[k-N/2] - eta_3[k] actually overlaps with eta_3[-1/2] = -Lv, where f(-Lv)=0, so start at the next index)
+					end_k = N;													// set end_k to N to represent Lv as the upper bound of integration (i.e. integrate over all cells with index less than N)
+				}
+				tmp0=0.; tmp1=0.;												// initialise tmp0 & tmp1 at zero to begin the quadrature
+				for(l=start_i;l<end_i;l++)										// loop through all the quadrature indices in the eta_1 direction that give non-zero contribution
+				{
+					for(m=start_j;m<end_j;m++)									// loop through all the quadrature indices in the eta_2 direction that give non-zero contribution
+					{
+						for(n=start_k;n<end_k;n++)								// loop through all the quadrature indices in the eta_3 direction that give non-zero contribution
+						{
+		
+							x = i + N/2 - l;									// set the index x to i + N/2 - l to represent the subtraction eta[x] = ki[i] - eta[l]
+							y = j + N/2 - m;									// set the index y to j + N/2 - m to represent the subtraction eta[y] = ki[j] - eta[m]
+							z = k + N/2 - n;									// set the index z to k + N/2 - n to represent the subtraction eta[z] = ki[k] - eta[n]
+							//printf("%d, %d, %d; %d, %d, %d\n",i,j,k,l,m,n);
+							// printf("tempD=%g\n",conv_weights[k + N*(j+ N*i)][n + N*(m + N*l)]);
+							tempD = conv_weights[k + N*(j+ N*i)][n + N*(m + N*l)];		// set tempD to the value of the convolution weight corresponding to current value of ki(i,j,k) & eta(l,m,n)
+							tmp0 += prefactor*wtN[l]*wtN[m]*wtN[n]*tempD*(fftOut[n + N*(m + N*l)][0]*fftOut[z + N*(y + N*x)][0] - fftOut[n + N*(m + N*l)][1]*fftOut[z + N*(y + N*x)][1]);		// increment the value of the real part of qHat(ki(i,j,k)) by fHat(eta(l,m,n))*f(ki(i,j,k)-eta(l,m,n))*conv_weight(ki(i,j,k),eta(l,m,n)) for the current values of l, m & n in the quadrature sum
+		  
+							tmp1 += prefactor*wtN[l]*wtN[m]*wtN[n]*tempD*(fftOut[n + N*(m + N*l)][0]*fftOut[z + N*(y + N*x)][1] + fftOut[n + N*(m + N*l)][1]*fftOut[z + N*(y + N*x)][0]);		// increment the value of the imaginary part of qHat(ki(i,j,k)) by fHat(eta(l,m,n))*f(ki(i,j,k)-eta(l,m,n))*conv_weight(ki(i,j,k),eta(l,m,n)) for the current values of l, m & n in the quadrature sum
+							// printf(" tempD=%g, prefactor=%g, fftOut=[%g,%g] at %d, %d, %d; %d, %d, %d; %d, %d, %d\n",tempD, prefactor, fftOut[z + N*(y + N*x)][0], fftOut[z + N*(y + N*x)][1],i,j,k,l,m,n, x,y,z);
+						}
+					}
+				}
+				// printf("%d, %d, %d done\n", i,j,k);
+				qHat[k + N*(j + N*i)][0] = tmp0;								// set the real part of qHat(ki(i,j,k)) to the value tmp0 calculated in the quadrature
+				qHat[k + N*(j + N*i)][1] = tmp1;								// set the imaginary part of qHat(ki(i,j,k)) to the value tmp1 calculated in the quadrature
+				// printf("%d, %d, %d write-in done\n", i,j,k);
+			}
+		}
+	}
+}
 
+void ComputeDFTofMaxwellian(double *UMaxwell, double **fMaxwell, fftw_complex **DFTMax)				// function to compute the Fourier transform of the initial Maxwellian
+{
+	setInit_spectral(UMaxwell, fMaxwell); 												// Take the coefficient of the DG solution from the advection step, and project them onto the grid used for the spectral method to perform the collision step
+
+	for(int l=chunk_Nx*myrank_mpi;l<chunk_Nx*(myrank_mpi+1) && l<Nx;l++)
+	{
+		for(int i=0;i<size_ft;i++)														// initialise the input of the FFT
+		{
+			fftIn[i][0] = fMaxwell[l%chunk_Nx][i];												// set the real part to the sampling of the Maxwellian stored in fMaxwell
+			fftIn[i][1] = 0.;														// set the imaginary part to zero
+			fft3D(fftIn, DFTMax[l%chunk_Nx]);														// perform the FFT of fftIn and store the result in DFTMaxwell
+		}
+	}
+
+}
+
+void ComputeQLinear(double *f, fftw_complex *Maxwell_fftOut, fftw_complex *qHat, double **conv_weights)		// function to calculate the discrete Fourier transform of the linear collision operator Q(f, M) at a given f(Hat)
+{
+	int i, j, k, l, m, n, x, y, z;												// declare (i,j,k) (the indices for a given value of given ki = ki_(i,j,k)), (l,m,n) (counters for the quadrature to calculate the integral w.r.t. eta in the evaluation of qHat and so also represent the indices of a given eta = eta_(l,m,n)) & (x,y,z) (the indices for the value of a subtraction in the calculation, namely eta_(x,y,z) = ki_(i,j,k) - eta_(l,m,n))
+	int start_i, start_j, start_k, end_i, end_j, end_k;							// declare start_i, start_j & start_k (the indices for the values of the lower bounds of integration in computation of the convolution, corresponding to the lowest point where both functions are non-zero, in each velocity direction) and end_i, end_j & end_k (the indices for the values of the upper bounds of integration in computation of the convolution, corresponding to the highest point where both functions are non-zero, in each velocity direction)
+	double tempD, tmp0, tmp1;													// declare tempD (the value of the convolution weight at a given ki & eta), tmp0 (which will become the real part of qHat) & tmp1 (which will become the imaginary part of qHat)
+//	double tempD1, tempD2;														// declare tempD1 & tempD2 (the values of the convolution weights at a given ki & eta, separated to allow for multispecies calculations with different masses)
+	double prefactor = h_eta*h_eta*h_eta; 										// declare prefactor (the value of h_eta^3, as no scale3 in Fourier space) and set its value
+
+	for(i=0;i<size_ft;i++)														// initialise the input of the FFT
+	{
+		fftIn[i][0] = f[i];														// set the real part to the sampling of the solution stored in f
+		fftIn[i][1] = 0.;														// set the imaginary part to zero
+	}
+
+	fft3D(fftIn, fftOut);														// perform the FFT of fftIn and store the result in fftOut
+
+	//printf("fft done\n");
+	#pragma omp parallel for schedule(dynamic) private(i,j,k,l,m,n,x,y,z,start_i,start_j,start_k,end_i,end_j,end_k,tempD) shared(qHat, fftOut, conv_weights) reduction(+:tmp0, tmp1)
+	for(i=0;i<N;i++) 															// loop through all points in the ki_1
+	{
+		for(j=0;j<N;j++)														// loop through all points in the ki_2
+		{
+			for(k=0;k<N;k++)													// loop through all points in the ki_3
+			{
+				//figure out the windows for the convolutions (i.e. where eta(l,m,n) and ki(i,j,k)-eta(l,m,n) are in the domain)
+				if( i < N/2 ) 													// if ki_1(i) < 0 then the values of l for which f(ki_1(i)-eta_1(l))*f(eta_1(l)) give a non-zero product range need -Lv < eta_1 <= ki_1 + Lv/2, due to the support of f being -Lv to Lv
+				{
+					start_i = 0;												// set start_i to 0 to represent -Lv as the lower bound of integration
+					end_i = i + N/2 + 1;										// set end_i to i + N/2 + 1 to represent eta_1(i+N/2+1/2) as the upper bound of integration (with +1 there so that all cells less than index end_i are integrated over)
+				}
+				else 															// if ki_1(i) >= 0 then the values of l for which f(ki_1(i)-eta_1(l))*f(eta_1(l)) give a non-zero product range need ki_1 - Lv/2 < eta_1 <= Lv, due to the support of f being -Lv to Lv
+				{
+					start_i = i - N/2 + 1;										// set start_i to i - N/2 + 1 to represent eta_1(i) - Lv as the lower bound of integration (with +1 since ki_1[i-N/2] - eta_1[i] actually overlaps with eta_1[-1/2] = -Lv, where f(-Lv)=0, so start at the next index)
+					end_i = N;													// set end_i to N to represent Lv as the upper bound of integration (i.e. integrate over all cells with index less than N)
+				}
+
+				if( j < N/2 )													// if ki_2(j) < 0 then the values of m for which f(ki_2(j)-eta_2(m))*f(eta_2(m)) give a non-zero product range need -Lv < eta_2 <= ki_2 + Lv/2, due to the support of f being -Lv to Lv
+				{
+					start_j = 0;												// set start_j to 0 to represent -Lv as the lower bound of integration
+					end_j = j + N/2 + 1;										// set end_j to j + N/2 + 1 to represent eta_2(j+N/2+1/2) as the upper bound of integration (with +1 there so that all cells less than index end_i are integrated over)
+				}
+				else															// if ki_2(j) >= 0 then the values of m for which f(ki_2(j)-eta_2(m))*f(eta_2(m)) give a non-zero product range need ki_2 - Lv/2 < eta_2 <= Lv, due to the support of f being -Lv to Lv
+				{
+					start_j = j - N/2 + 1;										// set start_j to j - N/2 + 1 to represent eta_2(j) - Lv as the lower bound of integration (with +1 since ki_2[j-N/2] - eta_2[j] actually overlaps with eta_2[-1/2] = -Lv, where f(-Lv)=0, so start at the next index)
+					end_j = N;													// set end_j to N to represent Lv as the upper bound of integration (i.e. integrate over all cells with index less than N)
+				}
+
+				if( k < N/2 )													// if ki_3(k) < 0 then the values of n for which f(ki_3(k)-eta_3(n))*f(eta_3(n)) give a non-zero product range need -Lv < eta_3 <= ki_3 + Lv/2, due to the support of f being -Lv to Lv
+				{
+					start_k = 0;												// set start_k to 0 to represent -Lv as the lower bound of integration
+					end_k = k + N/2 + 1;										// set end_k to k + N/2 + 1 to represent eta_3(k+N/2+1/2) as the upper bound of integration (with +1 there so that all cells less than index end_i are integrated over)
+				}
+				else															// if ki_3(k) >= 0 then the values of n for which f(ki_3(k)-eta_3(n))*f(eta_3(n)) give a non-zero product range need ki_3 - Lv/2 < eta_3 <= Lv, due to the support of f being -Lv to Lv
+				{
+					start_k = k - N/2 + 1;										// set start_k to k - N/2 + 1 to represent eta_3(k) - Lv as the lower bound of integration (with +1 since ki_3[k-N/2] - eta_3[k] actually overlaps with eta_3[-1/2] = -Lv, where f(-Lv)=0, so start at the next index)
+					end_k = N;													// set end_k to N to represent Lv as the upper bound of integration (i.e. integrate over all cells with index less than N)
+				}
+				tmp0=0.; tmp1=0.;												// initialise tmp0 & tmp1 at zero to begin the quadrature
+				for(l=start_i;l<end_i;l++)										// loop through all the quadrature indices in the eta_1 direction that give non-zero contribution
+				{
+					for(m=start_j;m<end_j;m++)									// loop through all the quadrature indices in the eta_2 direction that give non-zero contribution
+					{
+						for(n=start_k;n<end_k;n++)								// loop through all the quadrature indices in the eta_3 direction that give non-zero contribution
+						{
+
+							x = i + N/2 - l;									// set the index x to i + N/2 - l to represent the subtraction eta[x] = ki[i] - eta[l]
+							y = j + N/2 - m;									// set the index y to j + N/2 - m to represent the subtraction eta[y] = ki[j] - eta[m]
+							z = k + N/2 - n;									// set the index z to k + N/2 - n to represent the subtraction eta[z] = ki[k] - eta[n]
+							//printf("%d, %d, %d; %d, %d, %d\n",i,j,k,l,m,n);
+							// printf("tempD=%g\n",conv_weights[k + N*(j+ N*i)][n + N*(m + N*l)]);
+
+							tempD = conv_weights[k + N*(j+ N*i)][n + N*(m + N*l)];
+//							tempD1 = conv_weightsA[k + N*(j+ N*i)][n + N*(m + N*l)];
+//							tempD2 = conv_weightsB[k + N*(j+ N*i)][n + N*(m + N*l)];
+							//multiply the weighted fourier coeff product
+							tmp0 += prefactor*wtN[l]*wtN[m]*wtN[n]*(tempD*(Maxwell_fftOut[n + N*(m + N*l)][0]*fftOut[z + N*(y + N*x)][0] - Maxwell_fftOut[n + N*(m + N*l)][1]*fftOut[z + N*(y + N*x)][1]));
+							tmp1 += prefactor*wtN[l]*wtN[m]*wtN[n]*(tempD*(Maxwell_fftOut[n + N*(m + N*l)][0]*fftOut[z + N*(y + N*x)][1] + Maxwell_fftOut[n + N*(m + N*l)][1]*fftOut[z + N*(y + N*x)][0]));
+//							tmp0 += prefactor*wtN[l]*wtN[m]*wtN[n]*((2*tempD1+tempD2)*(Maxwell_fftOut[n + N*(m + N*l)][0]*fftOut[z + N*(y + N*x)][0] - Maxwell_fftOut[n + N*(m + N*l)][1]*fftOut[z + N*(y + N*x)][1]));
+//							tmp1 += prefactor*wtN[l]*wtN[m]*wtN[n]*((2*tempD1+tempD2)*(Maxwell_fftOut[n + N*(m + N*l)][0]*fftOut[z + N*(y + N*x)][1] + Maxwell_fftOut[n + N*(m + N*l)][1]*fftOut[z + N*(y + N*x)][0]));
+
+
+							// printf(" tempD=%g, prefactor=%g, fftOut=[%g,%g] at %d, %d, %d; %d, %d, %d; %d, %d, %d\n",tempD, prefactor, fftOut[z + N*(y + N*x)][0], fftOut[z + N*(y + N*x)][1],i,j,k,l,m,n, x,y,z);
+						}
+					}
+				}
+				// printf("%d, %d, %d done\n", i,j,k);
+				qHat[k + N*(j + N*i)][0] = tmp0;								// set the real part of qHat(ki(i,j,k)) to the value tmp0 calculated in the quadrature
+				qHat[k + N*(j + N*i)][1] = tmp1;								// set the imaginary part of qHat(ki(i,j,k)) to the value tmp1 calculated in the quadrature
+				// printf("%d, %d, %d write-in done\n", i,j,k);
+			}
+		}
+	}
 }
 
 void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U, double *dU) //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6 
@@ -923,6 +1084,90 @@ void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U,
     dU[(l_local*size_v + kt)*5+1] = tp2;
     dU[(l_local*size_v + kt)*5+2] = tp3;
     dU[(l_local*size_v + kt)*5+3] = tp4;   
+  }
+}
+
+void RK4Linear(double *f, fftw_complex *MaxwellHat, int l, fftw_complex *qHat, double **conv_weights, double *U, double *dU) //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6 for the linear collision operator with a Maxwellian
+{
+  int i,j,k, j1, j2, j3, k_v, k_eta, kk,l_local;
+  double Q_re, Q_im, tp0, tp2, tp3,tp4,tp5, tmp0=0., tmp2=0., tmp3=0., tmp4=0.,tmp5=0., tem;
+
+  l_local = l%chunk_Nx;
+
+  FS(qHat, fftOut); 																	// set fftOut to the Fourier series representation of qHat (i.e. the IFFT of qHat)
+  //ifft3D(qHat, fftOut);
+  #pragma omp parallel for private(i) shared(Q,fftOut,f1,f)
+  for(i=0;i<size_ft;i++)																// calculate the first step of RK4
+  {
+    Q[i] = fftOut[i][0];																// this is Q(Fn, Fn) so that Kn^1 = dt*Q(Fn, Fn) = dt*Q[i]
+    f1[i] = f[i] + dt*Q[i]*nu; 															// this is Fn + Kn^1(*nu...?) BUG: this evolution (only on node values) is not consistent with our conservation routine, which preserves the exact moments of the {1,v,|v|^{2}} approximations
+  }
+
+  ComputeQLinear(f1, MaxwellHat, Q1_fft, conv_weights);								// calculate the Fourier transform of Q(f1,M) using conv_weights1 & conv_weights2 for the weights in the convolution, then store the results of the Fourier transform in Q1_fft
+  conserveAllMoments(Q1_fft);   														// perform the explicit conservation calculation on Kn2^ = Q^(f1,f1) = Q1_fft
+
+  FS(Q1_fft, fftOut);																	// set fftOut to the Fourier series representation of Q1_fft (i.e. the IFFT of Q1_fft, so that Kn^2 = fftOut = Q(Fn + dt*Kn^1, Fn + dt*Kn^1) )
+  //ifft3D(Q1_fft, fftOut);
+  #pragma omp parallel for private(i) shared(Q,Q1,fftOut,f1,f)
+  for(i=0;i<size_ft;i++)																// calculate the second step of RK4
+  {
+    Q1[i] = fftOut[i][0];
+    f1[i] = f[i] +  0.5*dt*Q[i]*nu + 0.5*dt*Q1[i]*nu;
+  }
+
+  ComputeQLinear(f1, MaxwellHat, Q2_fft, conv_weights);								// calculate the Fourier tranform of Q(f1,M) using conv_weights1 & conv_weights2 for the weights in the convolution, then store the results of the Fourier transform in Q2_fft
+  conserveAllMoments(Q2_fft);   //conserves k3
+
+  FS(Q2_fft, fftOut);
+  //ifft3D(Q2_fft, fftOut);
+  #pragma omp parallel for private(i) shared(Q,Q1,fftOut,f1,f)
+  for(i=0;i<size_ft;i++)																// calculate the third step of RK4
+  {
+    Q1[i] = fftOut[i][0];
+    f1[i] = f[i] + 0.5*Q[i]*nu + 0.5*Q1[i]*nu;
+  }
+
+  ComputeQLinear(f1, MaxwellHat, Q3_fft, conv_weights);								// calculate the Fourier transform of Q(f1,M) using conv_weights1 & conv_weights2 for the weights in the convolution, then store the results of the Fourier transform in Q3_fft
+  conserveAllMoments(Q3_fft);                //conserves k4
+
+  #pragma omp parallel for schedule(dynamic) private(j1,j2,j3,i,j,k,k_v,k_eta,kk,Q_re, Q_im) shared(l, l_local, qHat,U, dU) reduction(+:tp0, tp2,tp3,tp4, tp5)  // calculate the fourth step of RK4 (still in Fourier space though?!) - reduction(+: tmp0, tmp2, tmp3, tmp4, tmp5)
+  for(int kt=0;kt<size_v;kt++){
+    j3 = kt % Nv; j2 = ((kt-j3)/Nv) % Nv; j1 = (kt - j3 - Nv*j2)/(Nv*Nv);
+    tp0=0.; tp2=0.; tp3=0.; tp4=0.; tp5=0.;
+    for(i=0;i<N;i++){
+      for(j=0;j<N;j++){
+		for(k=0;k<N;k++){
+		  k_eta = k + N*(j + N*i);
+
+		  IntModes(i,j,k,j1,j2,j3,IntM); //the global IntM must be declared as threadprivate; BUG: forgot to uncomment this and thus IntM=0 !!
+
+		  Q_re = nu*(0.5*qHat[k_eta][0] + (Q1_fft[k_eta][0]+Q2_fft[k_eta][0]+Q3_fft[k_eta][0])/6.);
+		  Q_im = nu*(0.5*qHat[k_eta][1] + (Q1_fft[k_eta][1]+Q2_fft[k_eta][1]+Q3_fft[k_eta][1])/6.);
+
+		  //tem = scale3*wtN[i]*wtN[j]*wtN[k]*h_eta*h_eta*h_eta;
+		  tp0 += IntM[0]*Q_re - IntM[1]*Q_im;
+		  tp2 += IntM[1*2]*Q_re - IntM[1*2+1]*Q_im;
+		  tp3 += IntM[2*2]*Q_re - IntM[2*2+1]*Q_im;
+		  tp4 += IntM[3*2]*Q_re - IntM[3*2+1]*Q_im;
+		  tp5 += IntM[4*2]*Q_re - IntM[4*2+1]*Q_im;
+		}
+      }
+    }
+    //tmp0 += tp0; tmp2 += dv*tp2 + Gridv((double)j1)*tp0; tmp3 += dv*tp3 +Gridv((double)j2)*tp0 ;tmp4 += dv*tp4 + Gridv((double)j3)*tp0;  //tmp5 += (Gridv((double)j1)*Gridv((double)j1) + Gridv((double)j2)*Gridv((double)j2) + Gridv((double)j3)*Gridv((double)j3))*tp0 +dv*dv*tp5+2*dv*(Gridv((double)j1)*tp2 + Gridv((double)j2)*tp3 +Gridv((double)j3)*tp4);
+	//tmp5 += dv*dv*tp5 -  (Gridv((double)j1)*Gridv((double)j1) + Gridv((double)j2)*Gridv((double)j2) + Gridv((double)j3)*Gridv((double)j3))*tp0 + 2*(Gridv((double)j1)*(dv*tp2 + Gridv((double)j1)*tp0) + Gridv((double)j2)*(dv*tp3 + Gridv((double)j2)*tp0) + Gridv((double)j3)*(dv*tp4 + Gridv((double)j3)*tp0));
+
+    k_v = l*size_v + kt;
+    tp0 = U[k_v*6+0] + U[k_v*6+5]/4. + dt*tp0/scalev/scaleL/scale3;
+    tp2 = U[k_v*6+2] + dt*tp2*12./scalev/scaleL/scale3;
+    tp3 = U[k_v*6+3] + dt*tp3*12./scalev/scaleL/scale3;
+    tp4 = U[k_v*6+4] + dt*tp4*12./scalev/scaleL/scale3;
+    tp5 = U[k_v*6+0]/4. + U[k_v*6+5]*19./240. + dt*tp5/scalev/scaleL/scale3;
+
+    dU[(l_local*size_v + kt)*5] = 19*tp0/4. - 15*tp5;
+    dU[(l_local*size_v + kt)*5+4] = 60*tp5 - 15*tp0;
+    dU[(l_local*size_v + kt)*5+1] = tp2;
+    dU[(l_local*size_v + kt)*5+2] = tp3;
+    dU[(l_local*size_v + kt)*5+3] = tp4;
   }
 }
 #endif
