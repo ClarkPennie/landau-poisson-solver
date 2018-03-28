@@ -35,7 +35,9 @@ double Gridv(double m);
 
 double Gridx(double m);
 
+#ifdef Doping																						// only do this if Damping was defined
 void DirichletBC(vector<double>& Ub_vals, int i, int j1, int j2, int j3);
+#endif	/* Doping */
 
 double I1(double *U, int k, int l);
 

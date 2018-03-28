@@ -120,6 +120,7 @@ void SetInit_LD(double *U)																						// function to calculate the DG 
 	}
 }
 
+#ifdef Doping																									// only do this if Damping was define
 void SetInit_ND(double *U)																						// function to calculate the DG coefficients for the initial condition for Landau Damping
 {
     int i, j1, j2, j3, k, m1,m2,m3,nt=5;																		// declare i (to represent cell i in x-space), j1, j2, j3 (to represent cell (j1,j2,j3) in v-space), k (the index of cell (i,j1,j2,j3) in U), m1, m2, m3 (counters for the Gaussian quadrature in 3D) & nt (the number of points in the quadrature)
@@ -171,6 +172,7 @@ void SetInit_ND(double *U)																						// function to calculate the DG 
     	}
 	}
 }
+#endif /* Doping */
 
 void SetInit_4H(double *U)																							// function to calculate the DG coefficients for the initial condition with four humps, found by adding four Maxwellians
 {

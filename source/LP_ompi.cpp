@@ -18,8 +18,12 @@
 #include "LP_ompi.h"																				// LP_ompi.h is where the libraries required by the program included, all macros (to decide the behaviour of a given run) are defined and all variables to be used throughout the various files are defined as external
 
 double PI=M_PI;																						// declare PI and set it to M_PI (the value stored in the library math.h)
-//int M=5;		/*NOT FOR mConsOnly*/																					// declare M (the number of collision invarients) and set it equal to 5
+#ifdef MassConsOnly																					// only do this if MassConsOnly was defined and only conserving mass
 int M=1;																							// declare M (the number of collision invarients) and set it equal to 5
+#else
+int M=5;																							// declare M (the number of collision invarients) and set it equal to 5
+#endif	/* MassConsOnly */
+
 int Nx=24, Nv=24, nT=5, N=16; 											 							// declare Nx (no. of x discretised points), Nv (no. of v discretised point), nT (no. of time discretised points) & N (no. of nodes in the spectral method) and setting all their values
 int size_v=Nv*Nv*Nv, size=Nx*size_v, size_ft=N*N*N; 												// declare size_v (no. of total v discretised points in 3D) and set it to Nv^3, size (the total no. of discretised points) and set it to size_v*Nx & size_ft (total no. of spectral discretised points in 3D) and set it to N*N*N
 
@@ -82,12 +86,14 @@ double eps = 0.1;																					// declare eps (the dielectric constant in
 double *v, *eta;																					// declare v (the velocity variable) & eta (the Fourier space variable)
 double *wtN;																						// declare wtN (the trapezoidal rule weights to be used)
 double scale, scale3, scaleL=8*Lv*Lv*Lv, scalev=dv*dv*dv;											// declare scale (the 1/sqrt(2pi) factor appearing in Gaussians), scale (the 1/(sqrt(2pi))^3 factor appearing in the Maxwellian), scaleL (the volume of the velocity domain) and set it to 8Lv^3 & scalev (the volume of a discretised velocity element) and set it to dv^3
-double *C1;//, *C2;																					// declare pointers to matrices C1 (the real part of the conservation matrix C) & C2 (the imaginary part of the conservation matrix C), CCt (of dimension 5x5) & CCt_linear (of dimension 2x2)
-//double **C1, **C2;		/*NOT FOR mConsOnly*/																			// declare pointers to matrices C1 (the real part of the conservation matrix C) & C2 (the imaginary part of the conservation matrix C), CCt (of dimension 5x5) & CCt_linear (of dimension 2x2)
-//double CCt[5*5], CCt_linear[2*2];				/*NOT FOR mConsOnly*/													// declare matrices CCt (C*C^T, for the conservation matrix C) & CCt_linear (C*C^T, for the conservation matrix C, in the two species collision operator)
-//double lamb[5], lamb_linear[2];				/*NOT FOR mConsOnly*/														// declare the arrays lamb (to hold 5 values) & lamb_linear (to hold 2 values)
-double CCt[1*1], CCt_linear[2*2];																	// declare matrices CCt (C*C^T, for the conservation matrix C) & CCt_linear (C*C^T, for the conservation matrix C, in the two species collision operator)
-double lamb[1], lamb_linear[2];																		// declare the arrays lamb (to hold 5 values) & lamb_linear (to hold 2 values)
+#ifdef MassConsOnly																					// only do this if MassConsOnly was defined and only conserving mass
+double *C1;																							// declare pointers to matrices C1 (the real part of the conservation matrix C) & C2 (the imaginary part of the conservation matrix C), CCt (of dimension 5x5) & CCt_linear (of dimension 2x2)
+double CCt[1*1], lamb[1];																			// declare matrices CCt (C*C^T, for the conservation matrix C) & lamb (to hold 1 values)
+#else
+double **C1, **C2;																					// declare pointers to matrices C1 (the real part of the conservation matrix C) & C2 (the imaginary part of the conservation matrix C), CCt (of dimension 5x5) & CCt_linear (of dimension 2x2)
+double CCt[5*5], lamb[5];																			// declare matrices CCt (C*C^T, for the conservation matrix C) & lamb (to hold 5 values)
+#endif	/* MassConsOnly */
+double CCt_linear[2*2], lamb_linear[2];																// declare the arrays CCt_linear (C*C^T, for the conservation matrix C, in the two species collision operator) & lamb_linear (to hold 2 values)
 
 double *U1, *Utmp, *output_buffer_vp;//, **H;														// declare pointers to U1, Utmp (both used to help store the values in U, declared later) & output_buffer_vp (a buffer used when sending the data between MPI processes during the VP method)
 double *Q, *f1, *Q1, *Utmp_coll;//*f2, *f3;															// declare pointers to Q (the discretised collision operator), f1 (used to help store the solution during the collisional problem), Q1 (used in calculation of the collision operator) & Utmp_coll (used to store calculations from the RK4 method used in the collisional problem)
@@ -199,7 +205,9 @@ int main()
 
 	if(nu > 0.)
 	{
-		/*														/*NOT FOR mConsOnly*//*
+		#ifdef MassConsOnly																			// only do this if MassConsOnly was defined and only conserving mass
+		C1 = (double *)malloc(size_ft*sizeof(double));												// allocate enough space at the ith entry of C1 for size_ft many double numbers
+		#else
 		C1 = (double**)malloc(M*sizeof(double *)); 													// allocate enough space at the pointer C1 for M many pointers to double numbers
 		C2 = (double**)malloc(M*sizeof(double *));													// allocate enough space at the pointer C2 for M many pointers to double numbers
 		for(i=0;i<M;i++)
@@ -207,9 +215,7 @@ int main()
 			C1[i] = (double *)malloc(size_ft*sizeof(double));										// allocate enough space at the ith entry of C1 for size_ft many double numbers
 			C2[i] = (double *)malloc(size_ft*sizeof(double));										// allocate enough space at the ith entry of C2 for size_ft many double numbers
 		}
-		*/
-		C1 = (double *)malloc(size_ft*sizeof(double));												// allocate enough space at the ith entry of C1 for size_ft many double numbers
-		//C2 = (double *)malloc(size_ft*sizeof(double));											// allocate enough space at the ith entry of C2 for size_ft many double numbers
+		#endif /* MassConsOnly */
 		f = (double **)malloc(chunk_Nx*sizeof(double *));											// allocate enough space at the pointer f for chunk_Nx many pointers to double numbers
 		for (i=0;i<chunk_Nx;i++)
 		{
@@ -375,7 +381,7 @@ int main()
 						buffer_phi[110], buffer_E[110], buffer_marg[110], buffer_ent[110];			// declare the arrays buffer_moment (to store the name of the file where the moments are printed), buffer_u (to store the name of the file where the solution U is printed), buffer_ufull (to store the name of the file where the solution U is printed in the TwoStream), buffer_flags (to store the flag added to the end of the filenames), buffer_phi (to store the name of the file where the values of phi are printed), buffer_marg (to store the name of the file where the marginals are printed) & buffer_ent (to store the name of the file where the entropy values are printed)
 
 	// EVERY TIME THE CODE IS RUN, CHANGE THE FLAG TO A NAME THAT IDENTIFIES THE CASE RUNNING FOR OR WHAT TIME RUN UP TO:
-	sprintf(buffer_flags,"QLinear_eps0.1NL0.001NH1");														// store a string in buffer_flags, so that files associated to this run can be identified
+	sprintf(buffer_flags,"TestMassConsOnlyMacro");														// store a string in buffer_flags, so that files associated to this run can be identified
 	sprintf(buffer_moment,"Data/Moments_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
 					nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is Moments_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
 	sprintf(buffer_u,"Data/U_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
@@ -728,7 +734,10 @@ int main()
 	}
 	if(nu > 0.)
 	{
-		free(C1); free(v); free(eta); free(wtN); //free(C2);										// delete the dynamic memory allocated for C1, C2, v, eta & wtN
+		free(C1); free(v); free(eta); free(wtN); 													// delete the dynamic memory allocated for C1, v, eta & wtN
+		#ifndef MassConsOnly																		// only do this if MassConsOnly was not defined and conserving all moments
+		free(C2);																					// delete the dynamic memory allocated for C2
+		#endif	/* MassConsOnly */
 		free(f); free(conv_weights); free(output_buffer); 											// delete the dynamic memory allocated for f, conv_weights, output_buffer
 		fftw_free(temp); fftw_free(qHat);															// delete the dynamic memory allocated for temp & qhat
 		free(conv_weights1); free(conv_weights2); 													// delete the dynamic memory allocated for conv_weights1 & conv_weights2

@@ -38,16 +38,19 @@ using std::vector;
 //#define Damping																					// define the macro Damping (UNCOMMENT IF BEING RUN FOR THE LANDAU DAMPING PROBLEM)
 //#define FullandLinear 																			// define the macro FullandLinear (UNCOMMENT IF THE LINEAR ELE-ION COLLISION OPERATOR IS NEEDED; OTHERWISE, ONLY ELE-ELE COLLISIONS)
 //#define TwoStream																					// define the macro TwoStream (UNCOMMENT IF BEING RUN FOR THE TWO STREAM PROBLEM)
-//#define FourHump																					// define the macro FourHump (UNCOMMENT IF BEING RUN FOR THE FOUR HUMP IC PROBLEM)
+#define FourHump																					// define the macro FourHump (UNCOMMENT IF BEING RUN FOR THE FOUR HUMP IC PROBLEM)
 //#define TwoHump																					// define the macro TwoHump (UNCOMMENT IF BEING RUN FOR THE TWO HUMP IC PROBLEM)
-#define Doping																						// define the macro Doping (UNCOMMENT IF BEING RUN FOR THE NON-CONSTANT DOPING PROFILE PROBLEM)
+//#define Doping																						// define the macro Doping (UNCOMMENT IF BEING RUN FOR THE NON-CONSTANT DOPING PROFILE PROBLEM)
 
 // CHOOSE IF THIS IS THE INITIAL RUN OR A SUBSEQUENT RUN:
 #define First																						// define the macro First (UNCOMMENT IF RUNNING THE CODE FOR THE FIRST TIME)
 //#define Second																					// define the macro Second (UNCOMMENT IF PICKING UP DATA FROM A PREVIOUS RUN)
 
 // CHOOSE IF RUNNING THE LINEAR LANDAU EQUATION WITH Q(f,M):
-#define LinearLandau
+//#define LinearLandau
+
+// CHOOSE TO ONLY CONSERVE MASS:
+//#define MassConsOnly
 
 
 //************************//
@@ -79,12 +82,14 @@ extern double T_L;																					// declare T_L (the temperature at the le
 extern double *v, *eta;																				// declare v (the velocity variable) & eta (the Fourier space variable)
 extern double *wtN;																					// declare wtN (the trapezoidal rule weights to be used)
 extern double scale, scale3, scaleL, scalev;														// declare scale (the 1/sqrt(2pi) factor appearing in Gaussians), scale (the 1/(sqrt(2pi))^3 factor appearing in the Maxwellian), scaleL (the volume of the velocity domain) and set it to 8Lv^3 & scalev (the volume of a discretised velocity element) and set it to dv^3
-//extern double **C1, **C2;								/*NOT FOR mConsOnly*/											// declare pointers to matrices C1 (the real part of the conservation matrix C) & C2 (the imaginary part of the conservation matrix C), CCt (of dimension 5x5) & CCt_linear (of dimension 2x2)
-extern double *C1;//, *C2;																			// declare pointers to matrices C1 (the real part of the conservation matrix C) & C2 (the imaginary part of the conservation matrix C), CCt (of dimension 5x5) & CCt_linear (of dimension 2x2)
-//extern double CCt[5*5], CCt_linear[2*2];				/*NOT FOR mConsOnly*/											// declare matrices CCt (C*C^T, for the conservation matrix C) & CCt_linear (C*C^T, for the conservation matrix C, in the two species collision operator)
-//extern double lamb[5], lamb_linear[2];				/*NOT FOR mConsOnly*/												// declare the arrays lamb (to hold 5 values) & lamb_linear (to hold 2 values)
-extern double CCt[1*1], CCt_linear[2*2];															// declare matrices CCt (C*C^T, for the conservation matrix C) & CCt_linear (C*C^T, for the conservation matrix C, in the two species collision operator)
-extern double lamb[1], lamb_linear[2];																// declare the arrays lamb (to hold 5 values) & lamb_linear (to hold 2 values)
+#ifdef MassConsOnly																					// only do this if MassConsOnly was defined and only conserving mass
+extern double *C1;																					// declare pointers to matrices C1 (the real part of the conservation matrix C) & C2 (the imaginary part of the conservation matrix C), CCt (of dimension 5x5) & CCt_linear (of dimension 2x2)
+extern double CCt[1*1], lamb[1];																	// declare matrices CCt (C*C^T, for the conservation matrix C) & lamb (to hold 1 values)
+#else
+extern double **C1, **C2;																			// declare pointers to matrices C1 (the real part of the conservation matrix C) & C2 (the imaginary part of the conservation matrix C), CCt (of dimension 5x5) & CCt_linear (of dimension 2x2)
+extern double CCt[5*5], lamb[5];																	// declare matrices CCt (C*C^T, for the conservation matrix C) & lamb (to hold 5 values)
+#endif	/* MassConsOnly */
+extern double CCt_linear[2*2], lamb_linear[2];														// declare the arrays CCt_linear (C*C^T, for the conservation matrix C, in the two species collision operator) & lamb_linear (to hold 2 values)
 
 extern double *U1, *Utmp, *output_buffer_vp;//, **H;												// declare pointers to U1, Utmp (both used to help store the values in U, declared later) & output_buffer_vp (a buffer used when sending the data between MPI processes during the VP method)
 extern double *Q, *f1, *Q1, *Utmp_coll;//*f2, *f3;													// declare pointers to Q (the discretised collision operator), f1 (used to help store the solution during the collisional problem), Q1 (used in calculation of the collision operator) & Utmp_coll (used to store calculations from the RK4 method used in the collisional problem)

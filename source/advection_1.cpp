@@ -20,6 +20,7 @@ double Gridx(double m){ // x in [0,Lx]  (returns the x value at the mth discrete
 	return (m+0.5)*dx;
 }
 
+#ifdef Doping																						// only do this if Damping was defined
 void DirichletBC(vector<double>& Ub_vals, int i, int j1, int j2, int j3)
 {
     int m1,m2,m3,nt=5;																				// declare m1, m2, m3 (counters for the Gaussian quadrature in 3D) & nt (the number of points in the quadrature)
@@ -66,6 +67,7 @@ void DirichletBC(vector<double>& Ub_vals, int i, int j1, int j2, int j3)
 	Ub_vals[3] = ND*tmp2*12;																															// calculate the coefficient U[6k+3] = 12*b_(6k+3) = 12*(int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_(6k+3)(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
 	Ub_vals[4] = ND*tmp3*12;																															// calculate the coefficient U[6k+4] = 12*b_(6k+4) = 12*(int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_(6k+4)(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
 }
+#endif	/* Doping*/
 
 double I1(double *U, int k, int l) // Calculate the first inegtral in H_(i,j), namely \int v1*f*phi_x dxdv
 {
@@ -197,6 +199,7 @@ double I3_PB2(double *U, int k, int l) 																		// Calculate the differ
 	return result;
 }
 
+#ifdef Doping																								// only do this if Damping was defined
 double I3(double *U, int k, int l) 																			// Calculate the difference of the second and third integrals in H_(i,j), namely \int_j v1*gh*phi dv at interface x=x_i+1/2 - \int_j v1*gh*phi dv at interface x=x_i-1/2, with Dirichlet BCs
 {
 	vector<double> Ul(6), Ur(6);																			// declare Ul & Ur (the coefficients from U on the left and right edge of the current space cell, respectively)
@@ -266,6 +269,7 @@ double I3(double *U, int k, int l) 																			// Calculate the differenc
 
 	return result;
 }
+#endif	/* Doping */
 
 
 double I5(double *U, int k, int l) 	// Calculate the difference of the fifth and sixth integrals in H_(i,j), namely \int_i E*f*phi dx at interface v1==v_j+1/2 - \int_i E*f*phi dx at interface v1==v_j-1/2
@@ -386,12 +390,12 @@ void RK3(double *U) // RK3 for f_t = H(f)
   for(k=chunksize_dg*myrank_mpi;k<chunksize_dg*(myrank_mpi+1);k++){ 
     k_local = k%chunksize_dg;
     
-    tp0=I1(U,k,0)-I2(U,k,0)-I3(U,k,0)+I5(U,k,0);
-    tp1=I1(U,k,1)-I2(U,k,1)-I3(U,k,1)+I5(U,k,1);
-    tp2=I1(U,k,2)-I2(U,k,2)-I3(U,k,2)+I5(U,k,2);
-    tp3=I1(U,k,3)-I2(U,k,3)-I3(U,k,3)+I5(U,k,3);
-    tp4=I1(U,k,4)-I2(U,k,4)-I3(U,k,4)+I5(U,k,4);
-    tp5=I1(U,k,5)-I2(U,k,5)-I3(U,k,5)+I5(U,k,5);
+    tp0=I1(U,k,0)-I2(U,k,0)-I3_PB(U,k,0)+I5(U,k,0);
+    tp1=I1(U,k,1)-I2(U,k,1)-I3_PB(U,k,1)+I5(U,k,1);
+    tp2=I1(U,k,2)-I2(U,k,2)-I3_PB(U,k,2)+I5(U,k,2);
+    tp3=I1(U,k,3)-I2(U,k,3)-I3_PB(U,k,3)+I5(U,k,3);
+    tp4=I1(U,k,4)-I2(U,k,4)-I3_PB(U,k,4)+I5(U,k,4);
+    tp5=I1(U,k,5)-I2(U,k,5)-I3_PB(U,k,5)+I5(U,k,5);
 
     //H[k_local][0] = (19*tp[0]/4. - 15*tp[5])/dx/scalev;
     //H[k_local][5] = (60*tp[5] - 15*tp[0])/dx/scalev;	
@@ -438,12 +442,12 @@ void RK3(double *U) // RK3 for f_t = H(f)
   for(k=chunksize_dg*myrank_mpi;k<chunksize_dg*(myrank_mpi+1);k++){      
     k_local = k%chunksize_dg;
     
-    tp0=I1(U1,k,0)-I2(U1,k,0)-I3(U1,k,0)+I5(U1,k,0);
-    tp1=I1(U1,k,1)-I2(U1,k,1)-I3(U1,k,1)+I5(U1,k,1);
-    tp2=I1(U1,k,2)-I2(U1,k,2)-I3(U1,k,2)+I5(U1,k,2);
-    tp3=I1(U1,k,3)-I2(U1,k,3)-I3(U1,k,3)+I5(U1,k,3);
-    tp4=I1(U1,k,4)-I2(U1,k,4)-I3(U1,k,4)+I5(U1,k,4);
-    tp5=I1(U1,k,5)-I2(U1,k,5)-I3(U1,k,5)+I5(U1,k,5);
+    tp0=I1(U1,k,0)-I2(U1,k,0)-I3_PB(U1,k,0)+I5(U1,k,0);
+    tp1=I1(U1,k,1)-I2(U1,k,1)-I3_PB(U1,k,1)+I5(U1,k,1);
+    tp2=I1(U1,k,2)-I2(U1,k,2)-I3_PB(U1,k,2)+I5(U1,k,2);
+    tp3=I1(U1,k,3)-I2(U1,k,3)-I3_PB(U1,k,3)+I5(U1,k,3);
+    tp4=I1(U1,k,4)-I2(U1,k,4)-I3_PB(U1,k,4)+I5(U1,k,4);
+    tp5=I1(U1,k,5)-I2(U1,k,5)-I3_PB(U1,k,5)+I5(U1,k,5);
 
     //H[k_local][0] = (19*tp[0]/4. - 15*tp[5])/dx/scalev;
     //H[k_local][5] = (60*tp[5] - 15*tp[0])/dx/scalev;	
@@ -490,12 +494,12 @@ ce = computePhi_x_0(U1);
   for(k=chunksize_dg*myrank_mpi;k<chunksize_dg*(myrank_mpi+1);k++){      
     k_local = k%chunksize_dg;
   
-    tp0=I1(U1,k,0)-I2(U1,k,0)-I3(U1,k,0)+I5(U1,k,0);
-    tp1=I1(U1,k,1)-I2(U1,k,1)-I3(U1,k,1)+I5(U1,k,1);
-    tp2=I1(U1,k,2)-I2(U1,k,2)-I3(U1,k,2)+I5(U1,k,2);
-    tp3=I1(U1,k,3)-I2(U1,k,3)-I3(U1,k,3)+I5(U1,k,3);
-    tp4=I1(U1,k,4)-I2(U1,k,4)-I3(U1,k,4)+I5(U1,k,4);
-    tp5=I1(U1,k,5)-I2(U1,k,5)-I3(U1,k,5)+I5(U1,k,5);
+    tp0=I1(U1,k,0)-I2(U1,k,0)-I3_PB(U1,k,0)+I5(U1,k,0);
+    tp1=I1(U1,k,1)-I2(U1,k,1)-I3_PB(U1,k,1)+I5(U1,k,1);
+    tp2=I1(U1,k,2)-I2(U1,k,2)-I3_PB(U1,k,2)+I5(U1,k,2);
+    tp3=I1(U1,k,3)-I2(U1,k,3)-I3_PB(U1,k,3)+I5(U1,k,3);
+    tp4=I1(U1,k,4)-I2(U1,k,4)-I3_PB(U1,k,4)+I5(U1,k,4);
+    tp5=I1(U1,k,5)-I2(U1,k,5)-I3_PB(U1,k,5)+I5(U1,k,5);
 
     H[0] = (19*tp0/4. - 15*tp5)/dx/scalev;
     H[5] = (60*tp5 - 15*tp0)/dx/scalev;	
