@@ -46,6 +46,9 @@ using std::vector;
 #define First																						// define the macro First (UNCOMMENT IF RUNNING THE CODE FOR THE FIRST TIME)
 //#define Second																					// define the macro Second (UNCOMMENT IF PICKING UP DATA FROM A PREVIOUS RUN)
 
+// CHOOSE IF RUNNING THE LINEAR LANDAU EQUATION WITH Q(f,M):
+#define LinearLandau
+
 
 //************************//
 //   EXTERNAL VARIABLES   //

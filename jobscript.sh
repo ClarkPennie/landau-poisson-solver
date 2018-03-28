@@ -13,6 +13,6 @@
 set -x
 export OMP_NUM_THREADS=32
 
-ibrun tacc_affinity ./bin/LPsolver_nu005_NonUniND_QLinear_eps10^-1_NL0001NH1.out
+ibrun tacc_affinity ./bin/LPsolver_nu005_NonUniND_QLinear_TestMacro.out
 
 #./fpl.out

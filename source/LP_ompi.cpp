@@ -20,7 +20,7 @@
 double PI=M_PI;																						// declare PI and set it to M_PI (the value stored in the library math.h)
 //int M=5;		/*NOT FOR mConsOnly*/																					// declare M (the number of collision invarients) and set it equal to 5
 int M=1;																							// declare M (the number of collision invarients) and set it equal to 5
-int Nx=24, Nv=24, nT=10, N=16; 											 							// declare Nx (no. of x discretised points), Nv (no. of v discretised point), nT (no. of time discretised points) & N (no. of nodes in the spectral method) and setting all their values
+int Nx=24, Nv=24, nT=5, N=16; 											 							// declare Nx (no. of x discretised points), Nv (no. of v discretised point), nT (no. of time discretised points) & N (no. of nodes in the spectral method) and setting all their values
 int size_v=Nv*Nv*Nv, size=Nx*size_v, size_ft=N*N*N; 												// declare size_v (no. of total v discretised points in 3D) and set it to Nv^3, size (the total no. of discretised points) and set it to size_v*Nx & size_ft (total no. of spectral discretised points in 3D) and set it to N*N*N
 
 #ifdef TwoStream																					// only do this if TwoStream was defined
@@ -79,9 +79,6 @@ double T_L = 0.1;																					// declare T_L (the temperature at the lef
 double eps = 0.1;																					// declare eps (the dielectric constant in Poisson's equation: div(eps*grad(Phi)) = R(x,t)) and set its value
 #endif
 
-/* DATA FOR THE DOPING PROFILE - TURN INTO MACRO AT SOME POINT */
-
-
 double *v, *eta;																					// declare v (the velocity variable) & eta (the Fourier space variable)
 double *wtN;																						// declare wtN (the trapezoidal rule weights to be used)
 double scale, scale3, scaleL=8*Lv*Lv*Lv, scalev=dv*dv*dv;											// declare scale (the 1/sqrt(2pi) factor appearing in Gaussians), scale (the 1/(sqrt(2pi))^3 factor appearing in the Maxwellian), scaleL (the volume of the velocity domain) and set it to 8Lv^3 & scalev (the volume of a discretised velocity element) and set it to dv^3
@@ -127,8 +124,9 @@ int main()
 	double **conv_weights1, **conv_weights2;														// declare a pointer to conv_weights1 (the first matrix in the sum of matrices for the weights of the convolution in Fourier space of single species collisions) & conv_weights2 (the second matrix in the sum of matrices for the weights of the convolution in Fourier space of single species collisions)
   
 	fftw_complex *qHat, *qHat_linear;																// declare pointers to the complex numbers qHat (the DFT of Q) & qHat_linear (the DFT of the two species colission operator Q);
+	#ifdef LinearLandau																				// only do this is LinearLandau was defined, for using Q(f,M)
 	fftw_complex **DFTMaxwell;																		// declare pointer to the FFT variable DFTMaxwell (to store the FFT of the initial Maxwellian)
-
+	#endif
   
 	//************************
 	//MPI-related variables!
@@ -210,8 +208,8 @@ int main()
 			C2[i] = (double *)malloc(size_ft*sizeof(double));										// allocate enough space at the ith entry of C2 for size_ft many double numbers
 		}
 		*/
-		C1 = (double *)malloc(size_ft*sizeof(double));										// allocate enough space at the ith entry of C1 for size_ft many double numbers
-		//C2 = (double *)malloc(size_ft*sizeof(double));										// allocate enough space at the ith entry of C2 for size_ft many double numbers
+		C1 = (double *)malloc(size_ft*sizeof(double));												// allocate enough space at the ith entry of C1 for size_ft many double numbers
+		//C2 = (double *)malloc(size_ft*sizeof(double));											// allocate enough space at the ith entry of C2 for size_ft many double numbers
 		f = (double **)malloc(chunk_Nx*sizeof(double *));											// allocate enough space at the pointer f for chunk_Nx many pointers to double numbers
 		for (i=0;i<chunk_Nx;i++)
 		{
@@ -223,13 +221,13 @@ int main()
 			conv_weights[i] = (double *)malloc(size_ft*sizeof(double));								// allocate enough space at the ith entry of conv_weights for size_ft many float numbers
 		}
 
-		conv_weights1 = (double **)malloc(size_ft*sizeof(double *));									// allocate enough space at the pointer conv_weights1 for size_ft many pointers to float numbers
+		conv_weights1 = (double **)malloc(size_ft*sizeof(double *));								// allocate enough space at the pointer conv_weights1 for size_ft many pointers to float numbers
 		for (i=0;i<size_ft;i++)
 		{
 			conv_weights1[i] = (double *)malloc(size_ft*sizeof(double));							// allocate enough space at the ith entry of conv_weights1 for size_ft many float numbers
 		}
 
-		conv_weights2 = (double **)malloc(size_ft*sizeof(double *));									// allocate enough space at the pointer conv_weights2 for size_ft many pointers to float numbers
+		conv_weights2 = (double **)malloc(size_ft*sizeof(double *));								// allocate enough space at the pointer conv_weights2 for size_ft many pointers to float numbers
 		for (i=0;i<size_ft;i++)
 		{
 			conv_weights2[i] = (double *)malloc(size_ft*sizeof(double));							// allocate enough space at the ith entry of conv_weights2 for size_ft many float numbers
@@ -283,11 +281,13 @@ int main()
 		fftOut = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer fftOut for size_ft many complex numbers
 		fftIn = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer fftIn for size_ft many complex numbers
  
+		#ifdef LinearLandau																			// only do this is LinearLandau was defined, for using Q(f,M)
 		DFTMaxwell = (fftw_complex**)fftw_malloc(chunk_Nx*sizeof(fftw_complex*));
 		for(i=0;i<chunk_Nx;i++)
 		{
 			DFTMaxwell[i] = (fftw_complex*)fftw_malloc(size_ft*sizeof(fftw_complex));
 		}
+		#endif
 
 		char buffer_weights[100], loading_buffer[100];												// declare the arrays buffer_weights (to store a string which displays the values of N & L_v) & loading_buffer (...?)
 		sprintf(buffer_weights,"Weights/N%d_L%g_Landau.wts",N,L_v);									// store the values of N & L_v in buffer_weights
@@ -394,59 +394,71 @@ int main()
 	#ifdef First																					// only do this if First was defined (setting initial conditions)
 		#ifdef Damping																				// only do this if Damping was defined
 		SetInit_LD(U);																				// set initial DG solution for Landau Damping. For the first time run t=0, use this to give init solution (otherwise, comment out)
-		#endif
+		#endif	/* Damping */
 		#ifdef TwoStream																			// only do this if TwoStream was defined
 		SetInit_LD(U);																				// set initial DG solution for Landau Damping. For the first time run t=0, use this to give init solution (otherwise, comment out)
-		#endif
+		#endif	/* TwoStream */
 		#ifdef FourHump																				// only do this if FourHump was defined
 		SetInit_4H(U);																				// set initial DG solution with the 4Hump IC. For the first time run t=0, use this to give init solution (otherwise, comment out)
-		#endif
+		#endif	/* FourHump */
 		#ifdef TwoHump																				// only do this if TwoHump was defined
 		SetInit_2H(U);																				// set initial DG solution with the 2Hump IC. For the first time run t=0, use this to give init solution (otherwise, comment out)
-		#endif
+		#endif	/* TwoHump */
 		#ifdef Doping																				// only do this if Damping was defined
 		SetInit_ND(U);																				// set initial DG solution appropriate for the non-constant doping profile. For the first time run t=0, use this to give init solution (otherwise, comment out)
-		ComputeDFTofMaxwellian(U, f, DFTMaxwell);														// compute the Fourier transform of the initial Maxwellian currently stored in U and store the output in DFTMaxwell
-//		setInit_spectral(U, fMaxwell); 																// Take the coefficient of the DG solution from the advection step, and project them onto the grid used for the spectral method to perform the collision step
-		#endif
-	#endif
+		#endif	/* Doping */
+
+		#ifdef LinearLandau																			// only do this is LinearLandau was defined, for using Q(f,M)
+		ComputeDFTofMaxwellian(U, f, DFTMaxwell);													// compute the Fourier transform of the initial Maxwellian currently stored in U and store the output in DFTMaxwell
+		#endif	/* LinearLandau */
+	#endif	/* First */
 
 	FILE *fmom, *fu, *fufull, *fmarg, *fphi, *fE, *fent;											// declare pointers to the files fmom (which will store the moments), fu (which will store the solution U), fufull (which will store the solution U in the TwoStream case), fmarg (which will store the values of the marginals), fphi (which will store the values of the potential phi) & fent (which will store the values fo the entropy)
 
 	if(myrank_mpi==0)																				// only the process with rank 0 will do this
 	{
 		#ifdef Damping																				// only do this if Damping was defined
-		printf("Damping. %s. nu=%g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
+		printf("Damping. %s. nu=%g, epsilon = %g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
 				"N=%d, dt=%g, nT=%d\nchunk_Nx=%d, nprocs_Nx=%d\n",
-				buffer_flags, nu, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT,chunk_Nx,nprocs_Nx);			// display in the output file that this is the Damping calculation, as well as the contents of the string buffer_flags and the values of nu, A_amp,k_wave, Nx, Lv, Nv, N, dt, nT, chunk_Nx & nprocs_Nx
+				buffer_flags, nu, eps, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT,chunk_Nx,nprocs_Nx);			// display in the output file that this is the Damping calculation, as well as the contents of the string buffer_flags and the values of nu, A_amp,k_wave, Nx, Lv, Nv, N, dt, nT, chunk_Nx & nprocs_Nx
 		#endif
     
 		#ifdef TwoStream																			// only do this if TwoStream was defined
-		printf("2Stream. %s. with 2Gauss. nu=%g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
-				"N=%d, dt=%g, nT=%d\n", buffer_flags, nu, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT);	// display in the output file that this is the TwoStream calculation, as well as the contents of the string buffer_flags and the values of nu, A_amp,k_wave, Nx, Lv, Nv, N, dt & nT
+		printf("2Stream. %s. with 2Gauss. nu=%g, epsilon = %g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
+				"N=%d, dt=%g, nT=%d\n", buffer_flags, nu, eps, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT);	// display in the output file that this is the TwoStream calculation, as well as the contents of the string buffer_flags and the values of nu, A_amp,k_wave, Nx, Lv, Nv, N, dt & nT
 		#endif
 
 		#ifdef FourHump																				// only do this if FourHump was defined
-		printf("4HumpIC. %s. nu=%g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
+		printf("4HumpIC. %s. nu=%g, epsilon = %g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
 				"N=%d, dt=%g, nT=%d\nchunk_Nx=%d, nprocs_Nx=%d\n",
-				buffer_flags, nu, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT,chunk_Nx,nprocs_Nx);			// display in the output file that this is the calculation with the 4Hump IC, as well as the contents of the string buffer_flags and the values of nu, A_amp,k_wave, Nx, Lv, Nv, N, dt, nT, chunk_Nx & nprocs_Nx
+				buffer_flags, nu, eps, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT,chunk_Nx,nprocs_Nx);			// display in the output file that this is the calculation with the 4Hump IC, as well as the contents of the string buffer_flags and the values of nu, A_amp,k_wave, Nx, Lv, Nv, N, dt, nT, chunk_Nx & nprocs_Nx
 		#endif
 
 		#ifdef TwoHump																				// only do this if TwoHump was defined
-		printf("2HumpIC. %s. nu=%g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
+		printf("2HumpIC. %s. nu=%g, epsilon = %g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
 				"N=%d, dt=%g, nT=%d\nchunk_Nx=%d, nprocs_Nx=%d\n",
-				buffer_flags, nu, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT,chunk_Nx,nprocs_Nx);			// display in the output file that this is the calculation with the 2Hump IC, as well as the contents of the string buffer_flags and the values of nu, A_amp,k_wave, Nx, Lv, Nv, N, dt, nT, chunk_Nx & nprocs_Nx
+				buffer_flags, nu, eps, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT,chunk_Nx,nprocs_Nx);			// display in the output file that this is the calculation with the 2Hump IC, as well as the contents of the string buffer_flags and the values of nu, A_amp,k_wave, Nx, Lv, Nv, N, dt, nT, chunk_Nx & nprocs_Nx
 		#endif
 
 		#ifdef Doping																				// only do this if Damping was defined
-		printf("Non-constant Doping Profile. %s. nu=%g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
+		printf("Non-constant Doping Profile. %s. nu=%g, epsilon = %g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
 				"N=%d, dt=%g, nT=%d\nchunk_Nx=%d, nprocs_Nx=%d\n"
 				"Doping Data: a_i = %d, b_i = %d, NH = %g, NL = %g, T_L = %g, T_R = %g \n",
-				buffer_flags, nu, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT,chunk_Nx,nprocs_Nx,
+				buffer_flags, nu, eps, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT,chunk_Nx,nprocs_Nx,
 				a_i, b_i, NH, NL, T_L, T_R);														// display in the output file that this is the Damping calculation, as well as the contents of the string buffer_flags and the values of nu, A_amp,k_wave, Nx, Lv, Nv, N, dt, nT, chunk_Nx & nprocs_Nx
 		#endif
+
+		#ifdef LinearLandau																			// only do this if LinearLandau was defined, for using Q(f,M)
+		printf("Linear Landau simulation using Q(f,M)\n");
+		#endif /* LinearLandau */
 	
 		#ifdef Second																				// only do this Second was defined (picking up data from a previous run)
+		#ifdef LinearLandau																			// only do this if LinearLandau was defined, for using Q(f,M)
+		SetInit_ND(U);																				// set initial DG solution appropriate for the non-constant doping profile. For the first time run t=0, use this to give init solution (otherwise, comment out)
+		ComputeDFTofMaxwellian(U, f, DFTMaxwell);													// compute the Fourier transform of the initial Maxwellian currently stored in U and store the output in DFTMaxwell
+		printf("Linear Landau simulation using Q(f,M)\n");
+		#endif	/* LinearLandau */
+
 		fu=fopen("Data/U_nu0.05A0.2k0.5Nx24Lx12.5664Nv24Lv5.25SpectralN16dt0.01nT200_QLinear_eps0.1NL0.0001NH0.1.dc","r"); 		// set fu to be a file with the name U_nu0.02A0.5k0.785398Nx48Lx8Nv48Lv4.5SpectralN24dt0.004nT500_non_nu002_2.dc, stored in the directory Data, and set the file access mode of fu to r (which means the file must exist already and will be read from)
 
 		fseek(fu ,0 ,SEEK_END);																		// find the final entry of the file fu
@@ -468,7 +480,7 @@ int main()
 		}
 
 		fclose(fu);																					// close the file fu
-		#endif
+		#endif	/* Second */
       
 		fmom=fopen(buffer_moment,"w");																// set fmom to be a file with the name stored in buffer_moment and set the file access mode of fmom to w (which creates an empty file and allows it to be written to)
 		fu=fopen(buffer_u, "w");																	// set fu to be a file with the name stored in buffer_u and set the file access mode of fu to w (which creates an empty file and allows it to be written to)
@@ -556,9 +568,17 @@ int main()
 				conserveAllMoments(qHat, qHat_linear);												// perform the explicit conservation calculation
 				RK4(f[l%chunk_Nx], l, qHat, conv_weights, qHat_linear, conv_weights_linear,
 						U, Utmp_coll);																// advance to the next time step in the collisional problem using RK4 at the given space-step l, taking the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), as well as qHat, conv_weights, qHat_linear & conv_weights_linear (to allow more Fourier transforms of Q to be made), storing the output partially in U and partially in Utmp_coll
-				#else																				// otherwise, if FullandLinear was not defined...
-//				ComputeQ(f[l%chunk_Nx], qHat, conv_weights);										// using the coefficients of the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), calculate the Fourier tranform of Q(f,f) using conv_weights for the weights in the convolution, then store the results of the Fourier transform in qHat
-				ComputeQLinear(f[l%chunk_Nx], DFTMaxwell[l%chunk_Nx], qHat, conv_weights);					// using the coefficients of the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), calculate the Fourier tranform of Q(f,M) using conv_weights1 & conv_weights2 for the weights in the convolution, then store the results of the Fourier transform in qHat
+				#else
+					#ifdef LinearLandau																// only do this if LinearLandau was defined, for using Q(f,M)
+					ComputeQLinear(f[l%chunk_Nx], DFTMaxwell[l%chunk_Nx], qHat, conv_weights);		// using the coefficients of the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), calculate the Fourier tranform of Q(f,M) using conv_weights1 & conv_weights2 for the weights in the convolution, then store the results of the Fourier transform in qHat
+					conserveAllMoments(qHat);														// perform the explicit conservation calculation
+					RK4Linear(f[l%chunk_Nx], DFTMaxwell[l%chunk_Nx], l, qHat, conv_weights, U, Utmp_coll);		// advance to the next time step in the collisional problem using RK4 at the given space-step l, taking the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), as well as qHat, conv_weights1 & conv_weights2 (to allow more Fourier transforms of Q to be made), storing the output partially in U and partially in Utmp_coll
+					#else																			// otherwise, if FullandLinear was not defined...
+					ComputeQ(f[l%chunk_Nx], qHat, conv_weights);									// using the coefficients of the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), calculate the Fourier tranform of Q(f,f) using conv_weights for the weights in the convolution, then store the results of the Fourier transform in qHat
+					conserveAllMoments(qHat);														// perform the explicit conservation calculation
+					RK4(f[l%chunk_Nx], l, qHat, conv_weights, U, Utmp_coll);						// advance to the next time step in the collisional problem using RK4 at the given space-step l, taking the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), as well as qHat & conv_weights (to allow more Fourier transforms of Q to be made), storing the output partially in U and partially in Utmp_coll
+					#endif	/* LinearLandau*/
+				#endif	/* FullandLinear */
 /*				//DEBUG CHECK:
 				double qHat_real, qHat_imag;
 				for(int j1=0;j1<N;j1++)
@@ -575,10 +595,6 @@ int main()
 					}
 				}
 				*/
-				conserveAllMoments(qHat);															// perform the explicit conservation calculation
-//				RK4(f[l%chunk_Nx], l, qHat, conv_weights, U, Utmp_coll);							// advance to the next time step in the collisional problem using RK4 at the given space-step l, taking the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), as well as qHat & conv_weights (to allow more Fourier transforms of Q to be made), storing the output partially in U and partially in Utmp_coll
-				RK4Linear(f[l%chunk_Nx], DFTMaxwell[l%chunk_Nx], l, qHat, conv_weights, U, Utmp_coll);		// advance to the next time step in the collisional problem using RK4 at the given space-step l, taking the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), as well as qHat, conv_weights1 & conv_weights2 (to allow more Fourier transforms of Q to be made), storing the output partially in U and partially in Utmp_coll
-				#endif
 			}
 
 			MPI_Barrier(MPI_COMM_WORLD);															// set an MPI barrier to ensure that all processes have reached this point before continuing
@@ -712,18 +728,20 @@ int main()
 	}
 	if(nu > 0.)
 	{
-		free(C1); free(v); free(eta); free(wtN); //free(C2);											// delete the dynamic memory allocated for C1, C2, v, eta & wtN
+		free(C1); free(v); free(eta); free(wtN); //free(C2);										// delete the dynamic memory allocated for C1, C2, v, eta & wtN
 		free(f); free(conv_weights); free(output_buffer); 											// delete the dynamic memory allocated for f, conv_weights, output_buffer
 		fftw_free(temp); fftw_free(qHat);															// delete the dynamic memory allocated for temp & qhat
 		free(conv_weights1); free(conv_weights2); 													// delete the dynamic memory allocated for conv_weights1 & conv_weights2
 		fftw_free(Q1_fft); fftw_free(Q2_fft); fftw_free(Q3_fft); fftw_free(fftOut); fftw_free(fftIn); // delete the dynamic memory allocated for Q1_fft, Q2_fft, Q3_fft, fftOut & fftIn
-		fftw_free(DFTMaxwell);																		// delete the dynamic memory allocated for DFTMaxwell
 		free(Q);free(f1);free(Q1); free(Utmp_coll);// free(f2); free(f3);//free(Q3);				// delete the dynamic memory allocated for Q, f1, Q1 & Utmp_coll
 		#ifdef FullandLinear																		// only do this if FullandLinear is defined
 		fftw_free(qHat_linear); fftw_free(Q1_fft_linear); 											// delete the dynamic memory allocated for qHat_linear & Q1_fft_linear
 		fftw_free(Q2_fft_linear); fftw_free(Q3_fft_linear); 										// delete the dynamic memory allocated for Q2_fft_linear & Q3_fft_linear
 		free(conv_weights_linear);																	// delete the dynamic memory allocated for conv_weights_linear
-		#endif
+		#endif	/* FullandLinear */
+		#ifdef LinearLandau																			// only do this is LinearLandau was defined, for using Q(f,M)
+		fftw_free(DFTMaxwell);																		// delete the dynamic memory allocated for DFTMaxwell
+		#endif	/* LinearLandau */
 	}
 	free(output_buffer_vp);																			// delete the dynamic memory allocated for output_buffer_vp
 	free(U); free(U1); free(Utmp); // free(H);														// delete the dynamic memory allocated for U, U1 & Utmp

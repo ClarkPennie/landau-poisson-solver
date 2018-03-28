@@ -822,7 +822,6 @@ void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights)				// functi
 
 	fft3D(fftIn, fftOut);														// perform the FFT of fftIn and store the result in fftOut
   
-	//printf("fft done\n");
 	#pragma omp parallel for schedule(dynamic) private(i,j,k,l,m,n,x,y,z,start_i,start_j,start_k,end_i,end_j,end_k,tempD) shared(qHat, fftOut, conv_weights) reduction(+:tmp0, tmp1)
 	for(i=0;i<N;i++) 															// loop through all points in the ki_1
 	{
@@ -874,24 +873,107 @@ void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights)				// functi
 							x = i + N/2 - l;									// set the index x to i + N/2 - l to represent the subtraction eta[x] = ki[i] - eta[l]
 							y = j + N/2 - m;									// set the index y to j + N/2 - m to represent the subtraction eta[y] = ki[j] - eta[m]
 							z = k + N/2 - n;									// set the index z to k + N/2 - n to represent the subtraction eta[z] = ki[k] - eta[n]
-							//printf("%d, %d, %d; %d, %d, %d\n",i,j,k,l,m,n);
-							// printf("tempD=%g\n",conv_weights[k + N*(j+ N*i)][n + N*(m + N*l)]);
+
 							tempD = conv_weights[k + N*(j+ N*i)][n + N*(m + N*l)];		// set tempD to the value of the convolution weight corresponding to current value of ki(i,j,k) & eta(l,m,n)
 							tmp0 += prefactor*wtN[l]*wtN[m]*wtN[n]*tempD*(fftOut[n + N*(m + N*l)][0]*fftOut[z + N*(y + N*x)][0] - fftOut[n + N*(m + N*l)][1]*fftOut[z + N*(y + N*x)][1]);		// increment the value of the real part of qHat(ki(i,j,k)) by fHat(eta(l,m,n))*f(ki(i,j,k)-eta(l,m,n))*conv_weight(ki(i,j,k),eta(l,m,n)) for the current values of l, m & n in the quadrature sum
 		  
 							tmp1 += prefactor*wtN[l]*wtN[m]*wtN[n]*tempD*(fftOut[n + N*(m + N*l)][0]*fftOut[z + N*(y + N*x)][1] + fftOut[n + N*(m + N*l)][1]*fftOut[z + N*(y + N*x)][0]);		// increment the value of the imaginary part of qHat(ki(i,j,k)) by fHat(eta(l,m,n))*f(ki(i,j,k)-eta(l,m,n))*conv_weight(ki(i,j,k),eta(l,m,n)) for the current values of l, m & n in the quadrature sum
-							// printf(" tempD=%g, prefactor=%g, fftOut=[%g,%g] at %d, %d, %d; %d, %d, %d; %d, %d, %d\n",tempD, prefactor, fftOut[z + N*(y + N*x)][0], fftOut[z + N*(y + N*x)][1],i,j,k,l,m,n, x,y,z);
 						}
 					}
 				}
-				// printf("%d, %d, %d done\n", i,j,k);
+
 				qHat[k + N*(j + N*i)][0] = tmp0;								// set the real part of qHat(ki(i,j,k)) to the value tmp0 calculated in the quadrature
 				qHat[k + N*(j + N*i)][1] = tmp1;								// set the imaginary part of qHat(ki(i,j,k)) to the value tmp1 calculated in the quadrature
-				// printf("%d, %d, %d write-in done\n", i,j,k);
 			}
 		}
 	}
 }
+
+void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U, double *dU) //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6
+{
+  int i,j,k, j1, j2, j3, k_v, k_eta, kk,l_local;
+  double Q_re, Q_im, tp0, tp2, tp3,tp4,tp5, tmp0=0., tmp2=0., tmp3=0., tmp4=0.,tmp5=0., tem;
+
+  l_local = l%chunk_Nx;
+
+  FS(qHat, fftOut); 																	// set fftOut to the Fourier series representation of qHat (i.e. the IFFT of qHat)
+  //ifft3D(qHat, fftOut);
+  #pragma omp parallel for private(i) shared(Q,fftOut,f1,f)
+  for(i=0;i<size_ft;i++)																// calculate the first step of RK4
+  {
+    Q[i] = fftOut[i][0];																// this is Q(Fn, Fn) so that Kn^1 = dt*Q(Fn, Fn) = dt*Q[i]
+    f1[i] = f[i] + dt*Q[i]*nu; 															// this is Fn + Kn^1(*nu...?) BUG: this evolution (only on node values) is not consistent with our conservation routine, which preserves the exact moments of the {1,v,|v|^{2}} approximations
+  }
+
+  ComputeQ(f1, Q1_fft, conv_weights);													// calculate the Fourier tranform of Q(f1,f1) using conv_weights for the weights in the convolution, then store the results of the Fourier transform in Q1_fft
+  conserveAllMoments(Q1_fft);   														// perform the explicit conservation calculation on Kn2^ = Q^(f1,f1) = Q1_fft
+
+  FS(Q1_fft, fftOut);																	// set fftOut to the Fourier series representation of Q1_fft (i.e. the IFFT of Q1_fft, so that Kn^2 = fftOut = Q(Fn + dt*Kn^1, Fn + dt*Kn^1) )
+  //ifft3D(Q1_fft, fftOut);
+  #pragma omp parallel for private(i) shared(Q,Q1,fftOut,f1,f)
+  for(i=0;i<size_ft;i++)																// calculate the second step of RK4
+  {
+    Q1[i] = fftOut[i][0];
+    f1[i] = f[i] +  0.5*dt*Q[i]*nu + 0.5*dt*Q1[i]*nu;
+  }
+
+  ComputeQ(f1, Q2_fft, conv_weights); //collides
+  conserveAllMoments(Q2_fft);   //conserves k3
+
+  FS(Q2_fft, fftOut);
+  //ifft3D(Q2_fft, fftOut);
+  #pragma omp parallel for private(i) shared(Q,Q1,fftOut,f1,f)
+  for(i=0;i<size_ft;i++)																// calculate the third step of RK4
+  {
+    Q1[i] = fftOut[i][0];
+    f1[i] = f[i] + 0.5*Q[i]*nu + 0.5*Q1[i]*nu;
+  }
+
+  ComputeQ(f1, Q3_fft, conv_weights); //collides
+  conserveAllMoments(Q3_fft);                //conserves k4
+
+  #pragma omp parallel for schedule(dynamic) private(j1,j2,j3,i,j,k,k_v,k_eta,kk,Q_re, Q_im) shared(l, l_local, qHat,U, dU) reduction(+:tp0, tp2,tp3,tp4, tp5)  // calculate the fourth step of RK4 (still in Fourier space though?!) - reduction(+: tmp0, tmp2, tmp3, tmp4, tmp5)
+  for(int kt=0;kt<size_v;kt++){
+    j3 = kt % Nv; j2 = ((kt-j3)/Nv) % Nv; j1 = (kt - j3 - Nv*j2)/(Nv*Nv);
+    tp0=0.; tp2=0.; tp3=0.; tp4=0.; tp5=0.;
+    for(i=0;i<N;i++){
+      for(j=0;j<N;j++){
+		for(k=0;k<N;k++){
+		  k_eta = k + N*(j + N*i);
+
+		  IntModes(i,j,k,j1,j2,j3,IntM); //the global IntM must be declared as threadprivate; BUG: forgot to uncomment this and thus IntM=0 !!
+
+		  Q_re = nu*(0.5*qHat[k_eta][0] + (Q1_fft[k_eta][0]+Q2_fft[k_eta][0]+Q3_fft[k_eta][0])/6.);
+		  Q_im = nu*(0.5*qHat[k_eta][1] + (Q1_fft[k_eta][1]+Q2_fft[k_eta][1]+Q3_fft[k_eta][1])/6.);
+
+		  //tem = scale3*wtN[i]*wtN[j]*wtN[k]*h_eta*h_eta*h_eta;
+		  tp0 += IntM[0]*Q_re - IntM[1]*Q_im;
+		  tp2 += IntM[1*2]*Q_re - IntM[1*2+1]*Q_im;
+		  tp3 += IntM[2*2]*Q_re - IntM[2*2+1]*Q_im;
+		  tp4 += IntM[3*2]*Q_re - IntM[3*2+1]*Q_im;
+		  tp5 += IntM[4*2]*Q_re - IntM[4*2+1]*Q_im;
+		}
+      }
+    }
+    //tmp0 += tp0; tmp2 += dv*tp2 + Gridv((double)j1)*tp0; tmp3 += dv*tp3 +Gridv((double)j2)*tp0 ;tmp4 += dv*tp4 + Gridv((double)j3)*tp0;  //tmp5 += (Gridv((double)j1)*Gridv((double)j1) + Gridv((double)j2)*Gridv((double)j2) + Gridv((double)j3)*Gridv((double)j3))*tp0 +dv*dv*tp5+2*dv*(Gridv((double)j1)*tp2 + Gridv((double)j2)*tp3 +Gridv((double)j3)*tp4);
+	//tmp5 += dv*dv*tp5 -  (Gridv((double)j1)*Gridv((double)j1) + Gridv((double)j2)*Gridv((double)j2) + Gridv((double)j3)*Gridv((double)j3))*tp0 + 2*(Gridv((double)j1)*(dv*tp2 + Gridv((double)j1)*tp0) + Gridv((double)j2)*(dv*tp3 + Gridv((double)j2)*tp0) + Gridv((double)j3)*(dv*tp4 + Gridv((double)j3)*tp0));
+
+    k_v = l*size_v + kt;
+    tp0 = U[k_v*6+0] + U[k_v*6+5]/4. + dt*tp0/scalev/scaleL/scale3;
+    tp2 = U[k_v*6+2] + dt*tp2*12./scalev/scaleL/scale3;
+    tp3 = U[k_v*6+3] + dt*tp3*12./scalev/scaleL/scale3;
+    tp4 = U[k_v*6+4] + dt*tp4*12./scalev/scaleL/scale3;
+    tp5 = U[k_v*6+0]/4. + U[k_v*6+5]*19./240. + dt*tp5/scalev/scaleL/scale3;
+
+    dU[(l_local*size_v + kt)*5] = 19*tp0/4. - 15*tp5;
+    dU[(l_local*size_v + kt)*5+4] = 60*tp5 - 15*tp0;
+    dU[(l_local*size_v + kt)*5+1] = tp2;
+    dU[(l_local*size_v + kt)*5+2] = tp3;
+    dU[(l_local*size_v + kt)*5+3] = tp4;
+  }
+}
+
+// FUNCTIONS FOR LINEAR LANDAU Q(f,M):
 
 void ComputeDFTofMaxwellian(double *UMaxwell, double **fMaxwell, fftw_complex **DFTMax)				// function to compute the Fourier transform of the initial Maxwellian
 {
@@ -925,7 +1007,6 @@ void ComputeQLinear(double *f, fftw_complex *Maxwell_fftOut, fftw_complex *qHat,
 
 	fft3D(fftIn, fftOut);														// perform the FFT of fftIn and store the result in fftOut
 
-	//printf("fft done\n");
 	#pragma omp parallel for schedule(dynamic) private(i,j,k,l,m,n,x,y,z,start_i,start_j,start_k,end_i,end_j,end_k,tempD) shared(qHat, fftOut, conv_weights) reduction(+:tmp0, tmp1)
 	for(i=0;i<N;i++) 															// loop through all points in the ki_1
 	{
@@ -977,8 +1058,6 @@ void ComputeQLinear(double *f, fftw_complex *Maxwell_fftOut, fftw_complex *qHat,
 							x = i + N/2 - l;									// set the index x to i + N/2 - l to represent the subtraction eta[x] = ki[i] - eta[l]
 							y = j + N/2 - m;									// set the index y to j + N/2 - m to represent the subtraction eta[y] = ki[j] - eta[m]
 							z = k + N/2 - n;									// set the index z to k + N/2 - n to represent the subtraction eta[z] = ki[k] - eta[n]
-							//printf("%d, %d, %d; %d, %d, %d\n",i,j,k,l,m,n);
-							// printf("tempD=%g\n",conv_weights[k + N*(j+ N*i)][n + N*(m + N*l)]);
 
 							tempD = conv_weights[k + N*(j+ N*i)][n + N*(m + N*l)];
 //							tempD1 = conv_weightsA[k + N*(j+ N*i)][n + N*(m + N*l)];
@@ -988,103 +1067,14 @@ void ComputeQLinear(double *f, fftw_complex *Maxwell_fftOut, fftw_complex *qHat,
 							tmp1 += prefactor*wtN[l]*wtN[m]*wtN[n]*(tempD*(Maxwell_fftOut[n + N*(m + N*l)][0]*fftOut[z + N*(y + N*x)][1] + Maxwell_fftOut[n + N*(m + N*l)][1]*fftOut[z + N*(y + N*x)][0]));
 //							tmp0 += prefactor*wtN[l]*wtN[m]*wtN[n]*((2*tempD1+tempD2)*(Maxwell_fftOut[n + N*(m + N*l)][0]*fftOut[z + N*(y + N*x)][0] - Maxwell_fftOut[n + N*(m + N*l)][1]*fftOut[z + N*(y + N*x)][1]));
 //							tmp1 += prefactor*wtN[l]*wtN[m]*wtN[n]*((2*tempD1+tempD2)*(Maxwell_fftOut[n + N*(m + N*l)][0]*fftOut[z + N*(y + N*x)][1] + Maxwell_fftOut[n + N*(m + N*l)][1]*fftOut[z + N*(y + N*x)][0]));
-
-
-							// printf(" tempD=%g, prefactor=%g, fftOut=[%g,%g] at %d, %d, %d; %d, %d, %d; %d, %d, %d\n",tempD, prefactor, fftOut[z + N*(y + N*x)][0], fftOut[z + N*(y + N*x)][1],i,j,k,l,m,n, x,y,z);
 						}
 					}
 				}
-				// printf("%d, %d, %d done\n", i,j,k);
 				qHat[k + N*(j + N*i)][0] = tmp0;								// set the real part of qHat(ki(i,j,k)) to the value tmp0 calculated in the quadrature
 				qHat[k + N*(j + N*i)][1] = tmp1;								// set the imaginary part of qHat(ki(i,j,k)) to the value tmp1 calculated in the quadrature
-				// printf("%d, %d, %d write-in done\n", i,j,k);
 			}
 		}
 	}
-}
-
-void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U, double *dU) //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6 
-{
-  int i,j,k, j1, j2, j3, k_v, k_eta, kk,l_local;  
-  double Q_re, Q_im, tp0, tp2, tp3,tp4,tp5, tmp0=0., tmp2=0., tmp3=0., tmp4=0.,tmp5=0., tem;
-
-  l_local = l%chunk_Nx;
-  
-  FS(qHat, fftOut); 																	// set fftOut to the Fourier series representation of qHat (i.e. the IFFT of qHat)
-  //ifft3D(qHat, fftOut);
-  #pragma omp parallel for private(i) shared(Q,fftOut,f1,f)
-  for(i=0;i<size_ft;i++)																// calculate the first step of RK4
-  {
-    Q[i] = fftOut[i][0];																// this is Q(Fn, Fn) so that Kn^1 = dt*Q(Fn, Fn) = dt*Q[i]
-    f1[i] = f[i] + dt*Q[i]*nu; 															// this is Fn + Kn^1(*nu...?) BUG: this evolution (only on node values) is not consistent with our conservation routine, which preserves the exact moments of the {1,v,|v|^{2}} approximations
-  }
-
-  ComputeQ(f1, Q1_fft, conv_weights);													// calculate the Fourier tranform of Q(f1,f1) using conv_weights for the weights in the convolution, then store the results of the Fourier transform in Q1_fft
-  conserveAllMoments(Q1_fft);   														// perform the explicit conservation calculation on Kn2^ = Q^(f1,f1) = Q1_fft
-
-  FS(Q1_fft, fftOut);																	// set fftOut to the Fourier series representation of Q1_fft (i.e. the IFFT of Q1_fft, so that Kn^2 = fftOut = Q(Fn + dt*Kn^1, Fn + dt*Kn^1) )
-  //ifft3D(Q1_fft, fftOut);
-  #pragma omp parallel for private(i) shared(Q,Q1,fftOut,f1,f)
-  for(i=0;i<size_ft;i++)																// calculate the second step of RK4
-  {
-    Q1[i] = fftOut[i][0];	   
-    f1[i] = f[i] +  0.5*dt*Q[i]*nu + 0.5*dt*Q1[i]*nu;
-  }
-
-  ComputeQ(f1, Q2_fft, conv_weights); //collides
-  conserveAllMoments(Q2_fft);   //conserves k3
-
-  FS(Q2_fft, fftOut);
-  //ifft3D(Q2_fft, fftOut);
-  #pragma omp parallel for private(i) shared(Q,Q1,fftOut,f1,f)
-  for(i=0;i<size_ft;i++)																// calculate the third step of RK4
-  {
-    Q1[i] = fftOut[i][0];	 
-    f1[i] = f[i] + 0.5*Q[i]*nu + 0.5*Q1[i]*nu;
-  }
-
-  ComputeQ(f1, Q3_fft, conv_weights); //collides
-  conserveAllMoments(Q3_fft);                //conserves k4
-
-  #pragma omp parallel for schedule(dynamic) private(j1,j2,j3,i,j,k,k_v,k_eta,kk,Q_re, Q_im) shared(l, l_local, qHat,U, dU) reduction(+:tp0, tp2,tp3,tp4, tp5)  // calculate the fourth step of RK4 (still in Fourier space though?!) - reduction(+: tmp0, tmp2, tmp3, tmp4, tmp5)
-  for(int kt=0;kt<size_v;kt++){
-    j3 = kt % Nv; j2 = ((kt-j3)/Nv) % Nv; j1 = (kt - j3 - Nv*j2)/(Nv*Nv);
-    tp0=0.; tp2=0.; tp3=0.; tp4=0.; tp5=0.;
-    for(i=0;i<N;i++){
-      for(j=0;j<N;j++){
-		for(k=0;k<N;k++){
-		  k_eta = k + N*(j + N*i);
-		  
-		  IntModes(i,j,k,j1,j2,j3,IntM); //the global IntM must be declared as threadprivate; BUG: forgot to uncomment this and thus IntM=0 !!
-		  
-		  Q_re = nu*(0.5*qHat[k_eta][0] + (Q1_fft[k_eta][0]+Q2_fft[k_eta][0]+Q3_fft[k_eta][0])/6.);
-		  Q_im = nu*(0.5*qHat[k_eta][1] + (Q1_fft[k_eta][1]+Q2_fft[k_eta][1]+Q3_fft[k_eta][1])/6.);
-		  
-		  //tem = scale3*wtN[i]*wtN[j]*wtN[k]*h_eta*h_eta*h_eta;
-		  tp0 += IntM[0]*Q_re - IntM[1]*Q_im;
-		  tp2 += IntM[1*2]*Q_re - IntM[1*2+1]*Q_im;
-		  tp3 += IntM[2*2]*Q_re - IntM[2*2+1]*Q_im;
-		  tp4 += IntM[3*2]*Q_re - IntM[3*2+1]*Q_im;
-		  tp5 += IntM[4*2]*Q_re - IntM[4*2+1]*Q_im;
-		}
-      }
-    }	     
-    //tmp0 += tp0; tmp2 += dv*tp2 + Gridv((double)j1)*tp0; tmp3 += dv*tp3 +Gridv((double)j2)*tp0 ;tmp4 += dv*tp4 + Gridv((double)j3)*tp0;  //tmp5 += (Gridv((double)j1)*Gridv((double)j1) + Gridv((double)j2)*Gridv((double)j2) + Gridv((double)j3)*Gridv((double)j3))*tp0 +dv*dv*tp5+2*dv*(Gridv((double)j1)*tp2 + Gridv((double)j2)*tp3 +Gridv((double)j3)*tp4);     
-	//tmp5 += dv*dv*tp5 -  (Gridv((double)j1)*Gridv((double)j1) + Gridv((double)j2)*Gridv((double)j2) + Gridv((double)j3)*Gridv((double)j3))*tp0 + 2*(Gridv((double)j1)*(dv*tp2 + Gridv((double)j1)*tp0) + Gridv((double)j2)*(dv*tp3 + Gridv((double)j2)*tp0) + Gridv((double)j3)*(dv*tp4 + Gridv((double)j3)*tp0));
-	  
-    k_v = l*size_v + kt;      
-    tp0 = U[k_v*6+0] + U[k_v*6+5]/4. + dt*tp0/scalev/scaleL/scale3;
-    tp2 = U[k_v*6+2] + dt*tp2*12./scalev/scaleL/scale3;
-    tp3 = U[k_v*6+3] + dt*tp3*12./scalev/scaleL/scale3;
-    tp4 = U[k_v*6+4] + dt*tp4*12./scalev/scaleL/scale3;
-    tp5 = U[k_v*6+0]/4. + U[k_v*6+5]*19./240. + dt*tp5/scalev/scaleL/scale3;
-
-    dU[(l_local*size_v + kt)*5] = 19*tp0/4. - 15*tp5;
-    dU[(l_local*size_v + kt)*5+4] = 60*tp5 - 15*tp0;
-    dU[(l_local*size_v + kt)*5+1] = tp2;
-    dU[(l_local*size_v + kt)*5+2] = tp3;
-    dU[(l_local*size_v + kt)*5+3] = tp4;   
-  }
 }
 
 void RK4Linear(double *f, fftw_complex *MaxwellHat, int l, fftw_complex *qHat, double **conv_weights, double *U, double *dU) //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6 for the linear collision operator with a Maxwellian
