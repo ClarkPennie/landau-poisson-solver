@@ -25,6 +25,8 @@
 
 #ifdef Doping
 double DopingProfile(int i);
+
+double computeE(double *U, double x, int ix);
 #endif
 
 double rho_x(double x, double *U, int i);

@@ -390,12 +390,12 @@ void RK3(double *U) // RK3 for f_t = H(f)
   for(k=chunksize_dg*myrank_mpi;k<chunksize_dg*(myrank_mpi+1);k++){ 
     k_local = k%chunksize_dg;
     
-    tp0=I1(U,k,0)-I2(U,k,0)-I3_PB(U,k,0)+I5(U,k,0);
-    tp1=I1(U,k,1)-I2(U,k,1)-I3_PB(U,k,1)+I5(U,k,1);
-    tp2=I1(U,k,2)-I2(U,k,2)-I3_PB(U,k,2)+I5(U,k,2);
-    tp3=I1(U,k,3)-I2(U,k,3)-I3_PB(U,k,3)+I5(U,k,3);
-    tp4=I1(U,k,4)-I2(U,k,4)-I3_PB(U,k,4)+I5(U,k,4);
-    tp5=I1(U,k,5)-I2(U,k,5)-I3_PB(U,k,5)+I5(U,k,5);
+    tp0=I1(U,k,0)-I2(U,k,0)-I3(U,k,0)+I5(U,k,0);
+    tp1=I1(U,k,1)-I2(U,k,1)-I3(U,k,1)+I5(U,k,1);
+    tp2=I1(U,k,2)-I2(U,k,2)-I3(U,k,2)+I5(U,k,2);
+    tp3=I1(U,k,3)-I2(U,k,3)-I3(U,k,3)+I5(U,k,3);
+    tp4=I1(U,k,4)-I2(U,k,4)-I3(U,k,4)+I5(U,k,4);
+    tp5=I1(U,k,5)-I2(U,k,5)-I3(U,k,5)+I5(U,k,5);
 
     //H[k_local][0] = (19*tp[0]/4. - 15*tp[5])/dx/scalev;
     //H[k_local][5] = (60*tp[5] - 15*tp[0])/dx/scalev;	
@@ -442,12 +442,12 @@ void RK3(double *U) // RK3 for f_t = H(f)
   for(k=chunksize_dg*myrank_mpi;k<chunksize_dg*(myrank_mpi+1);k++){      
     k_local = k%chunksize_dg;
     
-    tp0=I1(U1,k,0)-I2(U1,k,0)-I3_PB(U1,k,0)+I5(U1,k,0);
-    tp1=I1(U1,k,1)-I2(U1,k,1)-I3_PB(U1,k,1)+I5(U1,k,1);
-    tp2=I1(U1,k,2)-I2(U1,k,2)-I3_PB(U1,k,2)+I5(U1,k,2);
-    tp3=I1(U1,k,3)-I2(U1,k,3)-I3_PB(U1,k,3)+I5(U1,k,3);
-    tp4=I1(U1,k,4)-I2(U1,k,4)-I3_PB(U1,k,4)+I5(U1,k,4);
-    tp5=I1(U1,k,5)-I2(U1,k,5)-I3_PB(U1,k,5)+I5(U1,k,5);
+    tp0=I1(U1,k,0)-I2(U1,k,0)-I3(U1,k,0)+I5(U1,k,0);
+    tp1=I1(U1,k,1)-I2(U1,k,1)-I3(U1,k,1)+I5(U1,k,1);
+    tp2=I1(U1,k,2)-I2(U1,k,2)-I3(U1,k,2)+I5(U1,k,2);
+    tp3=I1(U1,k,3)-I2(U1,k,3)-I3(U1,k,3)+I5(U1,k,3);
+    tp4=I1(U1,k,4)-I2(U1,k,4)-I3(U1,k,4)+I5(U1,k,4);
+    tp5=I1(U1,k,5)-I2(U1,k,5)-I3(U1,k,5)+I5(U1,k,5);
 
     //H[k_local][0] = (19*tp[0]/4. - 15*tp[5])/dx/scalev;
     //H[k_local][5] = (60*tp[5] - 15*tp[0])/dx/scalev;	
@@ -494,12 +494,12 @@ ce = computePhi_x_0(U1);
   for(k=chunksize_dg*myrank_mpi;k<chunksize_dg*(myrank_mpi+1);k++){      
     k_local = k%chunksize_dg;
   
-    tp0=I1(U1,k,0)-I2(U1,k,0)-I3_PB(U1,k,0)+I5(U1,k,0);
-    tp1=I1(U1,k,1)-I2(U1,k,1)-I3_PB(U1,k,1)+I5(U1,k,1);
-    tp2=I1(U1,k,2)-I2(U1,k,2)-I3_PB(U1,k,2)+I5(U1,k,2);
-    tp3=I1(U1,k,3)-I2(U1,k,3)-I3_PB(U1,k,3)+I5(U1,k,3);
-    tp4=I1(U1,k,4)-I2(U1,k,4)-I3_PB(U1,k,4)+I5(U1,k,4);
-    tp5=I1(U1,k,5)-I2(U1,k,5)-I3_PB(U1,k,5)+I5(U1,k,5);
+    tp0=I1(U1,k,0)-I2(U1,k,0)-I3(U1,k,0)+I5(U1,k,0);
+    tp1=I1(U1,k,1)-I2(U1,k,1)-I3(U1,k,1)+I5(U1,k,1);
+    tp2=I1(U1,k,2)-I2(U1,k,2)-I3(U1,k,2)+I5(U1,k,2);
+    tp3=I1(U1,k,3)-I2(U1,k,3)-I3(U1,k,3)+I5(U1,k,3);
+    tp4=I1(U1,k,4)-I2(U1,k,4)-I3(U1,k,4)+I5(U1,k,4);
+    tp5=I1(U1,k,5)-I2(U1,k,5)-I3(U1,k,5)+I5(U1,k,5);
 
     H[0] = (19*tp0/4. - 15*tp5)/dx/scalev;
     H[5] = (60*tp5 - 15*tp0)/dx/scalev;	

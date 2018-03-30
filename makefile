@@ -5,7 +5,7 @@ OBJDIR:=$(DIR)/build
 SRCDIR:=$(DIR)/source
 
 # Files
-EXEC :=  LPsolver_nu005_4Hump_TestMacro.out 
+EXEC :=  LPsolver_nu005_QLinear_BCTempsEqual_eps10^-1.out 
 SRC  :=  $(wildcard $(SRCDIR)/*.cpp) 
 OBJ  :=  $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SRC))
 
@@ -53,12 +53,14 @@ $(OBJDIR)/LP_ompi.o: $(SRCDIR)/LP_ompi.h $(SRCDIR)/advection_1.h $(SRCDIR)/colli
 $(OBJDIR)/advection_1.o: $(SRCDIR)/advection_1.h  $(SRCDIR)/LP_ompi.h $(SRCDIR)/FieldCalculations.h
 $(OBJDIR)/collisionRoutines_1.o: $(SRCDIR)/collisionRoutines_1.h $(SRCDIR)/LP_ompi.h $(SRCDIR)/advection_1.h #$(SRCDIR)/ThreadPriv.h
 $(OBJDIR)/conservationRoutines.o: $(SRCDIR)/conservationRoutines.h $(SRCDIR)/LP_ompi.h
+$(OBJDIR)/conservationRoutines_OnlyMass.o: $(SRCDIR)/conservationRoutines.h $(SRCDIR)/LP_ompi.h
 $(OBJDIR)/EntropyCalculations.o: $(SRCDIR)/EntropyCalculations.h  $(SRCDIR)/LP_ompi.h $(SRCDIR)/advection_1.h
 $(OBJDIR)/EquilibriumSolution.o: $(SRCDIR)/EquilibriumSolution.h  $(SRCDIR)/LP_ompi.h $(SRCDIR)/FieldCalculations.h #$(SRCDIR)/advection_1.h 
 $(OBJDIR)/MarginalCreation.o: $(SRCDIR)/MarginalCreation.h  $(SRCDIR)/LP_ompi.h $(SRCDIR)/advection_1.h
 $(OBJDIR)/MomentCalculations.o: $(SRCDIR)/MomentCalculations.h  $(SRCDIR)/LP_ompi.h $(SRCDIR)/FieldCalculations.h #$(SRCDIR)/advection_1.h
 $(OBJDIR)/NegativityChecks.o: $(SRCDIR)/NegativityChecks.h  $(SRCDIR)/LP_ompi.h $(SRCDIR)/advection_1.h
 $(OBJDIR)/FieldCalculations.o: $(SRCDIR)/FieldCalculations.h $(SRCDIR)/LP_ompi.h $(SRCDIR)/advection_1.h
+$(OBJDIR)/FieldCalculations_withND.o: $(SRCDIR)/FieldCalculations.h $(SRCDIR)/LP_ompi.h $(SRCDIR)/advection_1.h
 $(OBJDIR)/SetInit_1.o: $(SRCDIR)/SetInit_1.h $(SRCDIR)/LP_ompi.h $(SRCDIR)/advection_1.h
 
 

@@ -17,15 +17,15 @@
 
 #include "LP_ompi.h"																				// LP_ompi.h is where the libraries required by the program included, all macros (to decide the behaviour of a given run) are defined and all variables to be used throughout the various files are defined as external
 
+int Nx=24, Nv=24, nT=200, N=16; 										 							// declare Nx (no. of x discretised points), Nv (no. of v discretised point), nT (no. of time discretised points) & N (no. of nodes in the spectral method) and setting all their values
+int size_v=Nv*Nv*Nv, size=Nx*size_v, size_ft=N*N*N; 												// declare size_v (no. of total v discretised points in 3D) and set it to Nv^3, size (the total no. of discretised points) and set it to size_v*Nx & size_ft (total no. of spectral discretised points in 3D) and set it to N*N*N
+
 double PI=M_PI;																						// declare PI and set it to M_PI (the value stored in the library math.h)
 #ifdef MassConsOnly																					// only do this if MassConsOnly was defined and only conserving mass
 int M=1;																							// declare M (the number of collision invarients) and set it equal to 5
 #else
 int M=5;																							// declare M (the number of collision invarients) and set it equal to 5
 #endif	/* MassConsOnly */
-
-int Nx=24, Nv=24, nT=5, N=16; 											 							// declare Nx (no. of x discretised points), Nv (no. of v discretised point), nT (no. of time discretised points) & N (no. of nodes in the spectral method) and setting all their values
-int size_v=Nv*Nv*Nv, size=Nx*size_v, size_ft=N*N*N; 												// declare size_v (no. of total v discretised points in 3D) and set it to Nv^3, size (the total no. of discretised points) and set it to size_v*Nx & size_ft (total no. of spectral discretised points in 3D) and set it to N*N*N
 
 #ifdef TwoStream																					// only do this if TwoStream was defined
 double A_amp=0.5, k_wave=2*PI/4.;																	// declare A_amp (the amplitude of the perturbing wave) & k_wave (the wave number of the perturbing wave) and set their values
@@ -79,7 +79,7 @@ double NH = 1;																						// declare NH (the density of ions on the ed
 int a_i = Nx/3-1;																					// declare a_i (the index such that ND(x) = NH, for x <= x_{a_i-1/2}, & ND(x) = NL, for x > x_{a_i+1/2}) and set its value
 int b_i = 2*Nx/3-1;																					// declare b_i (the index such that ND(x) = NL, for x <= x_{b_i-1/2}, & ND(x) = NH, for x > x_{b_i+1/2}) and set its value
 double T_R = 0.4;																					// declare T_R (the temperature at the right edge of space) and set its value
-double T_L = 0.1;																					// declare T_L (the temperature at the left edge of space) and set its value
+double T_L = 0.4;																					// declare T_L (the temperature at the left edge of space) and set its value
 double eps = 0.1;																					// declare eps (the dielectric constant in Poisson's equation: div(eps*grad(Phi)) = R(x,t)) and set its value
 #endif
 
@@ -381,7 +381,7 @@ int main()
 						buffer_phi[110], buffer_E[110], buffer_marg[110], buffer_ent[110];			// declare the arrays buffer_moment (to store the name of the file where the moments are printed), buffer_u (to store the name of the file where the solution U is printed), buffer_ufull (to store the name of the file where the solution U is printed in the TwoStream), buffer_flags (to store the flag added to the end of the filenames), buffer_phi (to store the name of the file where the values of phi are printed), buffer_marg (to store the name of the file where the marginals are printed) & buffer_ent (to store the name of the file where the entropy values are printed)
 
 	// EVERY TIME THE CODE IS RUN, CHANGE THE FLAG TO A NAME THAT IDENTIFIES THE CASE RUNNING FOR OR WHAT TIME RUN UP TO:
-	sprintf(buffer_flags,"TestMassConsOnlyMacro");														// store a string in buffer_flags, so that files associated to this run can be identified
+	sprintf(buffer_flags,"QLinear_EqualBC_eps0.1T10");													// store a string in buffer_flags, so that files associated to this run can be identified
 	sprintf(buffer_moment,"Data/Moments_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
 					nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is Moments_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
 	sprintf(buffer_u,"Data/U_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
@@ -455,8 +455,13 @@ int main()
 		#endif
 
 		#ifdef LinearLandau																			// only do this if LinearLandau was defined, for using Q(f,M)
-		printf("Linear Landau simulation using Q(f,M)\n");
+		printf("Linear Landau simulation using Q(f,M)\n");											// display in the output file that this is the calculation for the Linear Landau problem
 		#endif /* LinearLandau */
+		#ifdef MassConsOnly																			// only do this if MassConsOnly was defined and only conserving mass
+		printf("Only mass conservation is being enforced...\n");									// display in the output file that only mass conservation is being enforced
+		#endif /* MassConsOnly */
+
+
 	
 		#ifdef Second																				// only do this Second was defined (picking up data from a previous run)
 		#ifdef LinearLandau																			// only do this if LinearLandau was defined, for using Q(f,M)
@@ -528,7 +533,7 @@ int main()
 		ent2 = computeRelEntropy(U, fEquiVals);														// set ent2 the value calculated through computeRelEntropy
 		l_ent2 = log(fabs(ent2));																	// set l_ent2 to the log of ent2
 		ll_ent2 = log(fabs(l_ent2));																// set ll_ent2 to the log of l_ent2
-		printf("step #0: %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g %11.8g %11.8g \n",
+		printf("\nstep #0: %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g %11.8g %11.8g \n",
 				mass, a[0], a[1], a[2], KiE, EleE, tmp, log(tmp), KiE+EleE, ent1);					// display in the output file that this is step 0 (so these are the initial conditions), then the mass, 3 components of momentum, kinetic energy, electric energy, sqrt(electric energy), log(sqrt(electric energy)), total energy & entropy
 		fprintf(fmom, "%11.8g %11.8g %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g \n",
 				mass, a[0], a[1], a[2], KiE, EleE, tmp, log(tmp), KiE+EleE);						// in the file tagged as fmom, print the initial mass, 3 components of momentum, kinetic energy, electric energy, sqrt(electric energy), log(sqrt(electric energy)) & total energy
