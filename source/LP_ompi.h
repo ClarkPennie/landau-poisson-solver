@@ -24,7 +24,9 @@
 #include <fftw3.h>																					// allows the Fast Fourier Transform to be used
 #include <mkl_lapack.h>
 #include <vector>
+#include <algorithm>
 using std::vector;
+using std::max_element;
 
 
 //************************//
@@ -67,7 +69,7 @@ extern double Lx, Lv;																				// declare Lx (for 0 < x < Lx) and set 
 extern double dv, dx; 																				// declare dv (the velocity stepsize) and set it to 2Lv/Nv & dx (the space stepsize) and set it to Lx/Nx
 extern double L_v, R_v, L_eta;																		// declare L_v (for -Lv < v < Lv in the collision problem) and set it to Lv, R_v (for v in B_(R_v) in the collision problem) and set it to Lv & L_eta (for Fourier space, -L_eta < eta < L_eta)
 extern double h_eta, h_v;																			// declare h_eta (the Fourier stepsize) & h_v (also the velocity stepsize but for the collision problem)
-extern double nu, dt, nthread; 																		// declare nu (1/knudson#) and set it to 0.1, dt (the timestep) and set it to 0.004 & nthread (the number of OpenMP threads)
+extern double dt, nthread; 																		// declare nu (1/knudson#) and set it to 0.1, dt (the timestep) and set it to 0.004 & nthread (the number of OpenMP threads)
 extern double eps;																					// declare eps (the dielectric constant in Poisson's equation: div(eps*grad(Phi)) = R(x,t))
 
 #ifdef Doping
@@ -78,6 +80,9 @@ extern int b_i;																						// declare b_i (the index such that ND(x) =
 extern double T_R;																					// declare T_R (the temperature at the right edge of space)
 extern double T_L;																					// declare T_L (the temperature at the left edge of space)
 #endif
+
+extern vector<double> nu;																			// declare the vector nu (to hold the value of 1/Knudsen on each cell)
+extern double nu_max;																				// declare nu_max (maximum of 1/knudson#)
 
 extern double *v, *eta;																				// declare v (the velocity variable) & eta (the Fourier space variable)
 extern double *wtN;																					// declare wtN (the trapezoidal rule weights to be used)

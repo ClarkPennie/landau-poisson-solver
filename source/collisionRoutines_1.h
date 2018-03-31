@@ -23,6 +23,8 @@
 //   FUNCTION PROTOTYPES  //
 //************************//
 
+void SetupKnudsen(vector<double>& nu_vals);
+
 double S1hat(double ki1,double ki2,double ki3);
 
 double S233hat(double ki1, double ki2, double ki3);
@@ -59,17 +61,17 @@ void ProjectedNodeValue(fftw_complex *qHat, double *Q_incremental);
 	#ifdef FullandLinear
 	void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear);
 
-	void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear, double *U, double *dU);
+	void RK4(double *f, int l, double nu_val, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear, double *U, double *dU);
 	#else
 	void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights);
 
-	void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U, double *dU);
+	void RK4(double *f, int l, double nu_val, fftw_complex *qHat, double **conv_weights, double *U, double *dU);
 
 	void ComputeDFTofMaxwellian(double *UMaxwell, double **fMaxwell, fftw_complex **DFTMax);
 
 	void ComputeQLinear(double *f, fftw_complex *Maxwell_fftOut, fftw_complex *qHat, double **conv_weights);
 
-	void RK4Linear(double *f, fftw_complex *MaxwellHat, int l, fftw_complex *qHat, double **conv_weights, double *U, double *dU);
+	void RK4Linear(double *f, fftw_complex *MaxwellHat, int l, double nu_val, fftw_complex *qHat, double **conv_weights, double *U, double *dU);
 	#endif
 #else
 	#ifdef FullandLinear
@@ -77,7 +79,7 @@ void ProjectedNodeValue(fftw_complex *qHat, double *Q_incremental);
 	#else
 	void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights);
 
-	void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U);
+	void RK4(double *f, int l, double nu_val, fftw_complex *qHat, double **conv_weights, double *U);
 	#endif
 #endif  
 

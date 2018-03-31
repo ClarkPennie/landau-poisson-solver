@@ -17,7 +17,7 @@
 
 #include "LP_ompi.h"																				// LP_ompi.h is where the libraries required by the program included, all macros (to decide the behaviour of a given run) are defined and all variables to be used throughout the various files are defined as external
 
-int Nx=24, Nv=24, nT=200, N=16; 										 							// declare Nx (no. of x discretised points), Nv (no. of v discretised point), nT (no. of time discretised points) & N (no. of nodes in the spectral method) and setting all their values
+int Nx=24, Nv=24, nT=5, N=16; 										 							// declare Nx (no. of x discretised points), Nv (no. of v discretised point), nT (no. of time discretised points) & N (no. of nodes in the spectral method) and setting all their values
 int size_v=Nv*Nv*Nv, size=Nx*size_v, size_ft=N*N*N; 												// declare size_v (no. of total v discretised points in 3D) and set it to Nv^3, size (the total no. of discretised points) and set it to size_v*Nx & size_ft (total no. of spectral discretised points in 3D) and set it to N*N*N
 
 double PI=M_PI;																						// declare PI and set it to M_PI (the value stored in the library math.h)
@@ -33,7 +33,7 @@ double Lx=4., Lv=5.25;																				// declare Lx (for 0 < x < Lx) and set
 double dv=2.*Lv/Nv, dx=Lx/Nx; 																		// declare dv (the velocity stepsize) and set it to 2Lv/Nv & dx (the space stepsize) and set it to Lx/Nx
 double L_v=Lv, R_v=Lv, L_eta;																		// declare L_v (for -Lv < v < Lv in the collision problem) and set it to Lv, R_v (for v in B_(R_v) in the collision problem) and set it to Lv & L_eta (for Fourier space, -L_eta < eta < L_eta)
 double h_eta, h_v;																					// declare h_eta (the Fourier stepsize) & h_v (also the velocity stepsize but for the collision problem)
-double nu=0.1, dt=0.004, nthread=16; 																// declare nu (1/knudson#) and set it to 0.1, dt (the timestep) and set it to 0.004 & nthread (the number of OpenMP threads) and set it to 16
+double dt=0.004, nthread=16; 																		// declare dt (the timestep) and set it to 0.004 & nthread (the number of OpenMP threads) and set it to 16
 double eps = 1;																						// declare eps (the dielectric constant in Poisson's equation: div(eps*grad(Phi)) = R(x,t)) and set its value
 #endif
 
@@ -43,7 +43,7 @@ double Lx=2*PI/k_wave, Lv=5.25;																		// declare Lx (for 0 < x < Lx) 
 double dv=2.*Lv/Nv, dx=Lx/Nx; 																		// declare dv (the velocity stepsize) and set it to 2Lv/Nv & dx (the space stepsize) and set it to Lx/Nx
 double L_v=Lv, R_v=Lv, L_eta;																		// declare L_v (for -Lv < v < Lv in the collision problem) and set it to Lv, R_v (for v in B_(R_v) in the collision problem) and set it to Lv & L_eta (for Fourier space, -L_eta < eta < L_eta)
 double h_eta, h_v;																					// declare h_eta (the Fourier stepsize) & h_v (also the velocity stepsize but for the collision problem)
-double nu=0.05, dt=0.01, nthread=16; 																// declare nu (1/knudson#) and set it to 0.02, dt (the timestep) and set it to 0.004 & nthread (the number of OpenMP threads) and set it to 16
+double dt=0.01, nthread=16; 																		// declare dt (the timestep) and set it to 0.004 & nthread (the number of OpenMP threads) and set it to 16
 double eps = 1;																						// declare eps (the dielectric constant in Poisson's equation: div(eps*grad(Phi)) = R(x,t)) and set its value
 #endif
 
@@ -53,7 +53,7 @@ double Lx=2*PI/k_wave, Lv=5.25;																		// declare Lx (for 0 < x < Lx) 
 double dv=2.*Lv/Nv, dx=Lx/Nx; 																		// declare dv (the velocity stepsize) and set it to 2Lv/Nv & dx (the space stepsize) and set it to Lx/Nx
 double L_v=Lv, R_v=Lv, L_eta;																		// declare L_v (for -Lv < v < Lv in the collision problem) and set it to Lv, R_v (for v in B_(R_v) in the collision problem) and set it to Lv & L_eta (for Fourier space, -L_eta < eta < L_eta)
 double h_eta, h_v;																					// declare h_eta (the Fourier stepsize) & h_v (also the velocity stepsize but for the collision problem)
-double nu=0.05, dt=0.01, nthread=16; 																// declare nu (1/knudson#) and set it to 0.02, dt (the timestep) and set it to 0.004 & nthread (the number of OpenMP threads) and set it to 16
+double dt=0.01, nthread=16; 																		// declare dt (the timestep) and set it to 0.004 & nthread (the number of OpenMP threads) and set it to 16
 double eps = 1;																						// declare eps (the dielectric constant in Poisson's equation: div(eps*grad(Phi)) = R(x,t)) and set its value
 #endif
 
@@ -63,7 +63,7 @@ double Lx=2*PI/k_wave, Lv=5.25;																		// declare Lx (for 0 < x < Lx) 
 double dv=2.*Lv/Nv, dx=Lx/Nx; 																		// declare dv (the velocity stepsize) and set it to 2Lv/Nv & dx (the space stepsize) and set it to Lx/Nx
 double L_v=Lv, R_v=Lv, L_eta;																		// declare L_v (for -Lv < v < Lv in the collision problem) and set it to Lv, R_v (for v in B_(R_v) in the collision problem) and set it to Lv & L_eta (for Fourier space, -L_eta < eta < L_eta)
 double h_eta, h_v;																					// declare h_eta (the Fourier stepsize) & h_v (also the velocity stepsize but for the collision problem)
-double nu=0.05, dt=0.01, nthread=16; 																// declare nu (1/knudson#) and set it to 0.02, dt (the timestep) and set it to 0.004 & nthread (the number of OpenMP threads) and set it to 16
+double dt=0.01, nthread=16; 																		// declare dt (the timestep) and set it to 0.004 & nthread (the number of OpenMP threads) and set it to 16
 double eps = 1;																						// declare eps (the dielectric constant in Poisson's equation: div(eps*grad(Phi)) = R(x,t)) and set its value
 #endif
 
@@ -73,7 +73,7 @@ double Lx=2*PI/k_wave, Lv=5.25;																		// declare Lx (for 0 < x < Lx) 
 double dv=2.*Lv/Nv, dx=Lx/Nx; 																		// declare dv (the velocity stepsize) and set it to 2Lv/Nv & dx (the space stepsize) and set it to Lx/Nx
 double L_v=Lv, R_v=Lv, L_eta;																		// declare L_v (for -Lv < v < Lv in the collision problem) and set it to Lv, R_v (for v in B_(R_v) in the collision problem) and set it to Lv & L_eta (for Fourier space, -L_eta < eta < L_eta)
 double h_eta, h_v;																					// declare h_eta (the Fourier stepsize) & h_v (also the velocity stepsize but for the collision problem)
-double nu=0.05, dt=0.01, nthread=32;																// declare nu (1/knudson#) and set it to 0.02, dt (the timestep) and set it to 0.004 & nthread (the number of OpenMP threads) and set it to 16
+double dt=0.01, nthread=32;																			// declare dt (the timestep) and set it to 0.004 & nthread (the number of OpenMP threads) and set it to 16
 double NL = 0.001;																					// declare NL (the density of ions in the middle of the well, the Lower value) and set its value
 double NH = 1;																						// declare NH (the density of ions on the edges of the well, the Higher value) and set its value
 int a_i = Nx/3-1;																					// declare a_i (the index such that ND(x) = NH, for x <= x_{a_i-1/2}, & ND(x) = NL, for x > x_{a_i+1/2}) and set its value
@@ -82,6 +82,9 @@ double T_R = 0.4;																					// declare T_R (the temperature at the rig
 double T_L = 0.4;																					// declare T_L (the temperature at the left edge of space) and set its value
 double eps = 0.1;																					// declare eps (the dielectric constant in Poisson's equation: div(eps*grad(Phi)) = R(x,t)) and set its value
 #endif
+
+vector<double> nu(Nx);																				// declare the vector nu (to hold the value of 1/Knudsen on each cell)
+double nu_max;																						// declare nu_max (maximum of 1/knudson#)
 
 double *v, *eta;																					// declare v (the velocity variable) & eta (the Fourier space variable)
 double *wtN;																						// declare wtN (the trapezoidal rule weights to be used)
@@ -203,7 +206,9 @@ int main()
 	fAvgVals = (double*)malloc(size*sizeof(double));												// allocate enough space at the pointer fAvgVals for size many doubles
 	fEquiVals = (double*)malloc(5*5*5*5*size*sizeof(double));										// allocate enough space at the pointer fEquiVals for 5*Nx*(5*Nv)^3 many doubles
 
-	if(nu > 0.)
+	SetupKnudsen(nu);
+
+	if(nu_max > 0.)
 	{
 		#ifdef MassConsOnly																			// only do this if MassConsOnly was defined and only conserving mass
 		C1 = (double *)malloc(size_ft*sizeof(double));												// allocate enough space at the ith entry of C1 for size_ft many double numbers
@@ -381,21 +386,21 @@ int main()
 						buffer_phi[110], buffer_E[110], buffer_marg[110], buffer_ent[110];			// declare the arrays buffer_moment (to store the name of the file where the moments are printed), buffer_u (to store the name of the file where the solution U is printed), buffer_ufull (to store the name of the file where the solution U is printed in the TwoStream), buffer_flags (to store the flag added to the end of the filenames), buffer_phi (to store the name of the file where the values of phi are printed), buffer_marg (to store the name of the file where the marginals are printed) & buffer_ent (to store the name of the file where the entropy values are printed)
 
 	// EVERY TIME THE CODE IS RUN, CHANGE THE FLAG TO A NAME THAT IDENTIFIES THE CASE RUNNING FOR OR WHAT TIME RUN UP TO:
-	sprintf(buffer_flags,"QLinear_EqualBC_eps0.1T10");													// store a string in buffer_flags, so that files associated to this run can be identified
-	sprintf(buffer_moment,"Data/Moments_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
-					nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is Moments_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
-	sprintf(buffer_u,"Data/U_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
-					nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is U_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_u
-	sprintf(buffer_ufull,"Data/U2stream_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
-					nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is U2stream_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_ufull
-	sprintf(buffer_marg,"Data/Marginals_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
-					nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is Marginals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
-	sprintf(buffer_phi,"Data/PhiVals_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
-					nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is PhiVals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
-	sprintf(buffer_E,"Data/FieldVals_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
-					nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is PhiVals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
-	sprintf(buffer_ent,"Data/EntropyVals_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
-					nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is EntropyVals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
+	sprintf(buffer_flags,"QLinear_TestNuVector");													// store a string in buffer_flags, so that files associated to this run can be identified
+	sprintf(buffer_moment,"Data/Moments_nuMax%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
+					nu_max, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is Moments_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
+	sprintf(buffer_u,"Data/U_nuMax%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
+					nu_max, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is U_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_u
+	sprintf(buffer_ufull,"Data/U2stream_nuMax%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
+					nu_max, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is U2stream_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_ufull
+	sprintf(buffer_marg,"Data/Marginals_nuMax%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
+					nu_max, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is Marginals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
+	sprintf(buffer_phi,"Data/PhiVals_nuMax%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
+					nu_max, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is PhiVals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
+	sprintf(buffer_E,"Data/FieldVals_nuMax%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
+					nu_max, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is PhiVals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
+	sprintf(buffer_ent,"Data/EntropyVals_nuMax%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
+					nu_max, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is EntropyVals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
 
 	#ifdef First																					// only do this if First was defined (setting initial conditions)
 		#ifdef Damping																				// only do this if Damping was defined
@@ -424,33 +429,33 @@ int main()
 	if(myrank_mpi==0)																				// only the process with rank 0 will do this
 	{
 		#ifdef Damping																				// only do this if Damping was defined
-		printf("Damping. %s. nu=%g, epsilon = %g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
+		printf("Damping. %s. nu_max=%g, epsilon = %g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
 				"N=%d, dt=%g, nT=%d\nchunk_Nx=%d, nprocs_Nx=%d\n",
-				buffer_flags, nu, eps, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT,chunk_Nx,nprocs_Nx);			// display in the output file that this is the Damping calculation, as well as the contents of the string buffer_flags and the values of nu, A_amp,k_wave, Nx, Lv, Nv, N, dt, nT, chunk_Nx & nprocs_Nx
+				buffer_flags, nu_max, eps, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT,chunk_Nx,nprocs_Nx);			// display in the output file that this is the Damping calculation, as well as the contents of the string buffer_flags and the values of nu, A_amp,k_wave, Nx, Lv, Nv, N, dt, nT, chunk_Nx & nprocs_Nx
 		#endif
     
 		#ifdef TwoStream																			// only do this if TwoStream was defined
-		printf("2Stream. %s. with 2Gauss. nu=%g, epsilon = %g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
-				"N=%d, dt=%g, nT=%d\n", buffer_flags, nu, eps, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT);	// display in the output file that this is the TwoStream calculation, as well as the contents of the string buffer_flags and the values of nu, A_amp,k_wave, Nx, Lv, Nv, N, dt & nT
+		printf("2Stream. %s. with 2Gauss. nu_max=%g, epsilon = %g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
+				"N=%d, dt=%g, nT=%d\n", buffer_flags, nu_max, eps, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT);	// display in the output file that this is the TwoStream calculation, as well as the contents of the string buffer_flags and the values of nu, A_amp,k_wave, Nx, Lv, Nv, N, dt & nT
 		#endif
 
 		#ifdef FourHump																				// only do this if FourHump was defined
-		printf("4HumpIC. %s. nu=%g, epsilon = %g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
+		printf("4HumpIC. %s. nu_max=%g, epsilon = %g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
 				"N=%d, dt=%g, nT=%d\nchunk_Nx=%d, nprocs_Nx=%d\n",
-				buffer_flags, nu, eps, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT,chunk_Nx,nprocs_Nx);			// display in the output file that this is the calculation with the 4Hump IC, as well as the contents of the string buffer_flags and the values of nu, A_amp,k_wave, Nx, Lv, Nv, N, dt, nT, chunk_Nx & nprocs_Nx
+				buffer_flags, nu_max, eps, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT,chunk_Nx,nprocs_Nx);			// display in the output file that this is the calculation with the 4Hump IC, as well as the contents of the string buffer_flags and the values of nu, A_amp,k_wave, Nx, Lv, Nv, N, dt, nT, chunk_Nx & nprocs_Nx
 		#endif
 
 		#ifdef TwoHump																				// only do this if TwoHump was defined
-		printf("2HumpIC. %s. nu=%g, epsilon = %g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
+		printf("2HumpIC. %s. nu_max=%g, epsilon = %g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
 				"N=%d, dt=%g, nT=%d\nchunk_Nx=%d, nprocs_Nx=%d\n",
-				buffer_flags, nu, eps, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT,chunk_Nx,nprocs_Nx);			// display in the output file that this is the calculation with the 2Hump IC, as well as the contents of the string buffer_flags and the values of nu, A_amp,k_wave, Nx, Lv, Nv, N, dt, nT, chunk_Nx & nprocs_Nx
+				buffer_flags, nu_max, eps, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT,chunk_Nx,nprocs_Nx);			// display in the output file that this is the calculation with the 2Hump IC, as well as the contents of the string buffer_flags and the values of nu, A_amp,k_wave, Nx, Lv, Nv, N, dt, nT, chunk_Nx & nprocs_Nx
 		#endif
 
 		#ifdef Doping																				// only do this if Damping was defined
-		printf("Non-constant Doping Profile. %s. nu=%g, epsilon = %g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
+		printf("Non-constant Doping Profile. %s. nu_max=%g, epsilon = %g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
 				"N=%d, dt=%g, nT=%d\nchunk_Nx=%d, nprocs_Nx=%d\n"
 				"Doping Data: a_i = %d, b_i = %d, NH = %g, NL = %g, T_L = %g, T_R = %g \n",
-				buffer_flags, nu, eps, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT,chunk_Nx,nprocs_Nx,
+				buffer_flags, nu_max, eps, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT,chunk_Nx,nprocs_Nx,
 				a_i, b_i, NH, NL, T_L, T_R);														// display in the output file that this is the Damping calculation, as well as the contents of the string buffer_flags and the values of nu, A_amp,k_wave, Nx, Lv, Nv, N, dt, nT, chunk_Nx & nprocs_Nx
 		#endif
 
@@ -568,7 +573,7 @@ int main()
 	{
 		RK3(U); 																					// Use RK3 to perform one timestep of the collisionless problem
 
-		if(nu > 0.)
+		if(nu_max > 0.)
 		{
 			setInit_spectral(U, f); 																// Take the coefficient of the DG solution from the advection step, and project them onto the grid used for the spectral method to perform the collision step
 
@@ -577,17 +582,17 @@ int main()
 				#ifdef FullandLinear																// only do this if FullandLinear was defined
 				ComputeQ(f[l%chunk_Nx], qHat, conv_weights, qHat_linear, conv_weights_linear);		// using the coefficients of the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), calculate the Fourier tranform of Q(f,f) using conv_weights for the weights in the convolution in the full part of Q & conv_weights_linear in the convolution in the linear part of Q, then store the results of each Fourier transform in qHat & qHat_linear, respectively
 				conserveAllMoments(qHat, qHat_linear);												// perform the explicit conservation calculation
-				RK4(f[l%chunk_Nx], l, qHat, conv_weights, qHat_linear, conv_weights_linear,
+				RK4(f[l%chunk_Nx], l, nu[l], qHat, conv_weights, qHat_linear, conv_weights_linear,
 						U, Utmp_coll);																// advance to the next time step in the collisional problem using RK4 at the given space-step l, taking the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), as well as qHat, conv_weights, qHat_linear & conv_weights_linear (to allow more Fourier transforms of Q to be made), storing the output partially in U and partially in Utmp_coll
 				#else
 					#ifdef LinearLandau																// only do this if LinearLandau was defined, for using Q(f,M)
 					ComputeQLinear(f[l%chunk_Nx], DFTMaxwell[l%chunk_Nx], qHat, conv_weights);		// using the coefficients of the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), calculate the Fourier tranform of Q(f,M) using conv_weights1 & conv_weights2 for the weights in the convolution, then store the results of the Fourier transform in qHat
 					conserveAllMoments(qHat);														// perform the explicit conservation calculation
-					RK4Linear(f[l%chunk_Nx], DFTMaxwell[l%chunk_Nx], l, qHat, conv_weights, U, Utmp_coll);		// advance to the next time step in the collisional problem using RK4 at the given space-step l, taking the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), as well as qHat, conv_weights1 & conv_weights2 (to allow more Fourier transforms of Q to be made), storing the output partially in U and partially in Utmp_coll
+					RK4Linear(f[l%chunk_Nx], DFTMaxwell[l%chunk_Nx], l, nu[l], qHat, conv_weights, U, Utmp_coll);		// advance to the next time step in the collisional problem using RK4 at the given space-step l, taking the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), as well as qHat, conv_weights1 & conv_weights2 (to allow more Fourier transforms of Q to be made), storing the output partially in U and partially in Utmp_coll
 					#else																			// otherwise, if FullandLinear was not defined...
 					ComputeQ(f[l%chunk_Nx], qHat, conv_weights);									// using the coefficients of the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), calculate the Fourier tranform of Q(f,f) using conv_weights for the weights in the convolution, then store the results of the Fourier transform in qHat
 					conserveAllMoments(qHat);														// perform the explicit conservation calculation
-					RK4(f[l%chunk_Nx], l, qHat, conv_weights, U, Utmp_coll);						// advance to the next time step in the collisional problem using RK4 at the given space-step l, taking the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), as well as qHat & conv_weights (to allow more Fourier transforms of Q to be made), storing the output partially in U and partially in Utmp_coll
+					RK4(f[l%chunk_Nx], l, nu[l], qHat, conv_weights, U, Utmp_coll);						// advance to the next time step in the collisional problem using RK4 at the given space-step l, taking the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), as well as qHat & conv_weights (to allow more Fourier transforms of Q to be made), storing the output partially in U and partially in Utmp_coll
 					#endif	/* LinearLandau*/
 				#endif	/* FullandLinear */
 /*				//DEBUG CHECK:
@@ -737,7 +742,7 @@ int main()
 		//fclose(fufull);
 		#endif
 	}
-	if(nu > 0.)
+	if(nu_max > 0.)
 	{
 		free(C1); free(v); free(eta); free(wtN); 													// delete the dynamic memory allocated for C1, v, eta & wtN
 		#ifndef MassConsOnly																		// only do this if MassConsOnly was not defined and conserving all moments

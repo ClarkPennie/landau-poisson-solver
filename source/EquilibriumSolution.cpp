@@ -17,8 +17,8 @@ void ExportRhoQuadVals(double *U)																// function to export the value
 
 	char flag[100], buffer_rhoeq[100];															// declare flag (a flag at the end of the file name, of 100 characters) & buffer_rhoeq (to store the name of the file where rho is store)
 	sprintf(flag,"4Hump");																		// store the string "4Hump" in flag
-	sprintf(buffer_rhoeq,"Data/RhoEquiVals_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
-					nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, flag);						// create a .dc file name, located in the directory Data, whose name is RhoEquiVals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of flag and store it in buffer_rhoeq
+	sprintf(buffer_rhoeq,"Data/RhoEquiVals_nuMax%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
+					nu_max, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, flag);						// create a .dc file name, located in the directory Data, whose name is RhoEquiVals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of flag and store it in buffer_rhoeq
 	FILE *rhoeqvals;																			// declare a pointer to a file called rhoeqvals
 	rhoeqvals = fopen(buffer_rhoeq,"w");														// set rhoeqvals to be a file with the name stored in buffer_rhoeq and set the file access mode of rhoeqvals to w (which creates an empty file and allows it to be written to)
 
