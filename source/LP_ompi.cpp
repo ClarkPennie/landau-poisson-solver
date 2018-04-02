@@ -17,7 +17,7 @@
 
 #include "LP_ompi.h"																				// LP_ompi.h is where the libraries required by the program included, all macros (to decide the behaviour of a given run) are defined and all variables to be used throughout the various files are defined as external
 
-int Nx=24, Nv=24, nT=5, N=16; 										 							// declare Nx (no. of x discretised points), Nv (no. of v discretised point), nT (no. of time discretised points) & N (no. of nodes in the spectral method) and setting all their values
+int Nx=24, Nv=24, nT=1000, N=16; 										 							// declare Nx (no. of x discretised points), Nv (no. of v discretised point), nT (no. of time discretised points) & N (no. of nodes in the spectral method) and setting all their values
 int size_v=Nv*Nv*Nv, size=Nx*size_v, size_ft=N*N*N; 												// declare size_v (no. of total v discretised points in 3D) and set it to Nv^3, size (the total no. of discretised points) and set it to size_v*Nx & size_ft (total no. of spectral discretised points in 3D) and set it to N*N*N
 
 double PI=M_PI;																						// declare PI and set it to M_PI (the value stored in the library math.h)
@@ -74,7 +74,7 @@ double dv=2.*Lv/Nv, dx=Lx/Nx; 																		// declare dv (the velocity step
 double L_v=Lv, R_v=Lv, L_eta;																		// declare L_v (for -Lv < v < Lv in the collision problem) and set it to Lv, R_v (for v in B_(R_v) in the collision problem) and set it to Lv & L_eta (for Fourier space, -L_eta < eta < L_eta)
 double h_eta, h_v;																					// declare h_eta (the Fourier stepsize) & h_v (also the velocity stepsize but for the collision problem)
 double dt=0.01, nthread=32;																			// declare dt (the timestep) and set it to 0.004 & nthread (the number of OpenMP threads) and set it to 16
-double NL = 0.001;																					// declare NL (the density of ions in the middle of the well, the Lower value) and set its value
+double NL = 1;																						// declare NL (the density of ions in the middle of the well, the Lower value) and set its value
 double NH = 1;																						// declare NH (the density of ions on the edges of the well, the Higher value) and set its value
 int a_i = Nx/3-1;																					// declare a_i (the index such that ND(x) = NH, for x <= x_{a_i-1/2}, & ND(x) = NL, for x > x_{a_i+1/2}) and set its value
 int b_i = 2*Nx/3-1;																					// declare b_i (the index such that ND(x) = NL, for x <= x_{b_i-1/2}, & ND(x) = NH, for x > x_{b_i+1/2}) and set its value
@@ -386,7 +386,7 @@ int main()
 						buffer_phi[110], buffer_E[110], buffer_marg[110], buffer_ent[110];			// declare the arrays buffer_moment (to store the name of the file where the moments are printed), buffer_u (to store the name of the file where the solution U is printed), buffer_ufull (to store the name of the file where the solution U is printed in the TwoStream), buffer_flags (to store the flag added to the end of the filenames), buffer_phi (to store the name of the file where the values of phi are printed), buffer_marg (to store the name of the file where the marginals are printed) & buffer_ent (to store the name of the file where the entropy values are printed)
 
 	// EVERY TIME THE CODE IS RUN, CHANGE THE FLAG TO A NAME THAT IDENTIFIES THE CASE RUNNING FOR OR WHAT TIME RUN UP TO:
-	sprintf(buffer_flags,"QLinear_TestNuVector");													// store a string in buffer_flags, so that files associated to this run can be identified
+	sprintf(buffer_flags,"QLinear_VarNu_SheathTest_T10");												// store a string in buffer_flags, so that files associated to this run can be identified
 	sprintf(buffer_moment,"Data/Moments_nuMax%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
 					nu_max, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is Moments_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
 	sprintf(buffer_u,"Data/U_nuMax%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
@@ -458,6 +458,8 @@ int main()
 				buffer_flags, nu_max, eps, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT,chunk_Nx,nprocs_Nx,
 				a_i, b_i, NH, NL, T_L, T_R);														// display in the output file that this is the Damping calculation, as well as the contents of the string buffer_flags and the values of nu, A_amp,k_wave, Nx, Lv, Nv, N, dt, nT, chunk_Nx & nprocs_Nx
 		#endif
+
+		PrintKnudsen(nu);
 
 		#ifdef LinearLandau																			// only do this if LinearLandau was defined, for using Q(f,M)
 		printf("Linear Landau simulation using Q(f,M)\n");											// display in the output file that this is the calculation for the Linear Landau problem

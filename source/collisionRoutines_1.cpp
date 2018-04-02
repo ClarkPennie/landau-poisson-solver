@@ -17,10 +17,39 @@ double IntM[10];																					// declare an array IntM to hold 10 double 
 
 void SetupKnudsen(vector<double>& nu_vals)
 {
+	for(int i=0; i<Nx/8; i++)
+	{
+		nu_vals[i] = 0.1;
+	}
+	/*
+	for(int i=Nx/3; i<2*Nx/3; i++)
+	{
+		nu_vals[i] = 0.0875 - (i-Nx/3)*0.0125;
+	}
+	*/
+	for(int i=Nx/8; i<Nx; i++)
+	{
+		nu_vals[i] = 0;
+	}
+
+	/*
 	for(int i=0; i<Nx; i++)
 	{
 		nu_vals[i] = 0.05;
 	}
+	*/
+
+	nu_max = *max_element(nu_vals.begin(), nu_vals.end());
+}
+
+void PrintKnudsen(vector<double>& nu_vals)
+{
+	for(int i=0; i<Nx; i++)
+	{
+		printf("nu[%d] = %g, ", i, nu_vals[i]);
+	}
+	printf("nu_max = %g.\n", nu_max);
+
 	nu_max = *max_element(nu_vals.begin(), nu_vals.end());
 }
 
