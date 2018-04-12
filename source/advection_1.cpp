@@ -67,6 +67,36 @@ void DirichletBC(vector<double>& Ub_vals, int i, int j1, int j2, int j3)
 	Ub_vals[3] = ND*tmp2*12;																															// calculate the coefficient U[6k+3] = 12*b_(6k+3) = 12*(int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_(6k+3)(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
 	Ub_vals[4] = ND*tmp3*12;																															// calculate the coefficient U[6k+4] = 12*b_(6k+4) = 12*(int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_(6k+4)(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
 }
+
+void ChargeNeutralityBC(vector<double>& Ub_vals, double* U_vals, int i, int k)
+{
+	double ND;																																			// declare ND (the value of the doping profile at the given x)
+	double density;																																		// declare density (the value of int_{K_j} f(x,v) dv on this cell)
+
+	ND = DopingProfile(i);																			// set ND to the value of the doping profile at the given edge																												// set ND to the value of the doping profile at ix
+	if(i==0)
+	{
+		density = rho_x(0, U_vals, i);
+	}
+	else if(i==Nx-1)
+	{
+		density = rho_x(Lx, U_vals, i);
+	}
+	else
+	{
+		printf("This is not a boundary point in the DG calculation.");
+		exit(0);
+	}
+
+//	printf("i = %d, ND = %g, density = %g: \n", i, ND, density); // DEBUG TEST
+	for(int l=0; l<6; l++)
+	{
+		Ub_vals[l] = ND*U_vals[6*k + l]/density;
+//		printf("U[6*%d + %d] = %g; U_BC = %g \n", k, l, U_vals[6*k+l], Ub_vals[l]); // DEBUG TEST
+	}
+
+
+}
 #endif	/* Doping*/
 
 double I1(double *U, int k, int l) // Calculate the first inegtral in H_(i,j), namely \int v1*f*phi_x dxdv
@@ -218,7 +248,8 @@ double I3(double *U, int k, int l) 																			// Calculate the differenc
 		kkl=k;																								// set kkl to k (since iil = i)
 		if(iir==Nx)																							// if iir=Nx, then information is coming from the right boundary, so set Ur to the coefficients for the Dirichlet BC at the right
 		{
-			DirichletBC(Ur, Nx-1, j1, j2, j3);
+//			DirichletBC(Ur, Nx-1, j1, j2, j3);																// set the coefficients at the right of the cell with coordinates (Nx-1, j1, j2, j3), stored in Ur, to correspond to the Dirichlet BCs
+			ChargeNeutralityBC(Ur, U, Nx-1, k);																// set the coefficients at the right of the cell with index k (with space index Nx-1), stored in Ur, to correspond to the charge neutrality BCs
 		}
 		else																								// otherwise, the coefficients in Ur come from the current approximate solution U
 		{
@@ -242,7 +273,8 @@ double I3(double *U, int k, int l) 																			// Calculate the differenc
 		kkl=iil*size_v + j_mod; 																			// calculate the value of kkl for this value of iil
 		if(iil==-1)																							// if iil=-1, then information is coming from the left boundary, so set Ul to the coefficients for the Dirichlet BC at the left
 		{
-			DirichletBC(Ul, 0, j1, j2, j3);
+//			DirichletBC(Ul, 0, k);																			// set the coefficients at the right of the cell with coordinates (Nx-1, j1, j2, j3), stored in Ur, to correspond to the Dirichlet BCs
+			ChargeNeutralityBC(Ul, U, 0, k);																// set the coefficients at the left of the cell with index k (with space index 0), stored in Ul, to correspond to the charge neutrality BCs
 		}
 		else																								// otherwise, the coefficients in Ul come from the current approximate solution U
 		{

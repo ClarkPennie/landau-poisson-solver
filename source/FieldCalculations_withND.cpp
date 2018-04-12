@@ -13,17 +13,30 @@
 
 double DopingProfile(int i)																		// function to return a step function doping profile, based on what cell a given x is in
 {
-	double DP;																					// declare DP (the value of the doping profile in the current space cell to be returned)
+	double ND;																					// declare DP (the value of the doping profile in the current space cell to be returned)
 	if(i <= a_i || i > b_i)																// if the space cell i is either in the lower or upper third of all cells then set the value of DP to 1
 	{
-		DP = NH;
+		ND = NH;
 	}
 	else																						// if the space cell i is either in the middle third of all cells then set the value of DP to 0.1
 	{
-		DP = NL;
+		ND = NL;
 	}
-	return DP;																					// return the value of DP
+	return ND;																					// return the value of DP
 }
+
+void PrintDoping()
+{
+	double ND;
+	printf("Doping Profile: ");
+	for(int i=0; i<Nx; i++)
+	{
+		ND = DopingProfile(i);
+		printf("ND[%d] = %g, ", i, ND);
+	}
+	printf("\n");
+}
+
 
 double rho_x(double x, double *U, int i) // for x in I_i
 {
@@ -96,6 +109,7 @@ double computePhi(double *U, double x, int ix)	/* DIFFERENT FOR withND */							
 		sum1 += computeC_rho(U, i_out);
 
 		iNNN = i_out*Nv*Nv*Nv;
+		#pragma omp parallel for private(j1,j2,j3,j1NN,j2N,k) shared(Nv,iNNN,U,dx,scalev) reduction(+:sum1)
 		for(j1 = 0; j1 < Nv; j1++)
 		{
 			j1NN = j1*Nv*Nv;
@@ -116,6 +130,7 @@ double computePhi(double *U, double x, int ix)	/* DIFFERENT FOR withND */							
 
 	sum3 = sum3*x_diff;
 	iNNN = ix*Nv*Nv*Nv;
+	#pragma omp parallel for private(j1,j2,j3,j1NN,j2N,k) shared(Nv,iNNN,U,x_diff_sq,x_eval) reduction(+:sum4)
 	for(j1 = 0; j1 < Nv; j1++)
 	{
 		j1NN = j1*Nv*Nv;
@@ -161,6 +176,7 @@ double computeE(double *U, double x, int ix)	/* DIFFERENT FOR withND */								/
 	x_eval = x_diff_mid*x_diff_mid/(2.*dx) - dx/8.;
 
 	iNNN = ix*size_v;
+	#pragma omp parallel for private(j,k) shared(size_v,iNNN,U,x_diff,x_eval) reduction(+:sum)
 	for(j=0;j<size_v;j++)
 	{
 		k = iNNN + j;

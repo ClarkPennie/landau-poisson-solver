@@ -19,7 +19,7 @@ void SetupKnudsen(vector<double>& nu_vals)
 {
 	for(int i=0; i<Nx/8; i++)
 	{
-		nu_vals[i] = 0.1;
+		nu_vals[i] = 1;
 	}
 	/*
 	for(int i=Nx/3; i<2*Nx/3; i++)
@@ -44,13 +44,12 @@ void SetupKnudsen(vector<double>& nu_vals)
 
 void PrintKnudsen(vector<double>& nu_vals)
 {
+	printf("Collision Frequency: ");
 	for(int i=0; i<Nx; i++)
 	{
 		printf("nu[%d] = %g, ", i, nu_vals[i]);
 	}
 	printf("nu_max = %g.\n", nu_max);
-
-	nu_max = *max_element(nu_vals.begin(), nu_vals.end());
 }
 
 double S1hat(double ki1,double ki2,double ki3)

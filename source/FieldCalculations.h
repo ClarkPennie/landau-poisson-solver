@@ -26,6 +26,8 @@
 #ifdef Doping
 double DopingProfile(int i);
 
+void PrintDoping();
+
 double computeE(double *U, double x, int ix);
 #endif
 
