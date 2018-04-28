@@ -129,7 +129,8 @@ double I2(double *U, int k, int l) // Calculate the fourth integral in H_(i,j), 
   else if(l==5) result = U[k*6+2]*dv*dv*intE[i]/6.; 
   else result = 0.;
   
-  return result;
+//  return result;	// for modeling electrons
+  return -result;	// for modeling ions
 }
 
 double I3_PB(double *U, int k, int l) 																		// Calculate the difference of the second and third integrals in H_(i,j), namely \int_j v1*gh*phi dv at interface x=x_i+1/2 - \int_j v1*gh*phi dv at interface x=x_i-1/2, with periodic BCs
@@ -370,7 +371,8 @@ double I5(double *U, int k, int l) 	// Calculate the difference of the fifth and
 		else if(j1l>-1)result=-dv*dv*( ((U[kkl*6+0] + 0.5*ul)*5./12. + U[kkl*6+5]*133./720.)*intE[i] + U[kkl*6+1]*intE1[i]*5./12. );													// this is the value at the cell at the right boundary in v1 (so that the integral over the right edge is zero)
 	}
 
-  	return result;
+//  return result;	// for modeling electrons
+	return -result;	// for modeling ions
 }
 
 #ifdef UseMPI
@@ -402,13 +404,17 @@ void RK3(double *U) // RK3 for f_t = H(f)
   MPI_Status status;
   
   ce = computePhi_x_0(U); 
+  if(myrank_mpi == 0)
+  {
+	  printf("ce = %g \n", ce);
+  }
 
-  #pragma omp parallel for private(i) shared(U,cp, intE, intE1)
+  #pragma omp parallel for simd private(i) shared(U,cp, intE, intE1)
   for(i=0;i<Nx;i++){
     cp[i] = computeC_rho(U,i); intE[i] = Int_E(U,i); intE1[i] = Int_E1st(U,i); 
   }
   
-  #pragma omp parallel for private(i) shared(intE2)
+  #pragma omp parallel for simd private(i) shared(intE2)
   for(i=0;i<Nx;i++){
     intE2[i] = Int_E2nd(U,i); // BUG: Int_E2nd() require knowldege of cp 
   }

@@ -19,7 +19,7 @@ void SetupKnudsen(vector<double>& nu_vals)
 {
 	for(int i=0; i<Nx/8; i++)
 	{
-		nu_vals[i] = 1;
+		nu_vals[i] = 0.05;
 	}
 	/*
 	for(int i=Nx/3; i<2*Nx/3; i++)
@@ -29,7 +29,7 @@ void SetupKnudsen(vector<double>& nu_vals)
 	*/
 	for(int i=Nx/8; i<Nx; i++)
 	{
-		nu_vals[i] = 0;
+		nu_vals[i] = 0.05;
 	}
 
 	/*

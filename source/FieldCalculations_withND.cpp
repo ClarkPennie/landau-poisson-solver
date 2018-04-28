@@ -70,7 +70,7 @@ double computePhi_x_0(double *U) /* DIFFERENT FOR withND */																// co
 	double tmp=0.;
 	double a_val = (a_i+1)*dx;
 	double b_val = (b_i+1)*dx;
-	double Phi_Lx = 1;																									// declare Phi_Lx (the Dirichlet BC, Phi(t, L_x) = Phi_Lx) and set its value
+	double Phi_Lx = -1;																									// declare Phi_Lx (the Dirichlet BC, Phi(t, L_x) = Phi_Lx) and set its value
 
 	//#pragma omp parallel for private(j,q,m,k) shared(U) reduction(+:tmp) //reduction may change the final result a little bit
 	for(j=0;j<size_v;j++){
@@ -86,7 +86,8 @@ double computePhi_x_0(double *U) /* DIFFERENT FOR withND */																// co
 	}
 	tmp = tmp*scalev*dx*dx;
 
-	return Phi_Lx/Lx + 0.5*NH*Lx/eps + (NL-NH)*(b_val-a_val)/eps - (0.5*(NL-NH)*(b_val*b_val - a_val*a_val) + tmp)/(Lx*eps);
+	//return Phi_Lx/Lx + 0.5*NH*Lx/eps + (NL-NH)*(b_val-a_val)/eps - (0.5*(NL-NH)*(b_val*b_val - a_val*a_val) + tmp)/(Lx*eps);	// for modeling electrons
+	return Phi_Lx/Lx - (0.5*NH*Lx/eps + (NL-NH)*(b_val-a_val)/eps - (0.5*(NL-NH)*(b_val*b_val - a_val*a_val) + tmp)/(Lx*eps));	// for modeling ions
 }
 
 double computePhi(double *U, double x, int ix)	/* DIFFERENT FOR withND */											// function to compute the potential Phi at a position x, contained in [x_(ix-1/2), x_(ix+1/2)]
@@ -147,7 +148,7 @@ double computePhi(double *U, double x, int ix)	/* DIFFERENT FOR withND */							
 	sum4 = sum4*scalev;
 
 	C_E = computePhi_x_0(U);
-	retn = sum1 + sum3 + sum4 - ND*x*x/2.;// + C_E*x;
+	retn = sum1 + sum3 + sum4 - ND*x*x/2.;
 	if(ix > a_i)																						// if x > a then there is an extra term to add
 	{
 		double a_val = (a_i+1)*dx;																		// declare a_val and set it to the value of x at the edge of the ai-th space cell
@@ -159,7 +160,8 @@ double computePhi(double *U, double x, int ix)	/* DIFFERENT FOR withND */							
 		retn -= (NL-NH)*b_val*(x - 0.5*b_val);															// add (NL-NH)b(x-b/2) to retn
 	}
 
-	retn = retn/eps + C_E*x;
+//	retn = retn/eps + C_E*x; // for modeling electrons
+	retn = -retn/eps + C_E*x;	// for modeling ions
 	return retn;																						// return the value of phi at x
 }
 
@@ -185,7 +187,7 @@ double computeE(double *U, double x, int ix)	/* DIFFERENT FOR withND */								/
 	sum = sum*scalev;
 	sum += computeC_rho(U, ix);
 
-	retn = ND*x - sum;//- C_E;
+	retn = ND*x - sum;
 	if(ix > a_i)																						// if x > a then there is an extra term to add
 	{
 		double a_val = (a_i+1)*dx;																		// declare a_val and set it to the value of x at the edge of the ai-th space cell
@@ -197,7 +199,8 @@ double computeE(double *U, double x, int ix)	/* DIFFERENT FOR withND */								/
 		retn += (NL-NH)*b_val;																			// add (NL-NH)b to retn
 	}
 
-	retn = retn/eps - C_E;
+//	retn = retn/eps - C_E;	// for modeling electrons
+	retn = -retn/eps - C_E;	// for modeling ions
 	return retn;																						// return the value of phi at x
 
 }
@@ -351,7 +354,7 @@ double Int_E(double *U, int i) 		/* DIFFERENT FOR withND */ 						      // Funct
 	}
 
 	//ce = computePhi_x_0(U);
-	result = - tmp*dx*dx*scalev + ND*Gridx((double)i)*dx;// -ce*dx;
+	result = - tmp*dx*dx*scalev + ND*Gridx((double)i)*dx;
 	if(i > a_i)																							// if x > a then there is an extra term to add
 	{
 		double a_val = (a_i+1)*dx;																		// declare a_val and set it to the value of x at the edge of the ai-th space cell
@@ -363,7 +366,8 @@ double Int_E(double *U, int i) 		/* DIFFERENT FOR withND */ 						      // Funct
 		result += (NL-NH)*b_val*dx;																		// add (NL-NH)b*dx to result
 	}
 
-	result = result/eps - ce*dx;
+//	result = result/eps - ce*dx;	// for modeling electrons
+	result = -result/eps - ce*dx;	// for modeling ions
 	return result;
 }
 
@@ -380,7 +384,8 @@ double Int_E1st(double *U, int i) 	/* DIFFERENT FOR withND */					// \int_i E*(x
 	}
 	tmp = tmp*scalev;
 	
-	result = (ND-tmp)*dx*dx/(12.*eps);
+//	result = (ND-tmp)*dx*dx/(12.*eps);	// for modeling electrons
+	result = (tmp-ND)*dx*dx/(12.*eps);	// for modeling ions
 
 	return result;
 }
@@ -425,7 +430,8 @@ double Int_E2nd(double *U, int i) 	/* DIFFERENT FOR withND */							// \int_i E*
 		result += (NL-NH)*b_val*dx/12.;																	// add (NL-NH)b*dx/12 to result
 	}
 
-	result = result/eps - ce*dx/12.;
+//	result = result/eps - ce*dx/12.;	// for modeling electrons
+	result = -result/eps - ce*dx/12.;	// for modeling ions
 
     return result;
 }
