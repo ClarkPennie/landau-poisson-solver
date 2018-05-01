@@ -17,7 +17,7 @@
 
 #include "LP_ompi.h"																				// LP_ompi.h is where the libraries required by the program included, all macros (to decide the behaviour of a given run) are defined and all variables to be used throughout the various files are defined as external
 
-int Nx=12, Nv=12, nT=1, N=16; 										 							// declare Nx (no. of x discretised points), Nv (no. of v discretised point), nT (no. of time discretised points) & N (no. of nodes in the spectral method) and setting all their values
+int Nx=24, Nv=24, nT=200, N=16; 										 							// declare Nx (no. of x discretised points), Nv (no. of v discretised point), nT (no. of time discretised points) & N (no. of nodes in the spectral method) and setting all their values
 int size_v=Nv*Nv*Nv, size=Nx*size_v, size_ft=N*N*N; 												// declare size_v (no. of total v discretised points in 3D) and set it to Nv^3, size (the total no. of discretised points) and set it to size_v*Nx & size_ft (total no. of spectral discretised points in 3D) and set it to N*N*N
 
 double PI=M_PI;																						// declare PI and set it to M_PI (the value stored in the library math.h)
@@ -389,7 +389,7 @@ int main()
 						buffer_phi[110], buffer_E[110], buffer_marg[110], buffer_ent[110];			// declare the arrays buffer_moment (to store the name of the file where the moments are printed), buffer_u (to store the name of the file where the solution U is printed), buffer_ufull (to store the name of the file where the solution U is printed in the TwoStream), buffer_flags (to store the flag added to the end of the filenames), buffer_phi (to store the name of the file where the values of phi are printed), buffer_marg (to store the name of the file where the marginals are printed) & buffer_ent (to store the name of the file where the entropy values are printed)
 
 	// EVERY TIME THE CODE IS RUN, CHANGE THE FLAG TO A NAME THAT IDENTIFIES THE CASE RUNNING FOR OR WHAT TIME RUN UP TO:
-	sprintf(buffer_flags,"QLinear_DebugIons_Ion");												// store a string in buffer_flags, so that files associated to this run can be identified
+	sprintf(buffer_flags,"QLinear_Ions");												// store a string in buffer_flags, so that files associated to this run can be identified
 	sprintf(buffer_moment,"Data/Moments_nuMax%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
 					nu_max, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is Moments_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
 	sprintf(buffer_u,"Data/U_nuMax%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",

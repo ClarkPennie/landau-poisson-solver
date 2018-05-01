@@ -54,6 +54,10 @@ using std::max_element;
 // CHOOSE TO ONLY CONSERVE MASS:
 #define MassConsOnly
 
+// CHOOSE IF MODELING ELECTRONS OR IONS:
+//#define Electrons
+#define Ions
+
 
 //************************//
 //   EXTERNAL VARIABLES   //

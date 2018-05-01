@@ -14,11 +14,11 @@
 double DopingProfile(int i)																		// function to return a step function doping profile, based on what cell a given x is in
 {
 	double ND;																					// declare DP (the value of the doping profile in the current space cell to be returned)
-	if(i <= a_i || i > b_i)																// if the space cell i is either in the lower or upper third of all cells then set the value of DP to 1
+	if(i <= a_i || i > b_i)																		// if the space cell i is either in the lower or upper third of all cells then set the value of DP to NH
 	{
 		ND = NH;
 	}
-	else																						// if the space cell i is either in the middle third of all cells then set the value of DP to 0.1
+	else																						// if the space cell i is either in the middle third of all cells then set the value of DP to NL
 	{
 		ND = NL;
 	}
@@ -86,8 +86,12 @@ double computePhi_x_0(double *U) /* DIFFERENT FOR withND */																// co
 	}
 	tmp = tmp*scalev*dx*dx;
 
-	//return Phi_Lx/Lx + 0.5*NH*Lx/eps + (NL-NH)*(b_val-a_val)/eps - (0.5*(NL-NH)*(b_val*b_val - a_val*a_val) + tmp)/(Lx*eps);	// for modeling electrons
-	return Phi_Lx/Lx - (0.5*NH*Lx/eps + (NL-NH)*(b_val-a_val)/eps - (0.5*(NL-NH)*(b_val*b_val - a_val*a_val) + tmp)/(Lx*eps));	// for modeling ions
+	#ifdef Electrons
+	return Phi_Lx/Lx + 0.5*NH*Lx/eps + (NL-NH)*(b_val-a_val)/eps - (0.5*(NL-NH)*(b_val*b_val - a_val*a_val) + tmp)/(Lx*eps);
+	#endif	// Electrons
+	#ifdef Ions
+	return Phi_Lx/Lx - (0.5*NH*Lx/eps + (NL-NH)*(b_val-a_val)/eps - (0.5*(NL-NH)*(b_val*b_val - a_val*a_val) + tmp)/(Lx*eps));
+	#endif	// Ions
 }
 
 double computePhi(double *U, double x, int ix)	/* DIFFERENT FOR withND */											// function to compute the potential Phi at a position x, contained in [x_(ix-1/2), x_(ix+1/2)]
@@ -160,8 +164,12 @@ double computePhi(double *U, double x, int ix)	/* DIFFERENT FOR withND */							
 		retn -= (NL-NH)*b_val*(x - 0.5*b_val);															// add (NL-NH)b(x-b/2) to retn
 	}
 
-//	retn = retn/eps + C_E*x; // for modeling electrons
-	retn = -retn/eps + C_E*x;	// for modeling ions
+	#ifdef Electrons
+	retn = retn/eps + C_E*x;
+	#endif	// Electrons
+	#ifdef Ions
+	retn = -retn/eps + C_E*x;
+	#endif	// Ions
 	return retn;																						// return the value of phi at x
 }
 
@@ -199,8 +207,12 @@ double computeE(double *U, double x, int ix)	/* DIFFERENT FOR withND */								/
 		retn += (NL-NH)*b_val;																			// add (NL-NH)b to retn
 	}
 
-//	retn = retn/eps - C_E;	// for modeling electrons
-	retn = -retn/eps - C_E;	// for modeling ions
+	#ifdef Electrons
+	retn = retn/eps - C_E;
+	#endif	// Electrons
+	#ifdef Ions
+	retn = -retn/eps - C_E;
+	#endif	// Ions
 	return retn;																						// return the value of phi at x
 
 }
@@ -366,8 +378,12 @@ double Int_E(double *U, int i) 		/* DIFFERENT FOR withND */ 						      // Funct
 		result += (NL-NH)*b_val*dx;																		// add (NL-NH)b*dx to result
 	}
 
-//	result = result/eps - ce*dx;	// for modeling electrons
-	result = -result/eps - ce*dx;	// for modeling ions
+	#ifdef Electrons
+	result = result/eps - ce*dx;
+	#endif	// Electrons
+	#ifdef Ions
+	result = -result/eps - ce*dx;
+	#endif	// Ions
 	return result;
 }
 
@@ -384,8 +400,12 @@ double Int_E1st(double *U, int i) 	/* DIFFERENT FOR withND */					// \int_i E*(x
 	}
 	tmp = tmp*scalev;
 	
-//	result = (ND-tmp)*dx*dx/(12.*eps);	// for modeling electrons
-	result = (tmp-ND)*dx*dx/(12.*eps);	// for modeling ions
+	#ifdef Electrons
+	result = (ND-tmp)*dx*dx/(12.*eps);
+	#endif	// Electrons
+	#ifdef Ions
+	result = (tmp-ND)*dx*dx/(12.*eps);
+	#endif	// Ions
 
 	return result;
 }
@@ -430,8 +450,12 @@ double Int_E2nd(double *U, int i) 	/* DIFFERENT FOR withND */							// \int_i E*
 		result += (NL-NH)*b_val*dx/12.;																	// add (NL-NH)b*dx/12 to result
 	}
 
-//	result = result/eps - ce*dx/12.;	// for modeling electrons
-	result = -result/eps - ce*dx/12.;	// for modeling ions
+	#ifdef Electrons
+	result = result/eps - ce*dx/12.;
+	#endif	// Electrons
+	#ifdef Ions
+	result = -result/eps - ce*dx/12.;
+	#endif	// Ions
 
     return result;
 }
