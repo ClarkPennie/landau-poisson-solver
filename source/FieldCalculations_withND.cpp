@@ -37,6 +37,32 @@ void PrintDoping()
 	printf("\n");
 }
 
+double EpsilonValue(int i)																		// function to return a step function doping profile, based on what cell a given x is in
+{
+	double epsilon;																					// declare DP (the value of the doping profile in the current space cell to be returned)
+	if(i <= b_i)																		// if the space cell i is either in the lower or upper third of all cells then set the value of DP to NH
+	{
+		epsilon = 0.1;
+	}
+	else																						// if the space cell i is either in the middle third of all cells then set the value of DP to NL
+	{
+		epsilon = 0.1;
+	}
+	return epsilon;																					// return the value of DP
+}
+
+void PrintEpsilon()
+{
+	double eps;
+	printf("Permittivity Values: ");
+	for(int i=0; i<Nx; i++)
+	{
+		eps = EpsilonValue(i);
+		printf("eps[%d] = %g, ", i, eps);
+	}
+	printf("\n");
+}
+
 
 double rho_x(double x, double *U, int i) // for x in I_i
 {
@@ -71,6 +97,8 @@ double computePhi_x_0(double *U) /* DIFFERENT FOR withND */																// co
 	double a_val = (a_i+1)*dx;
 	double b_val = (b_i+1)*dx;
 	double Phi_Lx = -1;																									// declare Phi_Lx (the Dirichlet BC, Phi(t, L_x) = Phi_Lx) and set its value
+	double eps;
+	eps = EpsilonValue(Nx-1);																// set eps to the value of epsilon at ix
 
 	//#pragma omp parallel for private(j,q,m,k) shared(U) reduction(+:tmp) //reduction may change the final result a little bit
 	for(j=0;j<size_v;j++){
@@ -98,12 +126,13 @@ double computePhi(double *U, double x, int ix)	/* DIFFERENT FOR withND */							
 {
 	int i_out, i, j1, j2, j3, iNNN, j1NN, j2N, k;										// declare counters i_out (for the outer sum of i values), i, j1, j2, j3 for summing the contribution from cell I_i x K_(j1, j2, j3), iNNN (the value of i*Nv^3), j1NN (the value of j1*Nv^2), j2N (the value of j2*N) & k (the location in U of the cell I_i x K_(j1, j2, j3))
 	double retn, sum1, sum3, sum4, x_diff, x_diff_mid, x_diff_sq, x_eval, C_E;			// declare retn (the value of Phi returned at the end), sum1 (the value of the first two sums), sum3 (the value of the third sum), sum4 (the value of the fourth sum), x_diff (the value of x - x_(ix-1/2)), x_diff_mid (the value of x - x_ix), x_diff_sq (the value of x_diff^2), x_eval (the value associated to the integral of (x - x_i)^2) & C_E (the value of the constant in the formula for phi)
-	double ND;																			// declare ND (the value of the doping profile at the given x)
+	double ND, eps;																			// declare ND (the value of the doping profile at the given x)
 	sum1 = 0;
 	sum3 = 0;
 	sum4 = 0;
 	retn = 0;
 	ND = DopingProfile(ix);																// set ND to the value of the doping profile at ix
+	eps = EpsilonValue(ix);																// set eps to the value of epsilon at ix
 	x_diff = x - Gridx(ix-0.5);
 	x_diff_mid = x - Gridx(ix);
 	x_diff_sq = x_diff*x_diff;
@@ -177,9 +206,10 @@ double computeE(double *U, double x, int ix)	/* DIFFERENT FOR withND */								/
 {
 	int iNNN, j, k;																						// declare j (a counter for summing the contribution from the velocity cells), iNNN (the value of i*Nv^3) & k (the location in U of the cell I_ix x K_(j1, j2, j3))
 	double retn, sum, x_diff, x_diff_mid, x_eval, C_E;													// declare retn (the value of E returned at the end), sum (the value of the sum to calculate the integral of rho), x_diff (the value of x - x_(ix-1/2)), x_diff_mid (the value of x - x_ix), x_eval (the value associated to the integral of (x - x_i)^2) & C_E (the value of the constant in the formula for E)
-	double ND;																							// declare ND (the value of the doping profile at the given x)
+	double ND, eps;																							// declare ND (the value of the doping profile at the given x)
 	sum = 0;																							// initialise the sum at 0
 	ND = DopingProfile(ix);																				// set ND to the value of the doping profile at ix
+	eps = EpsilonValue(ix);																				// set eps to the value of epsilon at ix
 	C_E = computePhi_x_0(U);
 	x_diff = x - Gridx(ix-0.5);
 	x_diff_mid = x - Gridx(ix);
@@ -352,8 +382,9 @@ double Int_E(double *U, int i) 		/* DIFFERENT FOR withND */ 						      // Funct
 {
 	int m, j, k;
 	double tmp=0., result;
-	double ND;																			// declare ND (the value of the doping profile at the given x)
-	ND = DopingProfile(i);																// set ND to the value of the doping profile at ix
+	double ND, eps;																			// declare ND (the value of the doping profile at the given x)
+	ND = DopingProfile(i);																	// set ND to the value of the doping profile at i
+	eps = EpsilonValue(i);																	// set eps to the value of epsilon at i
 
 	//#pragma omp parallel for shared(U) reduction(+:tmp)
 	for(j=0;j<size_v;j++){
@@ -391,8 +422,9 @@ double Int_E1st(double *U, int i) 	/* DIFFERENT FOR withND */					// \int_i E*(x
 {
 	int j, k;
 	double tmp=0., result;
-	double ND;																			// declare ND (the value of the doping profile at the given x)
-	ND = DopingProfile(i);																// set ND to the value of the doping profile at ix
+	double ND, eps;																			// declare ND (the value of the doping profile at the given x)
+	ND = DopingProfile(i);																	// set ND to the value of the doping profile at ix
+	eps = EpsilonValue(i);																	// set eps to the value of epsilon at ix
 	//#pragma omp parallel for reduction(+:tmp)
 	for(j=0;j<size_v;j++){
 		k=i*size_v + j;
@@ -425,8 +457,9 @@ double Int_E2nd(double *U, int i) 	/* DIFFERENT FOR withND */							// \int_i E*
 {
     int m, j, j1, j2, j3, k;
     double c1=0., c2=0., result;
-	double ND;																			// declare ND (the value of the doping profile at the given x)
-	ND = DopingProfile(i);																// set ND to the value of the doping profile at ix
+	double ND, eps;																			// declare ND (the value of the doping profile at the given x)
+	ND = DopingProfile(i);																	// set ND to the value of the doping profile at ix
+	eps = EpsilonValue(i);																	// set eps to the value of epsilon at i
   
     //cp = computeC_rho(U,i); ce = computePhi_x_0(U);
 

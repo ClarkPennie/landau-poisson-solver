@@ -28,6 +28,10 @@ double DopingProfile(int i);
 
 void PrintDoping();
 
+double EpsilonValue(int i);
+
+void PrintEpsilon();
+
 double computeE(double *U, double x, int ix);
 #endif
 
