@@ -76,8 +76,8 @@ double h_eta, h_v;																					// declare h_eta (the Fourier stepsize) &
 double dt=0.01;//, nthread=32;																			// declare dt (the timestep) and set it to 0.004 & nthread (the number of OpenMP threads) and set it to 16
 double NL = 0.001;																						// declare NL (the density of ions in the middle of the well, the Lower value) and set its value
 double NH = 1;																						// declare NH (the density of ions on the edges of the well, the Higher value) and set its value
-int a_i = 5*Nx/12-1;																					// declare a_i (the index such that ND(x) = NH, for x <= x_{a_i-1/2}, & ND(x) = NL, for x > x_{a_i+1/2}) and set its value
-int b_i = 7*Nx/12 - 1;																					// declare b_i (the index such that ND(x) = NL, for x <= x_{b_i-1/2}, & ND(x) = NH, for x > x_{b_i+1/2}) and set its value
+int a_i = 2*Nx/12 - 1;																					// declare a_i (the index such that ND(x) = NH, for x <= x_{a_i-1/2}, & ND(x) = NL, for x > x_{a_i+1/2}) and set its value
+int b_i = 10*Nx/12 - 1;																					// declare b_i (the index such that ND(x) = NL, for x <= x_{b_i-1/2}, & ND(x) = NH, for x > x_{b_i+1/2}) and set its value
 double T_R = 0.4;																					// declare T_R (the temperature at the right edge of space) and set its value
 double T_L = 0.4;																					// declare T_L (the temperature at the left edge of space) and set its value
 //double eps = 0.1;																					// declare eps (the dielectric constant in Poisson's equation: div(eps*grad(Phi)) = R(x,t)) and set its value
@@ -389,7 +389,7 @@ int main()
 						buffer_phi[110], buffer_E[110], buffer_marg[110], buffer_ent[110];			// declare the arrays buffer_moment (to store the name of the file where the moments are printed), buffer_u (to store the name of the file where the solution U is printed), buffer_ufull (to store the name of the file where the solution U is printed in the TwoStream), buffer_flags (to store the flag added to the end of the filenames), buffer_phi (to store the name of the file where the values of phi are printed), buffer_marg (to store the name of the file where the marginals are printed) & buffer_ent (to store the name of the file where the entropy values are printed)
 
 	// EVERY TIME THE CODE IS RUN, CHANGE THE FLAG TO A NAME THAT IDENTIFIES THE CASE RUNNING FOR OR WHAT TIME RUN UP TO:
-	sprintf(buffer_flags,"QLinear_VarEpsTest");												// store a string in buffer_flags, so that files associated to this run can be identified
+	sprintf(buffer_flags,"QLinear_WideTest");												// store a string in buffer_flags, so that files associated to this run can be identified
 	sprintf(buffer_moment,"Data/Moments_nuMax%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
 					nu_max, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is Moments_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
 	sprintf(buffer_u,"Data/U_nuMax%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
@@ -463,8 +463,10 @@ int main()
 				a_i, b_i, NH, NL, T_L, T_R);														// display in the output file that this is the Damping calculation, as well as the contents of the string buffer_flags and the values of nu, A_amp,k_wave, Nx, Lv, Nv, N, dt, nT, chunk_Nx & nprocs_Nx
 		#endif
 
+		#ifdef Doping
 		PrintDoping();
 		PrintEpsilon();
+		#endif	/* Doping */
 		PrintKnudsen(nu);
 
 		#ifdef LinearLandau																			// only do this if LinearLandau was defined, for using Q(f,M)
@@ -515,7 +517,7 @@ int main()
 
 		FindNegVals(U, fNegVals, fAvgVals);															// find out in which cells the approximate solution goes negative and record it in fNegVals
 
-		ComputeEquiVals(fEquiVals);																	// compute the values of the equilibrium solution, for use in Gaussian quadrature, and store them in f_equivals
+//		ComputeEquiVals(fEquiVals);																	// compute the values of the equilibrium solution, for use in Gaussian quadrature, and store them in f_equivals
 
 		/* DEBUG TEST
 		for(int i=0;i<Nx;i++)
@@ -543,15 +545,15 @@ int main()
 		ent1 = computeEntropy(U);																	// set ent1 the value calculated through computeEntropy
 		l_ent1 = log(fabs(ent1));																	// set l_ent1 to the log of ent1
 		ll_ent1 = log(fabs(l_ent1));																// set ll_ent1 to the log of l_ent1
-		ent2 = computeRelEntropy(U, fEquiVals);														// set ent2 the value calculated through computeRelEntropy
-		l_ent2 = log(fabs(ent2));																	// set l_ent2 to the log of ent2
-		ll_ent2 = log(fabs(l_ent2));																// set ll_ent2 to the log of l_ent2
+//		ent2 = computeRelEntropy(U, fEquiVals);														// set ent2 the value calculated through computeRelEntropy
+//		l_ent2 = log(fabs(ent2));																	// set l_ent2 to the log of ent2
+//		ll_ent2 = log(fabs(l_ent2));																// set ll_ent2 to the log of l_ent2
 		printf("\nstep #0: %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g %11.8g %11.8g \n",
 				mass, a[0], a[1], a[2], KiE, EleE, tmp, log(tmp), KiE+EleE, ent1);					// display in the output file that this is step 0 (so these are the initial conditions), then the mass, 3 components of momentum, kinetic energy, electric energy, sqrt(electric energy), log(sqrt(electric energy)), total energy & entropy
 		fprintf(fmom, "%11.8g %11.8g %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g \n",
 				mass, a[0], a[1], a[2], KiE, EleE, tmp, log(tmp), KiE+EleE);						// in the file tagged as fmom, print the initial mass, 3 components of momentum, kinetic energy, electric energy, sqrt(electric energy), log(sqrt(electric energy)) & total energy
-		fprintf(fent, "%11.8g %11.8g %11.8g %11.8g %11.8g %11.8g \n",
-				ent1, l_ent1, ll_ent1, ent2, l_ent2, ll_ent2);										// in the file tagged as fent, print the entropy, its log, the log of that, then the relative entropy, its log and then the log of that
+		fprintf(fent, "%11.8g %11.8g %11.8g \n", //%11.8g %11.8g %11.8g \n",
+				ent1, l_ent1, ll_ent1); //, ent2, l_ent2, ll_ent2);										// in the file tagged as fent, print the entropy, its log, the log of that, then the relative entropy, its log and then the log of that
 
 		KiEratio = computeKiEratio(U, fNegVals);													// compute the ratio of the kinetic energy where f is negative to that where it is positive and store it in KiEratio
 		printf("Kinetic Energy Ratio = %g\n", KiEratio);											// print the ratio of the kinetic energy where f is negative to that where it is positive
@@ -685,15 +687,15 @@ int main()
 			ent1 = computeEntropy(U);																// set ent1 the value calculated through computeEntropy
 			l_ent1 = log(fabs(ent1));																// set l_ent1 to the log of ent1
 			ll_ent1 = log(fabs(l_ent1));															// set ll_ent1 to the log of l_ent1
-			ent2 = computeRelEntropy(U, fEquiVals);													// set ent2 the value calculated through computeRelEntropy
-			l_ent2 = log(fabs(ent2));																// set l_ent2 to the log of ent2
-			ll_ent2 = log(fabs(l_ent2));															// set ll_ent2 to the log of l_ent2
+//			ent2 = computeRelEntropy(U, fEquiVals);													// set ent2 the value calculated through computeRelEntropy
+//			l_ent2 = log(fabs(ent2));																// set l_ent2 to the log of ent2
+//			ll_ent2 = log(fabs(l_ent2));															// set ll_ent2 to the log of l_ent2
 			printf("step %d: %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g %11.8g %11.8g \n",
 					t+1, mass, a[0], a[1], a[2], KiE, EleE, tmp, log(tmp), KiE+EleE, ent1);			// display in the output file that this is step t+1, then the mass, 3 components of momentum, kinetic energy, electric energy, sqrt(electric energy), log(sqrt(electric energy)), total energy & entropy
 			fprintf(fmom, "%11.8g %11.8g %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g \n",
 					mass, a[0], a[1], a[2], KiE, EleE, tmp, log(tmp), KiE+EleE);					// in the file tagged as fmom, print the initial mass, 3 components of momentum, kinetic energy, electric energy, sqrt(electric energy), log(sqrt(electric energy)) & total energy
-			fprintf(fent, "%11.8g %11.8g %11.8g %11.8g %11.8g %11.8g \n",
-					ent1, l_ent1, ll_ent1, ent2, l_ent2, ll_ent2);									// in the file tagged as fent, print the entropy, its log, the log of that, then the relative entropy, its log and then the log of that
+			fprintf(fent, "%11.8g %11.8g %11.8g \n", //%11.8g %11.8g %11.8g \n",
+					ent1, l_ent1, ll_ent1); //, ent2, l_ent2, ll_ent2);									// in the file tagged as fent, print the entropy, its log, the log of that, then the relative entropy, its log and then the log of that
 
 			KiEratio = computeKiEratio(U, fNegVals);												// compute the ratio of the kinetic energy where f is negative to that where it is positive and store it in KiEratio
 			printf("Kinetic Energy Ratio = %g\n", KiEratio);										// print the ratio of the kinetic energy where f is negative to that where it is positive
