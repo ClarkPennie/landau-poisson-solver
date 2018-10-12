@@ -2,3 +2,20 @@ bin/			# ignore the executables
 build/			# ignore the object files created
 Data/			# ignore all data files
 Weight/			# ignore all weight files
+*~
+# autotools-intermediate files
+.deps
+aclocal.m4
+autom4te.cache
+compile
+config.log
+config.h.in
+config.status
+configure
+depcomp
+install-sh
+missing
+stamp-h1
+Makefile
+Makefile.in
+
