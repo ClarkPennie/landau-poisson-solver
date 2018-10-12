@@ -24,12 +24,15 @@ echo
 echo C++ compiler.................. : $CXX
 echo C++ compiler flags............ : $CXXFLAGS
 echo Install dir................... : $prefix 
-echo FFTW flags.................... : $FFTW_CFLAGS
+echo FFTW includes................. : $FFTW_CFLAGS
+echo FFTW lib...................... : $FFTW_LIBS
+echo MKLROOT....................... : $MKLROOT
+echo MKL_LIBS...................... : $MKL_LIBS
 echo Build user.................... : $USER
 echo Build host.................... : $BUILD_HOST
 echo Configure date................ : $BUILD_DATE
 echo Build architecture............ : $BUILD_ARCH
-echo SVN revision number........... : $BUILD_VERSION
+echo Git revision number........... : $BUILD_VERSION
 echo
 echo '-------------------------------------------------------------------------------'
 
