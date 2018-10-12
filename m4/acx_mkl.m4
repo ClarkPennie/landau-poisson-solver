@@ -66,7 +66,7 @@
 AC_DEFUN([ACX_MKL], [
 AC_PREREQ(2.60)
 AC_REQUIRE([AC_CANONICAL_TARGET])
-AC_REQUIRE([AC_F77_LIBRARY_LDFLAGS])
+#AC_REQUIRE([AC_F77_LIBRARY_LDFLAGS])
 AC_REQUIRE([AX_COMPILER_VENDOR])
 AC_ARG_VAR(MKLROOT,[root directory of MKL installation])
 
@@ -74,7 +74,7 @@ dnl Note the assumption that lp64 and not ilp64 should be used
 dnl Please add entries to the case statement as required
 case $target_cpu in
     x86_64)
-             acx_mkl_libdirsuffix="em64t"
+             acx_mkl_libdirsuffix="intel64"
              acx_mkl_libsuffix="_lp64"
              ;;
     i686)
@@ -163,7 +163,7 @@ if test "${with_mkl}" != no ; then
     MKL_LIBS=""
     MKL_LIBS="${MKL_LIBS} ${acx_mkl_interfacelayer}"
     MKL_LIBS="${MKL_LIBS} ${acx_mkl_threadinglayer}"
-    MKL_LIBS="${MKL_LIBS} -lmkl_lapack -lmkl_core"
+    MKL_LIBS="${MKL_LIBS} -lmkl_core"
     MKL_LIBS="${MKL_LIBS} ${acx_mkl_rtllayer}"
     MKL_LIBS="${MKL_LIBS} -lm"
 
@@ -183,7 +183,7 @@ if test "${with_mkl}" != no ; then
     AC_LANG_PUSH([C])
     AC_MSG_NOTICE([Ensuring we can use Intel MKL routines using a known link line])
     AC_CHECK_HEADER([mkl.h],[acx_mkl_found_header=yes],[acx_mkl_found_header=no])
-    AC_SEARCH_LIBS(MKLGetVersion,[],[acx_mkl_found_library=yes],[acx_mkl_found_library=no])
+    AC_SEARCH_LIBS(mkl_get_version,[],[acx_mkl_found_library=yes],[acx_mkl_found_library=no])
     AC_SEARCH_LIBS(dgemm,[],[acx_mkl_found_blas=yes],[acx_mkl_found_blas=no])
     AC_SEARCH_LIBS(dgbtrf,[],[acx_mkl_found_lapack=yes],[acx_mkl_found_lapack=no])
     AC_LANG_POP([C])

@@ -4,22 +4,35 @@
 AC_PREREQ([2.69])
 AC_INIT([FULL-PACKAGE-NAME], [VERSION], [BUG-REPORT-ADDRESS])
 AC_CONFIG_MACRO_DIR([m4])
-#AC_CONFIG_SRCDIR([source/collisionRoutines_1.h])
+AC_CONFIG_SRCDIR([source/collisionRoutines_1.h])
 AC_CONFIG_HEADERS([config.h])
+AC_CANONICAL_HOST
+AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE
 
-# Checks for programs.
+
+# Checks for MPI toolchain
+
 AC_PROG_CXX
-#AC_PROG_CC
+AC_LANG([C])
+ACX_MPI([CC="$MPICC"], AC_MSG_ERROR([Could not find MPI C compiler support]))
 AC_LANG([C++])
-ACX_MPI([CC="$MPIXX"], AC_MSG_ERROR([Could not find MPI C++ compiler support]))
-CXX="$MPICXX"
+ACX_MPI([CXX="$MPICXX"], AC_MSG_ERROR([Could not find MPI C++ compiler support]))
 
-# Checks for libraries.
-#AX_FFTW3(fftw3)
+#CXX="$MPICXX"
 
-# simple fftw check
+# OpenMP check
+AX_OPENMP([CXXFLAGS="$CXXFLAGS $OPENMP_CXXFLAGS"], AC_MSG_ERROR([Could not detect OpenMP linkage]))
 
+# MKL check
+AC_LANG_PUSH([C])
+AX_COMPILER_VENDOR
+ACX_MKL()
+LDFLAGS="$LDFLAGS $MKL_LIBS"
+AC_LANG_POP([C])
+## #ACX_MKL([],[], AC_MSG_ERROR([Could not detect MKL])
+
+# A simple fftw check
 AC_ARG_WITH(fftw, 
   [AS_HELP_STRING([--with-fftw[=DIR]],[root directory of FFTW installation (default = FFTW_DIR)])],
   [with_fftw=$withval
@@ -70,8 +83,6 @@ AC_SUBST(FFTW_PREFIX)
 
 # Checks for header files.
 AC_CHECK_HEADERS([malloc.h stdlib.h])
-
-# Checks for typedefs, structures, and compiler characteristics.
 
 # Checks for library functions.
 AC_FUNC_MALLOC
