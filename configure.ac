@@ -1,6 +1,3 @@
-#                                               -*- Autoconf -*-
-# Process this file with autoconf to produce a configure script.
-
 AC_PREREQ([2.69])
 AC_INIT([FULL-PACKAGE-NAME], [VERSION], [BUG-REPORT-ADDRESS])
 AC_CONFIG_MACRO_DIR([m4])
@@ -10,16 +7,13 @@ AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE
 
-
-# Checks for MPI toolchain
+# Check for MPI toolchain
 
 AC_PROG_CXX
 AC_LANG([C])
 ACX_MPI([CC="$MPICC"], AC_MSG_ERROR([Could not find MPI C compiler support]))
 AC_LANG([C++])
 ACX_MPI([CXX="$MPICXX"], AC_MSG_ERROR([Could not find MPI C++ compiler support]))
-
-#CXX="$MPICXX"
 
 # OpenMP check
 AX_OPENMP([CXXFLAGS="$CXXFLAGS $OPENMP_CXXFLAGS"], AC_MSG_ERROR([Could not detect OpenMP linkage]))
@@ -30,7 +24,6 @@ AX_COMPILER_VENDOR
 ACX_MKL()
 LDFLAGS="$LDFLAGS $MKL_LIBS"
 AC_LANG_POP([C])
-## #ACX_MKL([],[], AC_MSG_ERROR([Could not detect MKL])
 
 # A simple fftw check
 AC_ARG_WITH(fftw, 
@@ -43,6 +36,10 @@ fi
 with_fftw=$withval
 if test "x${FFTW_DIR}" != "x"; then
    FFTW_PREFIX=${FFTW_DIR}
+else
+   if test "x${TACC_FFTW3_DIR}" != "x"; then
+      FFTW_PREFIX=${TACC_FFTW3_DIR}
+   fi
 fi
 ])
 
