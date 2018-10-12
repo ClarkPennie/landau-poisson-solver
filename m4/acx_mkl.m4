@@ -165,7 +165,7 @@ if test "${with_mkl}" != no ; then
     MKL_LIBS="${MKL_LIBS} ${acx_mkl_threadinglayer}"
     MKL_LIBS="${MKL_LIBS} -lmkl_core"
     MKL_LIBS="${MKL_LIBS} ${acx_mkl_rtllayer}"
-    MKL_LIBS="${MKL_LIBS} -lm"
+#    MKL_LIBS="${MKL_LIBS} -lm"
 
     if test -d "${acx_mkl_libdir}" ; then
         MKL_LIBS="-L${acx_mkl_libdir} ${MKL_LIBS}"
