@@ -28,6 +28,7 @@ echo FFTW includes................. : $FFTW_CFLAGS
 echo FFTW lib...................... : $FFTW_LIBS
 echo MKLROOT....................... : $MKLROOT
 echo MKL_LIBS...................... : $MKL_LIBS
+echo BLAS_LIBS..................... : $BLAS_LIBS
 echo Build user.................... : $USER
 echo Build host.................... : $BUILD_HOST
 echo Configure date................ : $BUILD_DATE

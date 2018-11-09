@@ -205,9 +205,9 @@ void createCCtAndPivot()
 	}
 	//printf("\n");
 	}
-
-	dgetrf(&nele,&nele,CCt,&nele,pivotArray,&errinfo); 
-	dgetri(&nele,CCt,&nele,pivotArray,lapackWorkspace,&lwork,&errinfo);
+	
+	dgetrf_(&nele,&nele,CCt,&nele,pivotArray,&errinfo); 
+	dgetri_(&nele,CCt,&nele,pivotArray,lapackWorkspace,&lwork,&errinfo);
 	
 	#ifdef FullandLinear
 	tmp = 0.; tmp1=0.; tmp2=0.; 
@@ -217,8 +217,8 @@ void createCCtAndPivot()
 	   tmp2 += C1[4][k]*C1[4][k] + C2[4][k]*C2[4][k];
 	}
 	CCt_linear[0] = tmp; CCt_linear[1] = tmp1; CCt_linear[2] = tmp1; CCt_linear[3] = tmp2;
-	dgetrf(&nele1,&nele1,CCt_linear,&nele1,pivotArray1,&errinfo); 
-	dgetri(&nele1,CCt_linear,&nele1,pivotArray1,lapackWorkspace1,&lwork1,&errinfo);
+	dgetrf_(&nele1,&nele1,CCt_linear,&nele1,pivotArray1,&errinfo); 
+	dgetri_(&nele1,CCt_linear,&nele1,pivotArray1,lapackWorkspace1,&lwork1,&errinfo);
 	#endif
 	
 	/*printf("\n");

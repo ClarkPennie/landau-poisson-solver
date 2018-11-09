@@ -1,7 +1,7 @@
 AC_PREREQ([2.69])
 AC_INIT([landau], [0.1.0], [BUG-REPORT-ADDRESS])
 AC_CONFIG_MACRO_DIR([m4])
-AC_CONFIG_SRCDIR([source/collisionRoutines_1.h])
+AC_CONFIG_SRCDIR([/source/collisionRoutines_1.h])
 AC_CONFIG_HEADERS([config.h])
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
@@ -25,6 +25,15 @@ AX_OPENMP([CXXFLAGS="$CXXFLAGS $OPENMP_CXXFLAGS"], AC_MSG_ERROR([Could not detec
 #ACX_MKL()
 #LDFLAGS="$LDFLAGS $MKL_LIBS"
 #AC_LANG_POP([C])
+
+# OpenBLAS check
+AC_LANG_PUSH([C])
+LDFLAGS="-L$OPENBLAS_LIB"
+#AX_COMPILER_VENDOR
+AX_BLAS([],AC_MSG_ERROR([Could not detect OpenBLAS linkage]))
+#AX_BLAS([LDFLAGS="$BLAS_LIBS $LIBS $FLIBS"], AC_MSG_ERROR([Could not detect OpenBLAS linkage]))
+#LDFLAGS="$BLAS_LIBS $LIBS $FLIBS"
+AC_LANG_POP([C])
 
 # A simple fftw check
 AC_ARG_WITH(fftw, 
