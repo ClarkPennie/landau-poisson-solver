@@ -1,5 +1,7 @@
 bin_PROGRAMS  = solver
-AM_CPPFLAGS   = $(FFTW_CFLAGS)
+AM_CPPFLAGS   = $(FFTW_CFLAGS) 
+AM_CPPFLAGS  += -I$(OPENBLAS_INC)
+LIBS          = $(BLAS_LIBS)
 
 h_sources   = EntropyCalculations.h LP_ompi.h NegativityChecks.h collisionRoutines_1.h \
 	      EquilibriumSolution.h MarginalCreation.h SetInit_1.h conservationRoutines.h \
