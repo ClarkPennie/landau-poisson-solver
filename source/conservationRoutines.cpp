@@ -205,10 +205,14 @@ void createCCtAndPivot()
 	}
 	//printf("\n");
 	}
-	
+	#ifdef MKL_LIBS
+	dgetrf(&nele,&nele,CCt,&nele,pivotArray,&errinfo); 
+	dgetri(&nele,CCt,&nele,pivotArray,lapackWorkspace,&lwork,&errinfo);
+	#elif BLAS_LIBS
 	dgetrf_(&nele,&nele,CCt,&nele,pivotArray,&errinfo); 
 	dgetri_(&nele,CCt,&nele,pivotArray,lapackWorkspace,&lwork,&errinfo);
-	
+	#endif	
+
 	#ifdef FullandLinear
 	tmp = 0.; tmp1=0.; tmp2=0.; 
 	for(k=0;k<size_ft;k++) {
@@ -217,8 +221,14 @@ void createCCtAndPivot()
 	   tmp2 += C1[4][k]*C1[4][k] + C2[4][k]*C2[4][k];
 	}
 	CCt_linear[0] = tmp; CCt_linear[1] = tmp1; CCt_linear[2] = tmp1; CCt_linear[3] = tmp2;
+
+	#ifdef MKL_LIBS
+	dgetrf(&nele1,&nele1,CCt_linear,&nele1,pivotArray1,&errinfo); 
+	dgetri(&nele1,CCt_linear,&nele1,pivotArray1,lapackWorkspace1,&lwork1,&errinfo);
+	#elif BLAS_LIBS
 	dgetrf_(&nele1,&nele1,CCt_linear,&nele1,pivotArray1,&errinfo); 
 	dgetri_(&nele1,CCt_linear,&nele1,pivotArray1,lapackWorkspace1,&lwork1,&errinfo);
+	#endif
 	#endif
 	
 	/*printf("\n");

@@ -22,8 +22,11 @@
 #include <stdlib.h>																					// allows malloc & free to be used
 #include <omp.h>																					// allows all OpenMP routines to be used
 #include <fftw3.h>																					// allows the Fast Fourier Transform to be used
-//#include <mkl.h>
+#ifdef MKL_LIBS
+#include <mkl.h>
+#elif BLAS_LIBS
 #include <lapacke.h>
+#endif
 
 //************************//
 //         MACROS         //
