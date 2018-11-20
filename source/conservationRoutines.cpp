@@ -205,10 +205,10 @@ void createCCtAndPivot()
 	}
 	//printf("\n");
 	}
-	#ifdef MKL_LIBS
+	#ifdef HAVE_MKL
 	dgetrf(&nele,&nele,CCt,&nele,pivotArray,&errinfo); 
 	dgetri(&nele,CCt,&nele,pivotArray,lapackWorkspace,&lwork,&errinfo);
-	#elif BLAS_LIBS
+	#elif HAVE_OPENBLAS
 	dgetrf_(&nele,&nele,CCt,&nele,pivotArray,&errinfo); 
 	dgetri_(&nele,CCt,&nele,pivotArray,lapackWorkspace,&lwork,&errinfo);
 	#endif	
@@ -222,10 +222,10 @@ void createCCtAndPivot()
 	}
 	CCt_linear[0] = tmp; CCt_linear[1] = tmp1; CCt_linear[2] = tmp1; CCt_linear[3] = tmp2;
 
-	#ifdef MKL_LIBS
+	#ifdef HAVE_MKL
 	dgetrf(&nele1,&nele1,CCt_linear,&nele1,pivotArray1,&errinfo); 
 	dgetri(&nele1,CCt_linear,&nele1,pivotArray1,lapackWorkspace1,&lwork1,&errinfo);
-	#elif BLAS_LIBS
+	#elif HAVE_OPENBLAS
 	dgetrf_(&nele1,&nele1,CCt_linear,&nele1,pivotArray1,&errinfo); 
 	dgetri_(&nele1,CCt_linear,&nele1,pivotArray1,lapackWorkspace1,&lwork1,&errinfo);
 	#endif
