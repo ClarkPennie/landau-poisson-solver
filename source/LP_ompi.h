@@ -29,6 +29,10 @@
 #elif HAVE_OPENBLAS
 #include <lapacke.h>
 #endif
+#include<grvy.h>
+
+using namespace GRVY;
+
 
 //************************//
 //         MACROS         //
