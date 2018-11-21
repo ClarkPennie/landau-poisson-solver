@@ -22,19 +22,21 @@ AX_OPENMP([CXXFLAGS="$CXXFLAGS $OPENMP_CXXFLAGS"], AC_MSG_ERROR([Could not detec
 # MKL check
 AC_LANG_PUSH([C])
 AX_COMPILER_VENDOR
-ACX_MKL([CXXFLAGS="$CXXFLAGS -DHAVE_MKL"],echo "MKL not found.  Checking for BLAS...")
-LDFLAGS="$LDFLAGS $MKL_LIBS"
+ACX_MKL([CXXFLAGS="$CXXFLAGS -DHAVE_MKL"],[echo "MKL not found.  Checking for BLAS..."])
+###LDFLAGS="$LDFLAGS $MKL_LIBS"
 AC_LANG_POP([C])
-
+###
 # OpenBLAS check
-if [[ ! -v $MKL_FLAGS ]]; then
-	AC_LANG_PUSH([C])
-	LDFLAGS="-L$OPENBLAS_LIB"
-	#AX_COMPILER_VENDOR
-	AX_BLAS([CXXFLAGS="$CXXFLAGS -DHAVE_OPENBLAS"],AC_MSG_ERROR([Could not detect OpenBLAS linkage]))
-	#AX_BLAS([LDFLAGS="$BLAS_LIBS $LIBS $FLIBS"], AC_MSG_ERROR([Could not detect OpenBLAS linkage]))
-	#LDFLAGS="$BLAS_LIBS $LIBS $FLIBS"
-	AC_LANG_POP([C])
+#if [[ ! -v $MKL_FLAGS ]]; then
+
+if test "x${MKL_FLAGS}" == "x"; then
+AC_LANG_PUSH([C])
+LDFLAGS="-L$OPENBLAS_LIB"
+#AX_COMPILER_VENDOR
+AX_BLAS([CXXFLAGS="$CXXFLAGS -DHAVE_OPENBLAS"],AC_MSG_ERROR([Could not detect OpenBLAS linkage]))
+#AX_BLAS([LDFLAGS="$BLAS_LIBS $LIBS $FLIBS"], AC_MSG_ERROR([Could not detect OpenBLAS linkage]))
+#LDFLAGS="$BLAS_LIBS $LIBS $FLIBS"
+AC_LANG_POP([C])
 fi
 
 # A simple fftw check
