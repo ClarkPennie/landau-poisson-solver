@@ -153,6 +153,19 @@ int main()
 
 	nprocs_Nx = (int)((double)Nx/(double)chunk_Nx + 0.5);											// set nprocs_Nx to Nx/chunk_Nx + 0.5 and store the result as an integer
 
+	GRVY_Input_Class iparse;																		// Define a GRVY input parsing object
+
+	if(! iparse.Open("./LPsolver-input.txt"))														// Initialise and read in the GRVY file with the input paramters
+	{
+		exit(1);																					// Exit if it does not exist
+	}
+
+	if ( iparse.Read_Var("nT",&nT) )														// Check if the variable ... is being set and, if not, set its default to
+	{
+		printf("--> %-11s = %d\n","nT",nT);														// If it was set to a value, print it
+	}
+
+	
 	U = (double*)malloc(size*6*sizeof(double));														// allocate enough space at the pointer U for 6*size many double numbers
 	U1 = (double*)malloc(size*6*sizeof(double));													// allocate enough space at the pointer U1 for 6*size many floating point numbers
  
@@ -627,6 +640,8 @@ int main()
 
 	free(fNegVals); free(fAvgVals);	free (fEquiVals);												// delete the dynamic memory allocated for fNegVals, fAvgVals & fEquiVals
   
+	iparse.Close();																					// close the input file
+
 	MPI_Finalize();																					// ensure that MPI exits cleanly
 	return 0;																						// return 0, since main is of type int (and this shows the program completed correctly)
 }
