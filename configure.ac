@@ -46,8 +46,10 @@ AX_BLAS([CXXFLAGS="$CXXFLAGS -DHAVE_OPENBLAS"],AC_MSG_ERROR([Could not detect Op
 AC_LANG_POP([C])
 fi
 
-# Check compiler supports the C++11 standard (required for GRVY)
-AX_CXX_COMPILE_STDCXX_11([noext], [mandatory])
+# GRVY Check
+AX_PATH_GRVY([0.32],[yes])
+CPPFLAGS="${GRVY_CFLAGS} ${CPPFLAGS}"
+LDFLAGS="${GRVY_LIBS} ${LDFLAGS}"
 
 # A simple fftw check
 AC_ARG_WITH(fftw, 

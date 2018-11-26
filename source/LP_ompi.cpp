@@ -5,62 +5,32 @@
  */
 
 //***********************************************//
-//												 //
+//                                               //
 //          MACROS LOCATED IN LP_ompi.h          //
-//												 //
-//		Use these to choose:					 //
-//		- whether or not to use MPI,			 //
-//		- the initial conditions,				 //
-//		- if this is the first run or not.		 //
-//												 //
+//                                               //
+//      Use these to choose:                     //
+//      - whether or not to use MPI,             //
+//      - the initial conditions,                //
+//      - if this is the first run or not.       //
+//                                               //
 //***********************************************//
 
 #include "LP_ompi.h"																				// LP_ompi.h is where the libraries required by the program included, all macros (to decide the behaviour of a given run) are defined and all variables to be used throughout the various files are defined as external
 
 double PI=M_PI;																						// declare PI and set it to M_PI (the value stored in the library math.h)
 int M=5;																							// declare M (the number of collision invarients) and set it equal to 5
-int Nx=8, Nv=8, nT=1, N=8;	 											 							// declare Nx (no. of x discretised points), Nv (no. of v discretised point), nT (no. of time discretised points) & N (no. of nodes in the spectral method) and setting all their values
-int size_v=Nv*Nv*Nv, size=Nx*size_v, size_ft=N*N*N; 												// declare size_v (no. of total v discretised points in 3D) and set it to Nv^3, size (the total no. of discretised points) and set it to size_v*Nx & size_ft (total no. of spectral discretised points in 3D) and set it to N*N*N
-
-#ifdef TwoStream																					// only do this if TwoStream was defined
-double A_amp=0.5, k_wave=2*PI/4.;																	// declare A_amp (the amplitude of the perturbing wave) & k_wave (the wave number of the perturbing wave) and set their values
-double Lx=4., Lv=5.25;																				// declare Lx (for 0 < x < Lx) and set it to & Lv (for -Lv < v < Lv in the advection problem) and set their values
-double dv=2.*Lv/Nv, dx=Lx/Nx; 																		// declare dv (the velocity stepsize) and set it to 2Lv/Nv & dx (the space stepsize) and set it to Lx/Nx
-double L_v=Lv, R_v=Lv, L_eta;																		// declare L_v (for -Lv < v < Lv in the collision problem) and set it to Lv, R_v (for v in B_(R_v) in the collision problem) and set it to Lv & L_eta (for Fourier space, -L_eta < eta < L_eta)
+int Nx, Nv, nT, N;			 											 							// declare Nx (no. of x discretised points), Nv (no. of v discretised point), nT (no. of time discretised points) & N (no. of nodes in the spectral method) and setting all their values
+int size_v, size, size_ft; 																			// declare size_v (no. of total v discretised points in 3D), size (the total no. of discretised points) & size_ft (total no. of spectral discretised points in 3D)
+double dv, dx; 																						// declare dv (the velocity stepsize) & dx (the space stepsize)
+double A_amp, k_wave;																				// declare A_amp (the amplitude of the perturbing wave) & k_wave (the wave number of the perturbing wave)
+double Lx, Lv;																						// declare Lx (for 0 < x < Lx) and set it to & Lv (for -Lv < v < Lv in the advection problem)
+double L_v, R_v, L_eta;																				// declare L_v (for -Lv < v < Lv in the collision problem), R_v (for v in B_(R_v) in the collision problem) & L_eta (for Fourier space, -L_eta < eta < L_eta)
 double h_eta, h_v;																					// declare h_eta (the Fourier stepsize) & h_v (also the velocity stepsize but for the collision problem)
-double nu=0.1, dt=0.004, nthread=16; 																// declare nu (1/knudson#) and set it to 0.1, dt (the timestep) and set it to 0.004 & nthread (the number of OpenMP threads) and set it to 16
-#endif
-
-#ifdef Damping																						// only do this if Damping was defined
-double A_amp=0.2, k_wave=0.5;																		// declare A_amp (the amplitude of the perturbing wave) & k_wave (the wave number of the perturbing wave) and set their values
-double Lx=2*PI/k_wave, Lv=5.25;																		// declare Lx (for 0 < x < Lx) and set it to & Lv (for -Lv < v < Lv in the advection problem) and set their values
-double dv=2.*Lv/Nv, dx=Lx/Nx; 																		// declare dv (the velocity stepsize) and set it to 2Lv/Nv & dx (the space stepsize) and set it to Lx/Nx
-double L_v=Lv, R_v=Lv, L_eta;																		// declare L_v (for -Lv < v < Lv in the collision problem) and set it to Lv, R_v (for v in B_(R_v) in the collision problem) and set it to Lv & L_eta (for Fourier space, -L_eta < eta < L_eta)
-double h_eta, h_v;																					// declare h_eta (the Fourier stepsize) & h_v (also the velocity stepsize but for the collision problem)
-double nu=0.05, dt=0.01, nthread=16; 																// declare nu (1/knudson#) and set it to 0.02, dt (the timestep) and set it to 0.004 & nthread (the number of OpenMP threads) and set it to 16
-#endif
-
-#ifdef FourHump																						// only do this if FourHump was defined
-double A_amp=0.2, k_wave=0.5;																		// declare A_amp (the amplitude of the perturbing wave) & k_wave (the wave number of the perturbing wave) and set their values
-double Lx=2*PI/k_wave, Lv=5.25;																		// declare Lx (for 0 < x < Lx) and set it to & Lv (for -Lv < v < Lv in the advection problem) and set their values
-double dv=2.*Lv/Nv, dx=Lx/Nx; 																		// declare dv (the velocity stepsize) and set it to 2Lv/Nv & dx (the space stepsize) and set it to Lx/Nx
-double L_v=Lv, R_v=Lv, L_eta;																		// declare L_v (for -Lv < v < Lv in the collision problem) and set it to Lv, R_v (for v in B_(R_v) in the collision problem) and set it to Lv & L_eta (for Fourier space, -L_eta < eta < L_eta)
-double h_eta, h_v;																					// declare h_eta (the Fourier stepsize) & h_v (also the velocity stepsize but for the collision problem)
-double nu=0.05, dt=0.01, nthread=16; 																	// declare nu (1/knudson#) and set it to 0.02, dt (the timestep) and set it to 0.004 & nthread (the number of OpenMP threads) and set it to 16
-#endif
-
-#ifdef TwoHump																						// only do this if TwoHump was defined
-double A_amp=0.2, k_wave=0.5;																		// declare A_amp (the amplitude of the perturbing wave) & k_wave (the wave number of the perturbing wave) and set their values
-double Lx=2*PI/k_wave, Lv=5.25;																		// declare Lx (for 0 < x < Lx) and set it to & Lv (for -Lv < v < Lv in the advection problem) and set their values
-double dv=2.*Lv/Nv, dx=Lx/Nx; 																		// declare dv (the velocity stepsize) and set it to 2Lv/Nv & dx (the space stepsize) and set it to Lx/Nx
-double L_v=Lv, R_v=Lv, L_eta;																		// declare L_v (for -Lv < v < Lv in the collision problem) and set it to Lv, R_v (for v in B_(R_v) in the collision problem) and set it to Lv & L_eta (for Fourier space, -L_eta < eta < L_eta)
-double h_eta, h_v;																					// declare h_eta (the Fourier stepsize) & h_v (also the velocity stepsize but for the collision problem)
-double nu=0.05, dt=0.01, nthread=16; 																// declare nu (1/knudson#) and set it to 0.02, dt (the timestep) and set it to 0.004 & nthread (the number of OpenMP threads) and set it to 16
-#endif
+double nu, dt; 																						// declare nu (1/knudson#), dt (the timestep) & nthread (the number of OpenMP threads)
 
 double *v, *eta;																					// declare v (the velocity variable) & eta (the Fourier space variable)
 double *wtN;																						// declare wtN (the trapezoidal rule weights to be used)
-double scale, scale3, scaleL=8*Lv*Lv*Lv, scalev=dv*dv*dv;											// declare scale (the 1/sqrt(2pi) factor appearing in Gaussians), scale (the 1/(sqrt(2pi))^3 factor appearing in the Maxwellian), scaleL (the volume of the velocity domain) and set it to 8Lv^3 & scalev (the volume of a discretised velocity element) and set it to dv^3
+double scale, scale3, scaleL, scalev;																// declare scale (the 1/sqrt(2pi) factor appearing in Gaussians), scale (the 1/(sqrt(2pi))^3 factor appearing in the Maxwellian), scaleL (the volume of the velocity domain) & scalev (the volume of a discretised velocity element)
 double **C1, **C2;																					// declare pointers to matrices C1 (the real part of the conservation matrix C) & C2 (the imaginary part of the conservation matrix C), CCt (of dimension 5x5) & CCt_linear (of dimension 2x2)
 double CCt[5*5], CCt_linear[2*2];																	// declare matrices CCt (C*C^T, for the conservation matrix C) & CCt_linear (C*C^T, for the conservation matrix C, in the two species collision operator)
 double lamb[5], lamb_linear[2];																		// declare the arrays lamb (to hold 5 values) & lamb_linear (to hold 2 values)
@@ -100,6 +70,107 @@ int main()
   
 	fftw_complex *qHat, *qHat_linear;																// declare pointers to the complex numbers qHat (the DFT of Q) & qHat_linear (the DFT of the two species colission operator Q);
   
+	GRVY_Input_Class iparse;																		// Define a GRVY input parsing object
+
+	if(! iparse.Open("./LPsolver-input.txt"))														// Initialise and read in the GRVY file with the input paramters
+	{
+		exit(1);																					// Exit if it does not exist
+	}
+	if (! iparse.Read_Var("nT",&nT) )																// Check if the variable nT has been set and, if not, exit
+	{
+		exit(1);
+	}
+	printf("--> %-11s = %d\n","nT",nT);																// Print the set value
+	if (! iparse.Read_Var("Nx",&Nx) )																// Check if the variable Nx has been set and, if not, exit
+	{
+		exit(1);
+	}
+	printf("--> %-11s = %d\n","Nx",Nx);																// Print the set value
+	if (! iparse.Read_Var("Nv",&Nv) )																// Check if the variable Nv has been set and, if not, exit
+	{
+		exit(1);
+	}
+	printf("--> %-11s = %d\n","Nv",Nv);																// Print the set value
+	if (! iparse.Read_Var("N",&N) )																	// Check if the variable N has been set and, if not, exit
+	{
+		exit(1);
+	}
+	printf("--> %-11s = %d\n","N",N);																// Print the set value
+	if (! iparse.Read_Var("nu",&nu) )																// Check if the variable dt has been set and, if not, exit
+	{
+		exit(1);
+	}
+	printf("--> %-11s = %g\n","nu",nu);																// Print the set value
+	if (! iparse.Read_Var("dt",&dt) )																// Check if the variable dt has been set and, if not, exit
+	{
+		exit(1);
+	}
+	printf("--> %-11s = %g\n","dt",dt);																// Print the set value
+
+	#ifdef Damping																					// only do this if Damping was defined
+	if (! iparse.Read_Var("Damping/A_amp",&A_amp) )													// Check if the variable A_amp has been set and, if not, exit
+	{
+		exit(1);
+	}
+	if (! iparse.Read_Var("Damping/k_wave",&k_wave) )												// Check if the variable k_wave has been set and, if not, exit
+	{
+		exit(1);
+	}
+	if (! iparse.Read_Var("Damping/Lv",&Lv) )														// Check if the variable Lv has been set and, if not, exit
+	{
+		exit(1);
+	}
+	iparse.Read_Var("Damping/Lx",&Lx,2*PI/k_wave);													// Check if the variable Lx has been set and, if not, set to the default value of 2pi/k_wave
+	#endif
+
+	#ifdef TwoStream																				// only do this if Damping was defined
+	if (! iparse.Read_Var("TwoStream/A_amp",&A_amp) )												// Check if the variable A_amp has been set and, if not, exit
+	{
+		exit(1);
+	}
+	if (! iparse.Read_Var("TwoStream/Lv",&Lv) )														// Check if the variable Lv has been set and, if not, exit
+	{
+		exit(1);
+	}
+	iparse.Read_Var("TwoStream/Lx",&Lx,2*PI/k_wave);													// Check if the variable Lx has been set and, if not, set to the default value of 2pi/k_wave
+	k_wave=2*PI/4.																					// set k_wave to pi/2
+	#endif
+
+	#ifdef FourHump																					// only do this if Damping was defined
+	iparse.Read_Var("FourHump/A_amp",&A_amp,0.);														// Check if the variable A_amp has been set and, if not, set the value to 0 (it's not needed)
+	iparse.Read_Var("FourHump/k_wave",&k_wave,0.5);													// Check if the variable k_wave has been set and, if not, set to the default value of 0.5 (to calculate Lx)
+	if (! iparse.Read_Var("FourHump/Lv",&Lv) )														// Check if the variable Lv has been set and, if not, exit
+	{
+		exit(1);
+	}
+	iparse.Read_Var("FourHump/Lx",&Lx,2*PI/k_wave);													// Check if the variable Lx has been set and, if not, set to the default value of 2pi/k_wave
+	#endif
+
+	#ifdef TwoHump																					// only do this if Damping was defined
+	iparse.Read_Var("TwoHump/A_amp",&A_amp,0.);														// Check if the variable A_amp has been set and, if not, set the value to 0 (it's not needed)
+	iparse.Read_Var("TwoHump/k_wave",&k_wave,0.5);													// Check if the variable k_wave has been set and, if not, set to the default value of 0.5 (to calculate Lx)
+	if (! iparse.Read_Var("TwoHump/Lv",&Lv) )														// Check if the variable Lv has been set and, if not, exit
+	{
+		exit(1);
+	}
+	iparse.Read_Var("TwoHump/Lx",&Lx,2*PI/k_wave);													// Check if the variable Lx has been set and, if not, set to the default value of 2pi/k_wave
+	#endif
+
+	printf("--> %-11s = %g\n","A_amp",A_amp);														// Print the value set for A_amp
+	printf("--> %-11s = %g\n","k_wave",k_wave);														// Print the value set for k_wave
+	printf("--> %-11s = %g\n","Lv",Lv);																// Print the value set for Lv
+	printf("--> %-11s = %g\n","Lx",Lx);																// Print the value set for Lx
+
+	size_v=Nv*Nv*Nv;																				// set size_v to Nv^3
+	size=Nx*size_v;																					// set size to size_v*Nx
+	size_ft=N*N*N; 																					// set size_ft to N^3
+	dv=2.*Lv/Nv;																					// set dv to 2Lv/Nv
+	dx=Lx/Nx; 																						// set dx to Lx/Nx
+	scalev=dv*dv*dv;																				// set scalev to dv^3
+	L_v=Lv;																							// set L_v to Lv
+	R_v=Lv;																							// set R_v to Lv
+	scaleL=8*Lv*Lv*Lv;																				// set scaleL to 8Lv^3
+
 	//************************
 	//MPI-related variables!
 	//************************
@@ -110,6 +181,9 @@ int main()
 	MPI_Init_thread(NULL, NULL, required, &provided);												// initialise the hybrid MPI & OpenMP environment, requesting the level of thread support to be required and store the actual thread support provided in provided
 	MPI_Comm_rank(MPI_COMM_WORLD, &myrank_mpi);														// store the rank of the current process in the MPI_COMM_WORLD communicator in myrank_mpi
 	MPI_Comm_size(MPI_COMM_WORLD, &nprocs_mpi);														// store the total number of processes running in the MPI_COMM_WORLD communicator in nprocs_mpi
+
+	int nthread;																					// declare nthread (the number of OpenMP threads)
+	nthread = omp_get_max_threads();																// set nthread to the value of the environment variable OMP_NUM_THREADS by calling the OpenMP function omp_get_max_threads
   
 	// CHECK THE LEVEL OF THREAD SUPPORT:
 	if (provided < required)																		// only do this if the required thread support was not possible
@@ -152,19 +226,6 @@ int main()
 	}
 
 	nprocs_Nx = (int)((double)Nx/(double)chunk_Nx + 0.5);											// set nprocs_Nx to Nx/chunk_Nx + 0.5 and store the result as an integer
-
-	GRVY_Input_Class iparse;																		// Define a GRVY input parsing object
-
-	if(! iparse.Open("./LPsolver-input.txt"))														// Initialise and read in the GRVY file with the input paramters
-	{
-		exit(1);																					// Exit if it does not exist
-	}
-
-	if ( iparse.Read_Var("nT",&nT) )														// Check if the variable ... is being set and, if not, set its default to
-	{
-		printf("--> %-11s = %d\n","nT",nT);														// If it was set to a value, print it
-	}
-
 	
 	U = (double*)malloc(size*6*sizeof(double));														// allocate enough space at the pointer U for 6*size many double numbers
 	U1 = (double*)malloc(size*6*sizeof(double));													// allocate enough space at the pointer U1 for 6*size many floating point numbers
