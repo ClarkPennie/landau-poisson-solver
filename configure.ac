@@ -16,6 +16,8 @@ ACX_MPI([CC="$MPICC"], AC_MSG_ERROR([Could not find MPI C compiler support]))
 AC_LANG([C++])
 ACX_MPI([CXX="$MPICXX"], AC_MSG_ERROR([Could not find MPI C++ compiler support]))
 
+#CXXFLAGS="$CXXFLAGS -g -p"
+
 # Check compiler supports the C++11 standard (required for GRVY)
 AX_CXX_COMPILE_STDCXX_11([noext], [mandatory])
 
