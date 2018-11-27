@@ -11,7 +11,7 @@
 # Global input variable definitions
 #--------------------------------------------
 
-flag     = "GRVY_Tests"
+flag     = GRVY_Tests
 
 nT       = 2   		    	# Number of time-steps
 Nx       = 8   		    	# Number of space cells
