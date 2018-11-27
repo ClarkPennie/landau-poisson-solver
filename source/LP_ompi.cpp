@@ -67,6 +67,7 @@ int main()
 	double tmp, mass, a[3], KiE, EleE, KiEratio, ent1, l_ent1, ll_ent1;								// declare tmp (the square root of electric energy), mass (the mass/density rho), a (the momentum vector J), KiE (the kinetic energy), EleE (the electric energy), KiEratio (the ratio of kinetic energy between where f is positive and negative),  ent1 (the entropy with negatives discarded), l_ent1 (log of the ent1) & ll_ent1 (log of log of ent1)
 	double *U, **f, *output_buffer;//, **conv_weights_local;										// declare pointers to U (the vector containing the coefficients of the DG basis functions for the solution f(x,v,t) at the given time t), f (the solution which has been transformed from the DG discretisation to the appropriate spectral discretisation) & output_buffer (from where to send MPI messages)
 	double **conv_weights, **conv_weights_linear;													// declare a pointer to conv_weights (a matrix of the weights for the convolution in Fourier space of single species collisions) conv_weights_linear (a matrix of convolution weights in Fourier space of two species collisions)
+	std::string flag;																				// declare a string flag, which will be used to identify files generated associated to the current run
   
 	fftw_complex *qHat, *qHat_linear;																// declare pointers to the complex numbers qHat (the DFT of Q) & qHat_linear (the DFT of the two species colission operator Q);
   
@@ -76,6 +77,12 @@ int main()
 	{
 		exit(1);																					// Exit if it does not exist
 	}
+
+	if(! iparse.Read_Var("flag",&flag))																// Check if the variable Flag has been set and, if not, exit
+	{
+		exit(1);
+	}
+	std::cout << "--> Flag associated to this run: " << flag << std::endl << std::endl;				// Print the flag associated to this run of the code at the top and of the file
 	if (! iparse.Read_Var("nT",&nT) )																// Check if the variable nT has been set and, if not, exit
 	{
 		exit(1);
@@ -392,11 +399,11 @@ int main()
 		MPI_Barrier(MPI_COMM_WORLD);																// set an MPI barrier to ensure that all processes have reached this point before continuing
 	}
 
-	char buffer_moment[100], buffer_u[100], buffer_ufull[100], buffer_flags[100],
+	char buffer_moment[100], buffer_u[100], buffer_ufull[100], buffer_flags[flag.size() + 1],
 									buffer_phi[100], buffer_marg[100], buffer_ent[100];				// declare the arrays buffer_moment (to store the name of the file where the moments are printed), buffer_u (to store the name of the file where the solution U is printed), buffer_ufull (to store the name of the file where the solution U is printed in the TwoStream), buffer_flags (to store the flag added to the end of the filenames), buffer_phi (to store the name of the file where the values of phi are printed), buffer_marg (to store the name of the file where the marginals are printed) & buffer_ent (to store the name of the file where the entropy values are printed)
 
 	// EVERY TIME THE CODE IS RUN, CHANGE THE FLAG TO A NAME THAT IDENTIFIES THE CASE RUNNING FOR OR WHAT TIME RUN UP TO:
-	sprintf(buffer_flags,"TestFieldFile");																// store the string "OMPfixTest" in buffer_flags
+	strcpy(buffer_flags, flag.c_str());																// copy the contents of flag to buffer_flags
 	sprintf(buffer_moment,"Data/Moments_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
 					nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is Moments_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
 	sprintf(buffer_u,"Data/U_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",

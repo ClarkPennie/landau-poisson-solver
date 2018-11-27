@@ -24,6 +24,7 @@
 #include <stdlib.h>																					// allows malloc & free to be used
 #include <omp.h>																					// allows all OpenMP routines to be used
 #include <fftw3.h>																					// allows the Fast Fourier Transform to be used
+#include <cstring>																					// allows c_str & strcpy to be used
 #ifdef HAVE_MKL
 #include <mkl.h>
 #elif HAVE_OPENBLAS
