@@ -30,6 +30,8 @@ AC_LANG_POP([C])
 
 if test "x${MKLROOT}" != "x"; then
   AC_MSG_NOTICE([MKL detected])
+else
+  MKL_LIBS=""
 fi
 
 # OpenBLAS check
