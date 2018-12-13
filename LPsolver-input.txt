@@ -13,7 +13,7 @@
 
 flag     = GRVY_Tests
 
-nT       = 2   		    	# Number of time-steps
+nT       = 1   		    	# Number of time-steps
 Nx       = 8   		    	# Number of space cells
 Nv       = 8   		    	# Number of velocity cells in each direction
 N        = 8   		    	# Number of Fourier modes
@@ -21,29 +21,41 @@ nu       = 0.05                 # Value of (Knudsen number)^{-1}
 dt       = 0.01                 # size of each time-step
 
 #--------------------------------------------
+# Boolean options to determine problem
+#--------------------------------------------
+
+# Options for initial conditions (choose one):
+Damping          = True        # Landau Damping ICs
+TwoStream        = False        # Two Stream ICs
+FourHump         = False        # Four Hump ICs
+TwoHump          = False        # Two Hump ICs
+
+FullandLinear    = False	# Include electron-ion collisions
+
+#--------------------------------------------
 # Parameters associated with certain ICs
 #--------------------------------------------
 
 [Damping]
 
-IC_name  = "Landau Damping"	# Name of problem associated to ICs
+IC_name  = 'Landau Damping'	# Name of problem associated to ICs
 A_amp    = 0.2                  # Amplitude of the perturbation
 k_wave   = 0.5			# Frequency of the perturbation
 Lv       = 5.25                 # Width of domain in v-space
 
 [TwoStream]
 
-IC_name  = "Two Stream"         # Name of problem associated to ICs
+IC_name  = 'Two Stream'         # Name of problem associated to ICs
 A_amp    = 0.5                  # Amplitude of the perturbation
 Lv       = 5.25                 # Width of domain in v-space
 Lx       = 4.                   # Width of domain in x-space
 
 [FourHump]
 
-IC_name  = "Four Hump"          # Name of problem associated to ICs
+IC_name  = 'Four Hump'          # Name of problem associated to ICs
 Lv       = 5.25                 # Width of domain in v-space
 
 [TwoHump]
 
-IC_name  = "Two Hump"           # Name of problem associated to ICs
+IC_name  = 'Two Hump'           # Name of problem associated to ICs
 Lv       = 5.25                 # Width of domain in v-space

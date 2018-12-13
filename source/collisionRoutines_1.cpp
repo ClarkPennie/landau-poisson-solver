@@ -565,11 +565,44 @@ void ProjectedNodeValue(fftw_complex *qHat, double *Q_incremental) // incrementa
 	Q_incremental[k_ft] = u0 + u2*(v[m1]-Gridv((double)j1))/dv + u3*(v[m2]-Gridv((double)j2))/dv + u4*(v[m3]-Gridv((double)j3))/dv + u5*( ((v[m1]-Gridv((double)j1))/dv)*((v[m1]-Gridv((double)j1))/dv) + ((v[m2]-Gridv((double)j2))/dv)*((v[m2]-Gridv((double)j2))/dv) + ((v[m3]-Gridv((double)j3))/dv)*((v[m3]-Gridv((double)j3))/dv) ); 
     }
 }	
-
 #ifdef UseMPI
+void ComputeQ_FandL(double *f, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear)
+{
+	ComputeQ_MPI_FandL(f, qHat, conv_weights, qHat_linear, conv_weights_linear)
+}
+void RK4_FandL(double *f, int l, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear, double *U, double *dU) //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6
+{
+	RK4_MPI_FandL(f, l, qHat, conv_weights, qHat_linear, conv_weights_linear, U, dU) //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6
+}
+void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights)
+{
+	ComputeQ_MPI(f, qHat, conv_weights)
+}
+void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U, double *dU) //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6
+{
+	RK4_MPI(f, l, qHat, conv_weights, U, dU) //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6
+}
+#else
+void ComputeQ_FandL(double *f, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear)
+{
+	//ComputeQ_NoMPI_FandL(f, qHat, conv_weights, qHat_linear, conv_weights_linear)
+}
+void RK4_FandL(double *f, int l, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear, double *U, double *dU) //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6
+{
+	//RK4_NoMPI_FandL(f, l, qHat, conv_weights, qHat_linear, conv_weights_linear, U) //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6
+}
+void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights)
+{
+	ComputeQ_NoMPI(f, qHat, conv_weights)
+}
+void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U, double *dU) //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6
+{
+	RK4_NoMPI(f, l, qHat, conv_weights, U) //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6
+}
 
-#ifdef FullandLinear
-void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear)
+//#ifdef UseMPI
+//#ifdef FullandLinear
+void ComputeQ_MPI_FandL(double *f, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear)
 {
   int i, j, k, l, m, n, x, y, z;
   int start_i, start_j, start_k, end_i, end_j, end_k;
@@ -655,7 +688,7 @@ void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights, fftw_complex
 
 }
 
-void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear, double *U, double *dU) //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6 
+void RK4_MPI_FandL(double *f, int l, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear, double *U, double *dU) //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6
 {
 int i,j,k, j1, j2, j3, k_v, k_eta, kk, l_local;  
   double Q_re, Q_im, tp0, tp2, tp3,tp4,tp5, tmp0=0., tmp2=0., tmp3=0., tmp4=0.,tmp5=0., tem;
@@ -675,7 +708,7 @@ int i,j,k, j1, j2, j3, k_v, k_eta, kk, l_local;
     f1[i] = f[i] + dt*Q[i]*nu; //BUG: this evolution (only on node values) is not consistent with our conservation routine, which preserves the exact moments of the {1,v,|v|^{2}} approximations
   }
 
-  ComputeQ(f1, Q1_fft, conv_weights, Q1_fft_linear, conv_weights_linear);
+  ComputeQ_FandL(f1, Q1_fft, conv_weights, Q1_fft_linear, conv_weights_linear);
   conserveAllMoments(Q1_fft, Q1_fft_linear);   	//conserves k2	
   
   #pragma omp parallel for private(i) shared(Q1_fft, Q1_fft_linear)
@@ -692,7 +725,7 @@ int i,j,k, j1, j2, j3, k_v, k_eta, kk, l_local;
     f1[i] = f[i] +  0.5*dt*Q[i]*nu + 0.5*dt*Q1[i]*nu;
   }
  
-  ComputeQ(f1, Q2_fft, conv_weights, Q2_fft_linear, conv_weights_linear);
+  ComputeQ_FandL(f1, Q2_fft, conv_weights, Q2_fft_linear, conv_weights_linear);
   conserveAllMoments(Q2_fft, Q2_fft_linear);   //conserves k3
 
   #pragma omp parallel for private(i) shared(Q2_fft, Q2_fft_linear)
@@ -708,7 +741,7 @@ int i,j,k, j1, j2, j3, k_v, k_eta, kk, l_local;
     f1[i] = f[i] + 0.5*dt*Q[i]*nu + 0.5*dt*Q1[i]*nu;
   }
 
-  ComputeQ(f1, Q3_fft, conv_weights, Q3_fft_linear, conv_weights_linear);
+  ComputeQ_FandL(f1, Q3_fft, conv_weights, Q3_fft_linear, conv_weights_linear);
   conserveAllMoments(Q3_fft, Q3_fft_linear);                //conserves k4
 
   #pragma omp parallel for private(i) shared(Q3_fft, Q3_fft_linear)
@@ -756,8 +789,8 @@ int i,j,k, j1, j2, j3, k_v, k_eta, kk, l_local;
     dU[(l_local*size_v + kt)*5+3] = tp4;   
   }
 }
-#else
-void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights)
+//#else
+void ComputeQ_MPI(double *f, fftw_complex *qHat, double **conv_weights)
 {
 	int i, j, k, l, m, n, x, y, z;												// declare (i,j,k) (the indices for a given value of given ki = ki_(i,j,k)), (l,m,n) (counters for the quadrature to calculate the integral w.r.t. eta in the evaluation of qHat and so also represent the indices of a given eta = eta_(l,m,n)) & (x,y,z) (the indices for the value of a subtraction in the calculation, namely eta_(x,y,z) = ki_(i,j,k) - eta_(l,m,n))
 	int start_i, start_j, start_k, end_i, end_j, end_k;							// declare start_i, start_j & start_k (the indices for the values of the lower bounds of integration in computation of the convolution, corresponding to the lowest point where both functions are non-zero, in each velocity direction) and end_i, end_j & end_k (the indices for the values of the upper bounds of integration in computation of the convolution, corresponding to the highest point where both functions are non-zero, in each velocity direction)
@@ -843,7 +876,7 @@ void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights)
 	}
 }
 
-void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U, double *dU) //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6 
+void RK4_MPI(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U, double *dU) //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6
 {
   int i,j,k, j1, j2, j3, k_v, k_eta, kk,l_local;  
   double Q_re, Q_im, tp0, tp2, tp3,tp4,tp5, tmp0=0., tmp2=0., tmp3=0., tmp4=0.,tmp5=0., tem;
@@ -926,12 +959,12 @@ void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U,
     dU[(l_local*size_v + kt)*5+3] = tp4;   
   }
 }
-#endif
+//#endif
  
-#else
+//#else
 
-#ifdef FullandLinear
-/*void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights, double **conv_weights_linear)
+//#ifdef FullandLinear
+/*void ComputeQ_NoMPI_FandL(double *f, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear)
 {
   int i, j, k, l, m, n, x, y, z;
   int start_i, start_j, start_k, end_i, end_j, end_k;
@@ -1016,7 +1049,7 @@ void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U,
  // fftw_free(fftOut);
 
 }
-void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, double **conv_weights_linear, double *U) //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6 
+void RK4_NoMPI_FandL(double *f, int l, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear, double *U) //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6
 {
   int i,j,k, j1, j2, j3, k_v, k_eta,kk;  
   double Q_re, Q_im, tp0, tp2, tp3,tp4,tp5, tmp0=0., tmp2=0., tmp3=0., tmp4=0.,tmp5=0., tem;
@@ -1029,7 +1062,7 @@ void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, double **c
     f1[i] = f[i] + dt*Q[i]*nu; //BUG: this evolution (only on node values) is not consistent with our conservation routine, which preserves the exact moments of the {1,v,|v|^{2}} approximations
   }
 
-  ComputeQ(f1, Q1_fft, conv_weights,conv_weights_linear); //collides
+  ComputeQ_FandL(f1, Q1_fft, conv_weights, qHat_linear, conv_weights_linear); //collides
   conserveAllMoments(Q1_fft);   	//conserves k2	
 
   FS(Q1_fft, fftOut);
@@ -1040,7 +1073,7 @@ void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, double **c
     f1[i] = f[i] +  0.5*dt*Q[i]*nu + 0.5*dt*Q1[i]*nu;
   }
   
-  ComputeQ(f1, Q2_fft, conv_weights,conv_weights_linear); //collides
+  ComputeQ_FandL(f1, Q2_fft, conv_weights, qHat_linear, conv_weights_linear); //collides
   conserveAllMoments(Q2_fft);   //conserves k3
 
   FS(Q2_fft, fftOut);
@@ -1051,7 +1084,7 @@ void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, double **c
     f1[i] = f[i] + 0.5*dt*Q[i]*nu + 0.5*dt*Q1[i]*nu;
   }
 	 
-  ComputeQ(f1, Q3_fft, conv_weights,conv_weights_linear); //collides
+  ComputeQ_FandL(f1, Q3_fft, conv_weights, qHat_linear, conv_weights_linear); //collides
   conserveAllMoments(Q3_fft);                //conserves k4
   
   #pragma omp parallel for schedule(dynamic) private(j1,j2,j3,i,j,k,k_v,k_eta,kk,Q_re, Q_im, tp0, tp2,tp3,tp4, tp5) shared(l,qHat,U) //reduction(+: tmp0, tmp2, tmp3, tmp4, tmp5)
@@ -1094,8 +1127,8 @@ void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, double **c
 	//printf("RK4: %g, %g, %g, %g, %g\n", tmp0, tmp2, tmp3, tmp4, 0.5*tmp5);  
 }   
 */
-#else
-void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights)
+//#else
+void ComputeQ_NoMPI(double *f, fftw_complex *qHat, double **conv_weights)
 {
   int i, j, k, l, m, n, x, y, z;
   int start_i, start_j, start_k, end_i, end_j, end_k;
@@ -1180,7 +1213,7 @@ void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights)
 
 }
 
-void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U) //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6 
+void RK4_NoMPI(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U) //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6
 {
   int i,j,k, j1, j2, j3, k_v, k_eta,kk;  
   double Q_re, Q_im, tp0, tp2, tp3,tp4,tp5, tmp0=0., tmp2=0., tmp3=0., tmp4=0.,tmp5=0., tem;
@@ -1291,6 +1324,6 @@ void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U)
   }
 	//printf("RK4: %g, %g, %g, %g, %g\n", tmp0, tmp2, tmp3, tmp4, 0.5*tmp5);  
 }   
-#endif
+//#endif
 
-#endif  
+//#endif

@@ -39,9 +39,7 @@ double *U1, *Utmp, *output_buffer_vp;//, **H;														// declare pointers t
 double *Q, *f1, *Q1, *Utmp_coll;//*f2, *f3;															// declare pointers to Q (the discretised collision operator), f1 (used to help store the solution during the collisional problem), Q1 (used in calculation of the collision operator) & Utmp_coll (used to store calculations from the RK4 method used in the collisional problem)
 fftw_complex *Q1_fft, *Q2_fft, *Q3_fft;																// declare pointers to the complex numbers Q1_fft, Q2_fft & Q3_fft (involved in storing the FFT of Q)
 
-#ifdef FullandLinear																				// only do this if FullandLinear was defined
 fftw_complex *Q1_fft_linear, *Q2_fft_linear, *Q3_fft_linear;										// declare pointers to the complex numbers Q1_fft_linear, Q2_fft_linear & Q3_fft_linear (involved in storing the FFT of the two species collison operator Q)
-#endif
 
 fftw_complex *fftIn, *fftOut;																		// declare pointers to the FFT variables fftIn (a vector to be to have the FFT applied to it) & fftOut (the output of an FFT)
 
@@ -59,6 +57,9 @@ int *fNegVals;																						// declare fNegVals (to store where DG solut
 double *fAvgVals;																					// declare fAvgVals (to store the average values of f on each cell)
 double *fEquiVals;																					// declare f_equivals (to store the equilibrium solution)
 
+bool Damping, TwoStream, FourHump, TwoHump;															// declare Boolean variables which will determin the ICs for the problem
+bool FullandLinear;																					// declare a Boolean variable to determine if running with a mixture
+
 int main()
 {
 	int i, j, k, j1, j2, j3, l; 																	// declare i, j, k (counters), j1, j2, j3 (velocity space counters) & l (the index of the current DG basis function being integrated against)
@@ -67,7 +68,10 @@ int main()
 	double tmp, mass, a[3], KiE, EleE, KiEratio, ent1, l_ent1, ll_ent1;								// declare tmp (the square root of electric energy), mass (the mass/density rho), a (the momentum vector J), KiE (the kinetic energy), EleE (the electric energy), KiEratio (the ratio of kinetic energy between where f is positive and negative),  ent1 (the entropy with negatives discarded), l_ent1 (log of the ent1) & ll_ent1 (log of log of ent1)
 	double *U, **f, *output_buffer;//, **conv_weights_local;										// declare pointers to U (the vector containing the coefficients of the DG basis functions for the solution f(x,v,t) at the given time t), f (the solution which has been transformed from the DG discretisation to the appropriate spectral discretisation) & output_buffer (from where to send MPI messages)
 	double **conv_weights, **conv_weights_linear;													// declare a pointer to conv_weights (a matrix of the weights for the convolution in Fourier space of single species collisions) conv_weights_linear (a matrix of convolution weights in Fourier space of two species collisions)
-	std::string flag;																				// declare a string flag, which will be used to identify files generated associated to the current run
+	std::string flag;																				// declare a string flag (used to identify files generated associated to the current run)
+	std::string IC_name;																			// declare a string IC_name (used to identify the initial condions being run)
+	char IC_flag[30];
+	int IC_count = 0;																				// declare IC_count to count how many ICs have been set
   
 	fftw_complex *qHat, *qHat_linear;																// declare pointers to the complex numbers qHat (the DFT of Q) & qHat_linear (the DFT of the two species colission operator Q);
   
@@ -78,10 +82,74 @@ int main()
 		exit(1);																					// Exit if it does not exist
 	}
 
+	printf("Boolean options to choose which problem the code is running: \n \n");
+	if( iparse.Read_Var("Damping",&Damping,false) )													// Check if the Damping has been set and, if not, set to the default value of False
+	{
+		std::cout << "--> Damping = " << Damping << std::endl;										// Print the set value
+	}
+	if( iparse.Read_Var("TwoStream",&TwoStream,false) )												// Check if the TwoStream has been set and, if not, set to the default value of False
+	{
+		std::cout << "--> TwoStream = " << TwoStream << std::endl;									// Print the set value
+	}
+	if( iparse.Read_Var("FourHump",&FourHump,false) )												// Check if the FourHump has been set and, if not, set to the default value of False
+	{
+		std::cout << "--> FourHump = " << FourHump << std::endl;									// Print the set value
+	}
+	if( iparse.Read_Var("TwoHump",&TwoHump,false) )													// Check if the TwoHump has been set and, if not, set to the default value of False
+	{
+		std::cout << "--> TwoHump = " << TwoHump << std::endl;										// Print the set value
+	}
+
+	if(Damping)
+	{
+		IC_count++;																					// Add one to the value of IC_count to indiciate an IC has been set
+		sprintf(IC_flag,"Damping/IC_name");																// Set IC_flag to "Damping/IC_name"
+	}
+	if(TwoStream)
+	{
+		IC_count++;																					// Add one to the value of IC_count to indiciate an IC has been set
+		sprintf(IC_flag,"TwoStream/IC_name");																// Set IC_flag to "TwoStream/IC_name"
+	}
+	if(FourHump)
+	{
+		IC_count++;																					// Add one to the value of IC_count to indiciate an IC has been set
+		sprintf(IC_flag,"FourHump/IC_name");																// Set IC_flag to "FourHump/IC_name"
+	}
+	if(TwoHump)
+	{
+		IC_count++;																					// Add one to the value of IC_count to indiciate an IC has been set
+		sprintf(IC_flag,"TwoHump/IC_name");																// Set IC_flag to "TwoHump/IC_name"
+	}
+	if(IC_count == 0)																				// Exit the program if no IC option has been chosen
+	{
+		printf("Program cannot run... No initial condition has been chosen. \n"
+				"Please set one of Damping, TwoStream, FourHump or TwoHump to true "
+				"in LPsolver-input.txt. \n");
+		exit(1);
+	}
+	if(IC_count > 1)																				// Exit the program if too many IC options are chosen
+	{
+		printf("Program cannot run... %d initial conditions have been chosen. \n"
+				"Please ONLY set ONE of Damping, TwoStream, FourHump or TwoHump to true "
+				"in LPsolver-input.txt. \n", IC_count);
+		exit(1);
+	}
+	if( iparse.Read_Var(IC_flag,&IC_name))																// Check if the variable Flag has been set and, if not, exit
+	{
+		std::cout << std::endl << "Using the " << IC_name
+				<< " initial conditions for this run." << std::endl << std::endl;
+	}
+	else
+	{
+		std::cout << std::endl << "The above initial condition which is set equal to 1 "
+				"is being used for this run." << std::endl << std::endl;
+	}
+
 	if(! iparse.Read_Var("flag",&flag))																// Check if the variable Flag has been set and, if not, exit
 	{
 		exit(1);
 	}
+
 	std::cout << "--> Flag associated to this run: " << flag << std::endl << std::endl;				// Print the flag associated to this run of the code at the top and of the file
 	if (! iparse.Read_Var("nT",&nT) )																// Check if the variable nT has been set and, if not, exit
 	{
@@ -114,54 +182,58 @@ int main()
 	}
 	printf("--> %-11s = %g\n","dt",dt);																// Print the set value
 
-	#ifdef Damping																					// only do this if Damping was defined
-	if (! iparse.Read_Var("Damping/A_amp",&A_amp) )													// Check if the variable A_amp has been set and, if not, exit
+	if(Damping)																						// only do this if Damping is true
 	{
-		exit(1);
+		if (! iparse.Read_Var("Damping/A_amp",&A_amp) )												// Check if the variable A_amp has been set and, if not, exit
+		{
+			exit(1);
+		}
+		if (! iparse.Read_Var("Damping/k_wave",&k_wave) )											// Check if the variable k_wave has been set and, if not, exit
+		{
+			exit(1);
+		}
+		if (! iparse.Read_Var("Damping/Lv",&Lv) )													// Check if the variable Lv has been set and, if not, exit
+		{
+			exit(1);
+		}
+		iparse.Read_Var("Damping/Lx",&Lx,2*PI/k_wave);												// Check if the variable Lx has been set and, if not, set to the default value of 2pi/k_wave
 	}
-	if (! iparse.Read_Var("Damping/k_wave",&k_wave) )												// Check if the variable k_wave has been set and, if not, exit
-	{
-		exit(1);
-	}
-	if (! iparse.Read_Var("Damping/Lv",&Lv) )														// Check if the variable Lv has been set and, if not, exit
-	{
-		exit(1);
-	}
-	iparse.Read_Var("Damping/Lx",&Lx,2*PI/k_wave);													// Check if the variable Lx has been set and, if not, set to the default value of 2pi/k_wave
-	#endif
 
-	#ifdef TwoStream																				// only do this if Damping was defined
-	if (! iparse.Read_Var("TwoStream/A_amp",&A_amp) )												// Check if the variable A_amp has been set and, if not, exit
+	if(TwoStream)																					// only do this if TwoStream is true
 	{
-		exit(1);
+		if (! iparse.Read_Var("TwoStream/A_amp",&A_amp) )											// Check if the variable A_amp has been set and, if not, exit
+		{
+			exit(1);
+		}
+		if (! iparse.Read_Var("TwoStream/Lv",&Lv) )													// Check if the variable Lv has been set and, if not, exit
+		{
+			exit(1);
+		}
+		iparse.Read_Var("TwoStream/Lx",&Lx,2*PI/k_wave);											// Check if the variable Lx has been set and, if not, set to the default value of 2pi/k_wave
+		k_wave=2*PI/4.;																				// set k_wave to pi/2
 	}
-	if (! iparse.Read_Var("TwoStream/Lv",&Lv) )														// Check if the variable Lv has been set and, if not, exit
-	{
-		exit(1);
-	}
-	iparse.Read_Var("TwoStream/Lx",&Lx,2*PI/k_wave);													// Check if the variable Lx has been set and, if not, set to the default value of 2pi/k_wave
-	k_wave=2*PI/4.																					// set k_wave to pi/2
-	#endif
 
-	#ifdef FourHump																					// only do this if Damping was defined
-	iparse.Read_Var("FourHump/A_amp",&A_amp,0.);														// Check if the variable A_amp has been set and, if not, set the value to 0 (it's not needed)
-	iparse.Read_Var("FourHump/k_wave",&k_wave,0.5);													// Check if the variable k_wave has been set and, if not, set to the default value of 0.5 (to calculate Lx)
-	if (! iparse.Read_Var("FourHump/Lv",&Lv) )														// Check if the variable Lv has been set and, if not, exit
+	if(FourHump)																					// only do this if FourHump is true
 	{
-		exit(1);
+		iparse.Read_Var("FourHump/A_amp",&A_amp,0.);												// Check if the variable A_amp has been set and, if not, set the value to 0 (it's not needed)
+		iparse.Read_Var("FourHump/k_wave",&k_wave,0.5);												// Check if the variable k_wave has been set and, if not, set to the default value of 0.5 (to calculate Lx)
+		if (! iparse.Read_Var("FourHump/Lv",&Lv) )													// Check if the variable Lv has been set and, if not, exit
+		{
+			exit(1);
+		}
+		iparse.Read_Var("FourHump/Lx",&Lx,2*PI/k_wave);												// Check if the variable Lx has been set and, if not, set to the default value of 2pi/k_wave
 	}
-	iparse.Read_Var("FourHump/Lx",&Lx,2*PI/k_wave);													// Check if the variable Lx has been set and, if not, set to the default value of 2pi/k_wave
-	#endif
 
-	#ifdef TwoHump																					// only do this if Damping was defined
-	iparse.Read_Var("TwoHump/A_amp",&A_amp,0.);														// Check if the variable A_amp has been set and, if not, set the value to 0 (it's not needed)
-	iparse.Read_Var("TwoHump/k_wave",&k_wave,0.5);													// Check if the variable k_wave has been set and, if not, set to the default value of 0.5 (to calculate Lx)
-	if (! iparse.Read_Var("TwoHump/Lv",&Lv) )														// Check if the variable Lv has been set and, if not, exit
+	if(TwoHump)																						// only do this if TwoHump is true
 	{
-		exit(1);
+		iparse.Read_Var("TwoHump/A_amp",&A_amp,0.);													// Check if the variable A_amp has been set and, if not, set the value to 0 (it's not needed)
+		iparse.Read_Var("TwoHump/k_wave",&k_wave,0.5);												// Check if the variable k_wave has been set and, if not, set to the default value of 0.5 (to calculate Lx)
+		if (! iparse.Read_Var("TwoHump/Lv",&Lv) )													// Check if the variable Lv has been set and, if not, exit
+		{
+			exit(1);
+		}
+		iparse.Read_Var("TwoHump/Lx",&Lx,2*PI/k_wave);													// Check if the variable Lx has been set and, if not, set to the default value of 2pi/k_wave
 	}
-	iparse.Read_Var("TwoHump/Lx",&Lx,2*PI/k_wave);													// Check if the variable Lx has been set and, if not, set to the default value of 2pi/k_wave
-	#endif
 
 	printf("--> %-11s = %g\n","A_amp",A_amp);														// Print the value set for A_amp
 	printf("--> %-11s = %g\n","k_wave",k_wave);														// Print the value set for k_wave
@@ -270,19 +342,20 @@ int main()
 			conv_weights[i] = (double *)malloc(size_ft*sizeof(double));								// allocate enough space at the ith entry of conv_weights for size_ft many float numbers
 		}
 
-		#ifdef FullandLinear																		// only do this if FullandLinear was defined
-		conv_weights_linear = (double **)malloc(size_ft*sizeof(double *));							// allocate enough space at the pointer conv_weight_linear for size_ft many pointers to float numbers
-		for (i=0;i<size_ft;i++)
+		if(FullandLinear)																			// only do this if FullandLinear is true
 		{
-			conv_weights_linear[i] = (double *)malloc(size_ft*sizeof(double));						// allocate enough space at the ith entry of conv_weights_linear for size_ft many float numbers
+			conv_weights_linear = (double **)malloc(size_ft*sizeof(double *));						// allocate enough space at the pointer conv_weight_linear for size_ft many pointers to float numbers
+			for (i=0;i<size_ft;i++)
+			{
+				conv_weights_linear[i] = (double *)malloc(size_ft*sizeof(double));					// allocate enough space at the ith entry of conv_weights_linear for size_ft many float numbers
+			}
+
+			Q1_fft_linear = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));				// allocate enough space at the pointer Q1_fft_linear for size_ft many complex numbers
+			Q2_fft_linear = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));				// allocate enough space at the pointer Q2_fft_linear for size_ft many complex numbers
+			Q3_fft_linear = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));				// allocate enough space at the pointer Q3_fft_linear for size_ft many complex numbers
+
+			qHat_linear = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));				// allocate enough space at the pointer QHat_linear for size_ft many complex numbers
 		}
-  
-		Q1_fft_linear = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));					// allocate enough space at the pointer Q1_fft_linear for size_ft many complex numbers
-		Q2_fft_linear = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));					// allocate enough space at the pointer Q2_fft_linear for size_ft many complex numbers
-		Q3_fft_linear = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));					// allocate enough space at the pointer Q3_fft_linear for size_ft many complex numbers
-  
-		qHat_linear = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));					// allocate enough space at the pointer QHat_linear for size_ft many complex numbers
-		#endif
 
 		Q = (double*)malloc(size_ft*sizeof(double));												// allocate enough space at the pointer Q for size_ft many double numbers
 		f1 = (double*)malloc(size_ft*sizeof(double)); 												// allocate enough space at the pointer f1 for size_ft many double numbers
@@ -321,10 +394,11 @@ int main()
   
 		char buffer_weights[100], loading_buffer[100];												// declare the arrays buffer_weights (to store a string which displays the values of N & L_v) & loading_buffer (...?)
 		sprintf(buffer_weights,"Weights/N%d_L%g_Landau.wts",N,L_v);									// store the values of N & L_v in buffer_weights
-		#ifdef FullandLinear																		// only do this if Fullandlinear was defined
-		char buffer_weights1[100];																	// declare the array buffer_weights1 (to store a string which displays the values of N & L_v for the linear case)
-		sprintf(buffer_weights1,"Weights/N%d_L%g_Landau_linear.wts",N,L_v);							// store the values of N & L_v in buffer_weights1 and note that it's for the linear Landau damping
-		#endif
+		if(FullandLinear)																			// only do this if Fullandlinear is true
+		{
+			char buffer_weights1[100];																// declare the array buffer_weights1 (to store a string which displays the values of N & L_v for the linear case)
+			sprintf(buffer_weights1,"Weights/N%d_L%g_Landau_linear.wts",N,L_v);						// store the values of N & L_v in buffer_weights1 and note that it's for the linear Landau damping
+		}
 
 		// COMMONLY USED CONSTANTS:
 		scale = 1.0/sqrt(2.0*M_PI);																	// set scale to 1/sqrt(2*pi)
@@ -392,9 +466,10 @@ int main()
   
 		// Directly compute the weights; not from precomputed (for small number of nodes, it's very fast)
 		generate_conv_weights(conv_weights); 														// calculate the values of the convolution weights (the matrix G_Hat(xi, omega), for xi = (xi_i, xi_j, xi_k), omega = (omega_l, omega_m, omega_n), i,j,k,l,m,n = 0,1,...,N-1) and store the values in conv_weights
-		#ifdef FullandLinear																		// only do this FullandLinear was defined
-		generate_conv_weights_linear(conv_weights_linear);											// calculate the values of the convolution weights for the linear case (the matrix G_Hat(xi, omega), for xi = (xi_i, xi_j, xi_k), omega = (omega_l, omega_m, omega_n), i,j,k,l,m,n = 0,1,...,N-1) and store the values in conv_weights_linear
-		#endif
+		if(FullandLinear)																			// only do this FullandLinear is true
+		{
+			generate_conv_weights_linear(conv_weights_linear);										// calculate the values of the convolution weights for the linear case (the matrix G_Hat(xi, omega), for xi = (xi_i, xi_j, xi_k), omega = (omega_l, omega_m, omega_n), i,j,k,l,m,n = 0,1,...,N-1) and store the values in conv_weights_linear
+		}
 
 		MPI_Barrier(MPI_COMM_WORLD);																// set an MPI barrier to ensure that all processes have reached this point before continuing
 	}
@@ -418,46 +493,54 @@ int main()
 					nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is EntropyVals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
 
 	#ifdef First																					// only do this if First was defined (setting initial conditions)
-		#ifdef Damping																				// only do this if Damping was defined
-		SetInit_LD(U);																				// set initial DG solution for Landau Damping. For the first time run t=0, use this to give init solution (otherwise, comment out)
-		#endif
-		#ifdef TwoStream																			// only do this if TwoStream was defined
-		SetInit_LD(U);																				// set initial DG solution for Landau Damping. For the first time run t=0, use this to give init solution (otherwise, comment out)
-		#endif
-		#ifdef FourHump																				// only do this if FourHump was defined
-		SetInit_4H(U);																				// set initial DG solution with the 4Hump IC. For the first time run t=0, use this to give init solution (otherwise, comment out)
-		#endif
-		#ifdef TwoHump																				// only do this if TwoHump was defined
-		SetInit_2H(U);																				// set initial DG solution with the 2Hump IC. For the first time run t=0, use this to give init solution (otherwise, comment out)
-		#endif
+		if(Damping)																					// only do this if Damping is true
+		{
+			SetInit_LD(U);																			// set initial DG solution for Landau Damping. For the first time run t=0, use this to give init solution (otherwise, comment out)
+		}
+		if(TwoStream)																				// only do this if TwoStream is true
+		{
+			SetInit_LD(U);																			// set initial DG solution for Landau Damping. For the first time run t=0, use this to give init solution (otherwise, comment out)
+		}
+		if(FourHump)																				// only do this if FourHump is true
+		{
+			SetInit_4H(U);																			// set initial DG solution with the 4Hump IC. For the first time run t=0, use this to give init solution (otherwise, comment out)
+		}
+		if(TwoHump)																					// only do this if TwoHump is true
+		{
+			SetInit_2H(U);																			// set initial DG solution with the 2Hump IC. For the first time run t=0, use this to give init solution (otherwise, comment out)
+		}
 	#endif
 
-	FILE *fmom, *fu, *fufull, *fmarg, *fphi, *fent;													// declare pointers to the files fmom (which will store the moments), fu (which will store the solution U), fufull (which will store the solution U in the TwoStream case), fmarg (which will store the values of the marginals), fphi (which will store the values of the potential phi) & fent (which will store the values fo the entropy)
+	FILE *fmom, *fu, *fmarg, *fphi, *fent;													// declare pointers to the files fmom (which will store the moments), fu (which will store the solution U), fufull (which will store the solution U in the TwoStream case), fmarg (which will store the values of the marginals), fphi (which will store the values of the potential phi) & fent (which will store the values fo the entropy)
 
 	if(myrank_mpi==0)																				// only the process with rank 0 will do this
 	{
-		#ifdef Damping																				// only do this if Damping was defined
-		printf("Damping. %s. nu=%g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
+		if(Damping)																					// only do this if Damping is true
+		{
+			printf("Damping. %s. nu=%g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
 				"N=%d, dt=%g, nT=%d\nchunk_Nx=%d, nprocs_Nx=%d\n",
 				buffer_flags, nu, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT,chunk_Nx,nprocs_Nx);			// display in the output file that this is the Damping calculation, as well as the contents of the string buffer_flags and the values of nu, A_amp,k_wave, Nx, Lv, Nv, N, dt, nT, chunk_Nx & nprocs_Nx
-		#endif
+		}
     
-		#ifdef TwoStream																			// only do this if TwoStream was defined
-		printf("2Stream. %s. with 2Gauss. nu=%g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
+		if(TwoStream)																				// only do this if TwoStream is true
+		{
+			printf("2Stream. %s. with 2Gauss. nu=%g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
 				"N=%d, dt=%g, nT=%d\n", buffer_flags, nu, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT);	// display in the output file that this is the TwoStream calculation, as well as the contents of the string buffer_flags and the values of nu, A_amp,k_wave, Nx, Lv, Nv, N, dt & nT
-		#endif
+		}
 
-		#ifdef FourHump																				// only do this if FourHump was defined
-		printf("4HumpIC. %s. nu=%g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
+		if(FourHump)																				// only do this if FourHump is true
+		{
+			printf("4HumpIC. %s. nu=%g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
 				"N=%d, dt=%g, nT=%d\nchunk_Nx=%d, nprocs_Nx=%d\n",
 				buffer_flags, nu, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT,chunk_Nx,nprocs_Nx);			// display in the output file that this is the calculation with the 4Hump IC, as well as the contents of the string buffer_flags and the values of nu, A_amp,k_wave, Nx, Lv, Nv, N, dt, nT, chunk_Nx & nprocs_Nx
-		#endif
+		}
 
-		#ifdef TwoHump																				// only do this if TwoHump was defined
-		printf("2HumpIC. %s. nu=%g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
+		if(TwoHump)																				// only do this if TwoHump is true
+		{
+			printf("2HumpIC. %s. nu=%g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
 				"N=%d, dt=%g, nT=%d\nchunk_Nx=%d, nprocs_Nx=%d\n",
 				buffer_flags, nu, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT,chunk_Nx,nprocs_Nx);			// display in the output file that this is the calculation with the 2Hump IC, as well as the contents of the string buffer_flags and the values of nu, A_amp,k_wave, Nx, Lv, Nv, N, dt, nT, chunk_Nx & nprocs_Nx
-		#endif
+		}
 	
 		#ifdef Second																				// only do this Second was defined (picking up data from a previous run)
 		fu=fopen("Data/U_nu0.05A0.2k0.5Nx24Lx12.5664Nv24Lv5.25SpectralN16dt0.01nT1_4HumpMacroTest.dc","r"); 		// set fu to be a file with the name U_nu0.02A0.5k0.785398Nx48Lx8Nv48Lv4.5SpectralN24dt0.004nT500_non_nu002_2.dc, stored in the directory Data, and set the file access mode of fu to r (which means the file must exist already and will be read from)
@@ -554,16 +637,19 @@ int main()
 
 			for(l=chunk_Nx*myrank_mpi;l<chunk_Nx*(myrank_mpi+1) && l<Nx;l++) 						// divide the number of discretised space points equally over the number of MPI processes, so that each process receives a different chunk of space to work on
 			{
-				#ifdef FullandLinear																// only do this if FullandLinear was defined
-				ComputeQ(f[l%chunk_Nx], qHat, conv_weights, qHat_linear, conv_weights_linear);		// using the coefficients of the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), calculate the Fourier tranform of Q(f,f) using conv_weights for the weights in the convolution in the full part of Q & conv_weights_linear in the convolution in the linear part of Q, then store the results of each Fourier transform in qHat & qHat_linear, respectively
-				conserveAllMoments(qHat, qHat_linear);												// perform the explicit conservation calculation
-				RK4(f[l%chunk_Nx], l, qHat, conv_weights, qHat_linear, conv_weights_linear,
-						U, Utmp_coll);																// advance to the next time step in the collisional problem using RK4 at the given space-step l, taking the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), as well as qHat, conv_weights, qHat_linear & conv_weights_linear (to allow more Fourier transforms of Q to be made), storing the output partially in U and partially in Utmp_coll
-				#else																				// otherwise, if FullandLinear was not defined...
-				ComputeQ(f[l%chunk_Nx], qHat, conv_weights);										// using the coefficients of the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), calculate the Fourier tranform of Q(f,f) using conv_weights for the weights in the convolution, then store the results of the Fourier transform in qHat
-				conserveAllMoments(qHat);															// perform the explicit conservation calculation
-				RK4(f[l%chunk_Nx], l, qHat, conv_weights, U, Utmp_coll);							// advance to the next time step in the collisional problem using RK4 at the given space-step l, taking the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), as well as qHat & conv_weights (to allow more Fourier transforms of Q to be made), storing the output partially in U and partially in Utmp_coll
-				#endif
+				if(FullandLinear)																	// only do this if FullandLinear is true
+				{
+					ComputeQ_FandL(f[l%chunk_Nx], qHat, conv_weights, qHat_linear, conv_weights_linear);	// using the coefficients of the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), calculate the Fourier tranform of Q(f,f) using conv_weights for the weights in the convolution in the full part of Q & conv_weights_linear in the convolution in the linear part of Q, then store the results of each Fourier transform in qHat & qHat_linear, respectively
+					conserveAllMoments(qHat, qHat_linear);											// perform the explicit conservation calculation
+					RK4_FandL(f[l%chunk_Nx], l, qHat, conv_weights, qHat_linear, conv_weights_linear,
+							U, Utmp_coll);															// advance to the next time step in the collisional problem using RK4 at the given space-step l, taking the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), as well as qHat, conv_weights, qHat_linear & conv_weights_linear (to allow more Fourier transforms of Q to be made), storing the output partially in U and partially in Utmp_coll
+				}
+				else																				// otherwise, if FullandLinear is false...
+				{
+					ComputeQ(f[l%chunk_Nx], qHat, conv_weights);									// using the coefficients of the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), calculate the Fourier tranform of Q(f,f) using conv_weights for the weights in the convolution, then store the results of the Fourier transform in qHat
+					conserveAllMoments(qHat);														// perform the explicit conservation calculation
+					RK4(f[l%chunk_Nx], l, qHat, conv_weights, U, Utmp_coll);						// advance to the next time step in the collisional problem using RK4 at the given space-step l, taking the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), as well as qHat & conv_weights (to allow more Fourier transforms of Q to be made), storing the output partially in U and partially in Utmp_coll
+				}
 			}
 
 			MPI_Barrier(MPI_COMM_WORLD);															// set an MPI barrier to ensure that all processes have reached this point before continuing
@@ -685,9 +771,6 @@ int main()
 		fclose(fmarg);  																			// remove the tag fmarg to close the file
 		fclose(fphi);  																				// remove the tag fphi to close the file
 		fclose(fent);  																				// remove the tag fent to close the file
-		#ifdef TwoStream																			// only do this if TwoStream was defined
-		//fclose(fufull);
-		#endif
 	}
 	if(nu > 0.)
 	{
@@ -696,11 +779,9 @@ int main()
 		fftw_free(temp); fftw_free(qHat);															// delete the dynamic memory allocated for temp & qhat
 		fftw_free(Q1_fft); fftw_free(Q2_fft); fftw_free(Q3_fft); fftw_free(fftOut); fftw_free(fftIn); // delete the dynamic memory allocated for Q1_fft, Q2_fft, Q3_fft, fftOut & fftIn
 		free(Q);free(f1);free(Q1); free(Utmp_coll);// free(f2); free(f3);//free(Q3);				// delete the dynamic memory allocated for Q, f1, Q1 & Utmp_coll
-		#ifdef FullandLinear																		// only do this if FullandLinear is defined
 		fftw_free(qHat_linear); fftw_free(Q1_fft_linear); 											// delete the dynamic memory allocated for qHat_linear & Q1_fft_linear
 		fftw_free(Q2_fft_linear); fftw_free(Q3_fft_linear); 										// delete the dynamic memory allocated for Q2_fft_linear & Q3_fft_linear
 		free(conv_weights_linear);																	// delete the dynamic memory allocated for conv_weights_linear
-		#endif
 	}
 	free(output_buffer_vp);																			// delete the dynamic memory allocated for output_buffer_vp
 	free(U); free(U1); free(Utmp); // free(H);														// delete the dynamic memory allocated for U, U1 & Utmp

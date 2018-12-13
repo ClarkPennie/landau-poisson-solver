@@ -83,8 +83,19 @@ void solveWithCCt(int nElem, double *b)
 
 //MAIN CONSERVATION ROUTINE
 
-#ifdef FullandLinear
-void conserveAllMoments(fftw_complex *qHat, fftw_complex *qHat_linear) // Q^ -->Q--->conserve-->new Q^
+void conserveAllMoments(fftw_complex *qHat, fftw_complex *qHat_linear)
+{
+	if(FullandLinear)
+	{
+		conserveAllMoments_FandL(qHat, qHat_linear);
+	}
+	else
+	{
+		conserveAllMoments_normal(qHat);
+	}
+}
+
+void conserveAllMoments_FandL(fftw_complex *qHat, fftw_complex *qHat_linear) // Q^ -->Q--->conserve-->new Q^
 {
 	//double  *lamb, lamb_linear[2];
 	double tmp0=0., tmp1=0., tmp2=0., tmp3=0., tmp4=0., tp0=0., tp1=0.;
@@ -119,8 +130,8 @@ void conserveAllMoments(fftw_complex *qHat, fftw_complex *qHat_linear) // Q^ -->
 
 	//free(lamb); 	
 }
-#else
-void conserveAllMoments(fftw_complex *qHat) // Q^ -->Q--->conserve-->new Q^
+
+void conserveAllMoments_normal(fftw_complex *qHat) // Q^ -->Q--->conserve-->new Q^
 {
 	//double  *lamb, lamb_linear[2];
 	double tmp0=0., tmp1=0., tmp2=0., tmp3=0., tmp4=0., tp0=0., tp1=0.;
@@ -150,7 +161,6 @@ void conserveAllMoments(fftw_complex *qHat) // Q^ -->Q--->conserve-->new Q^
 
 	//free(lamb); 	
 }
-#endif
 /*$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$*/
 
 void createCCtAndPivot()
@@ -216,27 +226,29 @@ void createCCtAndPivot()
 	exit(1);
 #endif
 
-#ifdef FullandLinear
-	tmp = 0.; tmp1=0.; tmp2=0.; 
-	for(k=0;k<size_ft;k++) {
-	   tmp += C1[0][k]*C1[0][k] + C2[0][k]*C2[0][k]; 
-	   tmp1 += C1[0][k]*C1[4][k] + C2[0][k]*C2[4][k];
-	   tmp2 += C1[4][k]*C1[4][k] + C2[4][k]*C2[4][k];
+	if(FullandLinear)
+	{
+		tmp = 0.; tmp1=0.; tmp2=0.;
+		for(k=0;k<size_ft;k++) {
+		   tmp += C1[0][k]*C1[0][k] + C2[0][k]*C2[0][k];
+		   tmp1 += C1[0][k]*C1[4][k] + C2[0][k]*C2[4][k];
+		   tmp2 += C1[4][k]*C1[4][k] + C2[4][k]*C2[4][k];
+		}
+		CCt_linear[0] = tmp; CCt_linear[1] = tmp1; CCt_linear[2] = tmp1; CCt_linear[3] = tmp2;
+
+		#ifdef HAVE_MKL
+		dgetrf(&nele1,&nele1,CCt_linear,&nele1,pivotArray1,&errinfo);
+		dgetri(&nele1,CCt_linear,&nele1,pivotArray1,lapackWorkspace1,&lwork1,&errinfo);
+		#elif HAVE_OPENBLAS
+		dgetrf_(&nele1,&nele1,CCt_linear,&nele1,pivotArray1,&errinfo);
+		dgetri_(&nele1,CCt_linear,&nele1,pivotArray1,lapackWorkspace1,&lwork1,&errinfo);
+		#else
+		printf("Error: unsupported BLAS configuration\n");
+		exit(1);
+		#endif
 	}
-	CCt_linear[0] = tmp; CCt_linear[1] = tmp1; CCt_linear[2] = tmp1; CCt_linear[3] = tmp2;
+	//#endif
 
-#ifdef HAVE_MKL
-	dgetrf(&nele1,&nele1,CCt_linear,&nele1,pivotArray1,&errinfo); 
-	dgetri(&nele1,CCt_linear,&nele1,pivotArray1,lapackWorkspace1,&lwork1,&errinfo);
-#elif HAVE_OPENBLAS
-	dgetrf_(&nele1,&nele1,CCt_linear,&nele1,pivotArray1,&errinfo); 
-	dgetri_(&nele1,CCt_linear,&nele1,pivotArray1,lapackWorkspace1,&lwork1,&errinfo);
-#else
-	printf("Error: unsupported BLAS configuration\n");
-	exit(1);
-#endif
-
-#endif
 	
 	/*printf("\n");
 	for(i=0;i<M;i++){

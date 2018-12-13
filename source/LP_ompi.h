@@ -46,7 +46,7 @@ using namespace GRVY;
 //#define Damping																					// define the macro Damping (UNCOMMENT IF BEING RUN FOR THE LANDAU DAMPING PROBLEM)
 //#define FullandLinear 																			// define the macro FullandLinear (UNCOMMENT IF THE LINEAR ELE-ION COLLISION OPERATOR IS NEEDED; OTHERWISE, ONLY ELE-ELE COLLISIONS)
 //#define TwoStream																					// define the macro TwoStream (UNCOMMENT IF BEING RUN FOR THE TWO STREAM PROBLEM)
-#define FourHump																					// define the macro FourHump (UNCOMMENT IF BEING RUN FOR THE FOUR HUMP IC PROBLEM)
+//#define FourHump																					// define the macro FourHump (UNCOMMENT IF BEING RUN FOR THE FOUR HUMP IC PROBLEM)
 //#define TwoHump																					// define the macro TwoHump (UNCOMMENT IF BEING RUN FOR THE TWO HUMP IC PROBLEM)
 
 // CHOOSE IF THIS IS THE INITIAL RUN OR A SUBSEQUENT RUN:
@@ -81,9 +81,8 @@ extern double *U1, *Utmp, *output_buffer_vp;//, **H;												// declare point
 extern double *Q, *f1, *Q1, *Utmp_coll;//*f2, *f3;													// declare pointers to Q (the discretised collision operator), f1 (used to help store the solution during the collisional problem), Q1 (used in calculation of the collision operator) & Utmp_coll (used to store calculations from the RK4 method used in the collisional problem)
 extern fftw_complex *Q1_fft, *Q2_fft, *Q3_fft;														// declare pointers to the complex numbers Q1_fft, Q2_fft & Q3_fft (involved in storing the FFT of Q)
 
-#ifdef FullandLinear																				// only do this if FullandLinear was defined
+// FullandLinear variables:
 extern fftw_complex *Q1_fft_linear, *Q2_fft_linear, *Q3_fft_linear;									// declare pointers to the complex numbers Q1_fft_linear, Q2_fft_linear & Q3_fft_linear (involved in storing the FFT of the two species collison operator Q)
-#endif
 
 extern fftw_complex *fftIn, *fftOut;																// declare pointers to the FFT variables fftIn (a vector to be to have the FFT applied to it) & fftOut (the output of an FFT)
 //extern double IntM[10];																				// declare an array IntM to hold 10 double variables
@@ -101,6 +100,9 @@ extern int chunksize_dg, chunksize_ft, chunk_Nx;													// declare chunksiz
 extern int *fNegVals;																				// declare fNegVals (to store where DG solution goes negative - a 1 if negative and a 0 if positive)
 extern double *fAvgVals;																			// declare fAvgVals (to store the average values of f on each cell)
 extern double *fEquiVals;																			// declare f_equivals (to store the equilibrium solution)
+
+extern bool Damping, TwoStream, FourHump, TwoHump;													// declare Boolean variables which will determin the ICs for the problem
+extern bool FullandLinear;																			// declare a Boolean variable to determine if running with a mixture
 
 //extern double a[3];
 
