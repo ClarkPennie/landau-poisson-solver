@@ -1,5 +1,5 @@
 AC_PREREQ([2.69])
-AC_INIT([landau], [0.1.0], [BUG-REPORT-ADDRESS])
+AC_INIT([landau], [0.2.0], [BUG-REPORT-ADDRESS])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([/source/collisionRoutines_1.h])
 AC_CONFIG_HEADERS([config.h])
@@ -16,31 +16,33 @@ ACX_MPI([CC="$MPICC"], AC_MSG_ERROR([Could not find MPI C compiler support]))
 AC_LANG([C++])
 ACX_MPI([CXX="$MPICXX"], AC_MSG_ERROR([Could not find MPI C++ compiler support]))
 
-#CXXFLAGS="$CXXFLAGS -g -p"
-
 # Check compiler supports the C++11 standard (required for GRVY)
 AX_CXX_COMPILE_STDCXX_11([noext], [mandatory])
 
 # OpenMP check
 AX_OPENMP([CXXFLAGS="$CXXFLAGS $OPENMP_CXXFLAGS"], AC_MSG_ERROR([Could not detect OpenMP linkage]))
 
+# Math library check(s) - the first preference is for MKL. If MKL not
+# found, then check for OpenBLAS
+
 # MKL check
 AC_LANG_PUSH([C])
 AX_COMPILER_VENDOR
-ACX_MKL([CXXFLAGS="$CXXFLAGS -DHAVE_MKL"],[echo "MKL not found.  Checking for BLAS..."])
-###LDFLAGS="$LDFLAGS $MKL_LIBS"
+ACX_MKL([],AC_MSG_NOTICE([MKL not found. Will next check for OpenBLAS]))
 AC_LANG_POP([C])
-###
-# OpenBLAS check
-#if [[ ! -v $MKL_FLAGS ]]; then
 
-if test "x${MKL_FLAGS}" == "x"; then
+if test "x${MKLROOT}" != "x"; then
+  AC_MSG_NOTICE([MKL detected])
+else
+  MKL_LIBS=""
+fi
+
+# OpenBLAS check
+if test "x${MKLROOT}" == "x"; then
 AC_LANG_PUSH([C])
 LDFLAGS="-L$OPENBLAS_LIB"
 #AX_COMPILER_VENDOR
 AX_BLAS([CXXFLAGS="$CXXFLAGS -DHAVE_OPENBLAS"],AC_MSG_ERROR([Could not detect OpenBLAS linkage]))
-#AX_BLAS([LDFLAGS="$BLAS_LIBS $LIBS $FLIBS"], AC_MSG_ERROR([Could not detect OpenBLAS linkage]))
-#LDFLAGS="$BLAS_LIBS $LIBS $FLIBS"
 AC_LANG_POP([C])
 fi
 
