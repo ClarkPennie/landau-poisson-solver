@@ -57,8 +57,9 @@ int *fNegVals;																						// declare fNegVals (to store where DG solut
 double *fAvgVals;																					// declare fAvgVals (to store the average values of f on each cell)
 double *fEquiVals;																					// declare f_equivals (to store the equilibrium solution)
 
-bool Damping, TwoStream, FourHump, TwoHump;															// declare Boolean variables which will determin the ICs for the problem
+bool Damping, TwoStream, FourHump, TwoHump;															// declare Boolean variables which will determine the ICs for the problem
 bool FullandLinear;																					// declare a Boolean variable to determine if running with a mixture
+bool First, Second;																					// declare Boolean variables which will determine if this is the first or a subsequent run
 
 int main()
 {
@@ -72,7 +73,8 @@ int main()
 	std::string IC_name;																			// declare a string IC_name (used to identify the initial condions being run)
 	char IC_flag[30];
 	int IC_count = 0;																				// declare IC_count to count how many ICs have been set
-  
+	int run_count = 0;																				// declare run_count to check if first or second has been set
+
 	fftw_complex *qHat, *qHat_linear;																// declare pointers to the complex numbers qHat (the DFT of Q) & qHat_linear (the DFT of the two species colission operator Q);
   
 	GRVY_Input_Class iparse;																		// Define a GRVY input parsing object
@@ -83,19 +85,19 @@ int main()
 	}
 
 	printf("Boolean options to choose which problem the code is running: \n \n");
-	if( iparse.Read_Var("Damping",&Damping,false) )													// Check if the Damping has been set and, if not, set to the default value of False
+	if( iparse.Read_Var("Damping",&Damping,false) )													// Check if Damping has been set and, if not, set to the default value of False
 	{
 		std::cout << "--> Damping = " << Damping << std::endl;										// Print the set value
 	}
-	if( iparse.Read_Var("TwoStream",&TwoStream,false) )												// Check if the TwoStream has been set and, if not, set to the default value of False
+	if( iparse.Read_Var("TwoStream",&TwoStream,false) )												// Check if TwoStream has been set and, if not, set to the default value of False
 	{
 		std::cout << "--> TwoStream = " << TwoStream << std::endl;									// Print the set value
 	}
-	if( iparse.Read_Var("FourHump",&FourHump,false) )												// Check if the FourHump has been set and, if not, set to the default value of False
+	if( iparse.Read_Var("FourHump",&FourHump,false) )												// Check if FourHump has been set and, if not, set to the default value of False
 	{
 		std::cout << "--> FourHump = " << FourHump << std::endl;									// Print the set value
 	}
-	if( iparse.Read_Var("TwoHump",&TwoHump,false) )													// Check if the TwoHump has been set and, if not, set to the default value of False
+	if( iparse.Read_Var("TwoHump",&TwoHump,false) )													// Check ife TwoHump has been set and, if not, set to the default value of False
 	{
 		std::cout << "--> TwoHump = " << TwoHump << std::endl;										// Print the set value
 	}
@@ -134,7 +136,7 @@ int main()
 				"in LPsolver-input.txt. \n", IC_count);
 		exit(1);
 	}
-	if( iparse.Read_Var(IC_flag,&IC_name))																// Check if the variable Flag has been set and, if not, exit
+	if( iparse.Read_Var(IC_flag,&IC_name))															// Check if the variable Flag has been set and, if not, exit
 	{
 		std::cout << std::endl << "Using the " << IC_name
 				<< " initial conditions for this run." << std::endl << std::endl;
@@ -145,7 +147,35 @@ int main()
 				"is being used for this run." << std::endl << std::endl;
 	}
 
-	if( iparse.Read_Var("FullandLinear",&FullandLinear,false) )										// Check if the TwoHump has been set and, if not, set to the default value of False
+	if( iparse.Read_Var("First",&First,false) )														// Check if First has been set and, if not, set to the default value of False
+	{
+		std::cout << "--> First = " << First << std::endl;											// Print the set value
+	}
+	if( iparse.Read_Var("Second",&Second,false) )													// Check if Second has been set and, if not, set to the default value of False
+	{
+		std::cout << "--> Second = " << Second << std::endl << std::endl;							// Print the set value
+	}
+
+	if(First)
+	{
+		run_count++;																				// Add one to the value of run_count to indiciate a run sequence has been set
+		printf("Code is running for the first time with the above initial conditions. \n\n");		// Print that this is running the code for the first time
+	}
+	if(Second)
+	{
+		run_count++;																				// Add one to the value of run_count to indiciate a run sequence has been set
+		printf("Code is picking up from a previous run which should have the above "
+				"initial conditions. \n\n");														// Print that this is running the code for the first time
+	}
+	if(run_count != 1)																				// Exit the program if no IC option has been chosen
+	{
+		printf("Program cannot run... Need to choose if this is a first run or a subsequent one. \n"
+				"Please set ONE of First or Second to true in LPsolver-input.txt to decide "
+				"if this is the first run or picking up from a previous run. \n");
+		exit(1);
+	}
+
+	if( iparse.Read_Var("FullandLinear",&FullandLinear,false) )										// Check if TwoHump has been set and, if not, set to the default value of False
 	{
 		std::cout << "--> FullandLinear = " << FullandLinear << std::endl << std::endl;				// Print the set value
 		if(FullandLinear)
@@ -503,7 +533,8 @@ int main()
 	sprintf(buffer_ent,"Data/EntropyVals_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
 					nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is EntropyVals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
 
-	#ifdef First																					// only do this if First was defined (setting initial conditions)
+	if(First)																						// only do this if First is True (setting initial conditions)
+	{
 		if(Damping)																					// only do this if Damping is true
 		{
 			SetInit_LD(U);																			// set initial DG solution for Landau Damping. For the first time run t=0, use this to give init solution (otherwise, comment out)
@@ -520,9 +551,9 @@ int main()
 		{
 			SetInit_2H(U);																			// set initial DG solution with the 2Hump IC. For the first time run t=0, use this to give init solution (otherwise, comment out)
 		}
-	#endif
+	}
 
-	FILE *fmom, *fu, *fmarg, *fphi, *fent;													// declare pointers to the files fmom (which will store the moments), fu (which will store the solution U), fufull (which will store the solution U in the TwoStream case), fmarg (which will store the values of the marginals), fphi (which will store the values of the potential phi) & fent (which will store the values fo the entropy)
+	FILE *fmom, *fu, *fmarg, *fphi, *fent;															// declare pointers to the files fmom (which will store the moments), fu (which will store the solution U), fufull (which will store the solution U in the TwoStream case), fmarg (which will store the values of the marginals), fphi (which will store the values of the potential phi) & fent (which will store the values fo the entropy)
 
 	if(myrank_mpi==0)																				// only the process with rank 0 will do this
 	{
@@ -546,36 +577,37 @@ int main()
 				buffer_flags, nu, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT,chunk_Nx,nprocs_Nx);			// display in the output file that this is the calculation with the 4Hump IC, as well as the contents of the string buffer_flags and the values of nu, A_amp,k_wave, Nx, Lv, Nv, N, dt, nT, chunk_Nx & nprocs_Nx
 		}
 
-		if(TwoHump)																				// only do this if TwoHump is true
+		if(TwoHump)																					// only do this if TwoHump is true
 		{
 			printf("2HumpIC. %s. nu=%g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
 				"N=%d, dt=%g, nT=%d\nchunk_Nx=%d, nprocs_Nx=%d\n",
 				buffer_flags, nu, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT,chunk_Nx,nprocs_Nx);			// display in the output file that this is the calculation with the 2Hump IC, as well as the contents of the string buffer_flags and the values of nu, A_amp,k_wave, Nx, Lv, Nv, N, dt, nT, chunk_Nx & nprocs_Nx
 		}
 	
-		#ifdef Second																				// only do this Second was defined (picking up data from a previous run)
-		fu=fopen("Data/U_nu0.05A0.2k0.5Nx24Lx12.5664Nv24Lv5.25SpectralN16dt0.01nT1_4HumpMacroTest.dc","r"); 		// set fu to be a file with the name U_nu0.02A0.5k0.785398Nx48Lx8Nv48Lv4.5SpectralN24dt0.004nT500_non_nu002_2.dc, stored in the directory Data, and set the file access mode of fu to r (which means the file must exist already and will be read from)
-
-		fseek(fu ,0 ,SEEK_END);																		// find the final entry of the file fu
-	    tp = ftell(fu);																				// use the final entry to determine the size of the file
-
-	    //printf("tp = %d. \n", tp);																// display in the output file the value of tp
-	    float NoSol = (float)tp/(size*6*sizeof(double));											// calculate the number of solutions of U that must be in the file
-	    printf("no. of set of U = %f \n", NoSol);													// display in the output file the number of solutions of U that must be in the file
-
-		if(tp%(size*6) != 0)																		// check that the number of elements read was a multiple of 6*size
+		if(Second)																					// only do this if Second is true (picking up data from a previous run)
 		{
-			printf("Error reading file\n");															// if tp was not a multiple of 6*size then display that there was an error
-			exit(1);																				// then exit the program
-		}
-		else
-		{
-			fseek(fu, tp - size*6*sizeof(double), SEEK_SET);										// find the last solution that was printed in the file
-			fread(U,sizeof(double),size*6,fu);														// store the contents of the final solution in the file fu in U, expecting 6*size many entries of datatype double
-		}
+			fu=fopen("Data/U_nu0.05A0.2k0.5Nx8Lx12.5664Nv8Lv5.25SpectralN8dt0.01nT2_GRVY_Tests.dc","r"); 		// set fu to be a file with the name U_nu0.02A0.5k0.785398Nx48Lx8Nv48Lv4.5SpectralN24dt0.004nT500_non_nu002_2.dc, stored in the directory Data, and set the file access mode of fu to r (which means the file must exist already and will be read from)
 
-		fclose(fu);																					// close the file fu
-		#endif
+			fseek(fu ,0 ,SEEK_END);																		// find the final entry of the file fu
+			tp = ftell(fu);																				// use the final entry to determine the size of the file
+
+			//printf("tp = %d. \n", tp);																// display in the output file the value of tp
+			float NoSol = (float)tp/(size*6*sizeof(double));											// calculate the number of solutions of U that must be in the file
+			printf("no. of set of U = %f \n", NoSol);													// display in the output file the number of solutions of U that must be in the file
+
+			if(tp%(size*6) != 0)																		// check that the number of elements read was a multiple of 6*size
+			{
+				printf("Error reading file\n");															// if tp was not a multiple of 6*size then display that there was an error
+				exit(1);																				// then exit the program
+			}
+			else
+			{
+				fseek(fu, tp - size*6*sizeof(double), SEEK_SET);										// find the last solution that was printed in the file
+				fread(U,sizeof(double),size*6,fu);														// store the contents of the final solution in the file fu in U, expecting 6*size many entries of datatype double
+			}
+
+			fclose(fu);																					// close the file fu
+		}
       
 		fmom=fopen(buffer_moment,"w");																// set fmom to be a file with the name stored in buffer_moment and set the file access mode of fmom to w (which creates an empty file and allows it to be written to)
 		fu=fopen(buffer_u, "w");																	// set fu to be a file with the name stored in buffer_u and set the file access mode of fu to w (which creates an empty file and allows it to be written to)
@@ -622,13 +654,14 @@ int main()
 
 		//fufull=fopen("Data/U_nu0.02A0.5k1.5708Nx48Lx4Nv32Lv4SpectralN24dt0.004_non_nu002_time15s.dc", "w");
 		//fprintf(fmom, "%11.8g  %11.8g\n", EleE, log(tmp));
-		/*#ifdef TwoStream
-		fufull=fopen(buffer_ufull, "w");
-		for(k=0;k<size;k++){
-		for(l=0;l<6;l++)fprintf(fufull, "%g ", U[k*6+l]);
-		}
-		fprintf(fufull,"\n\n");
-		#endif*/
+		/*if(TwoStream)
+		{
+			fufull=fopen(buffer_ufull, "w");
+			for(k=0;k<size;k++){
+			for(l=0;l<6;l++)fprintf(fufull, "%g ", U[k*6+l]);
+			}
+			fprintf(fufull,"\n\n");
+		}*/
 
 		PrintMarginalLoc(fmarg);																	// print the values of x & v1 that the marginal will be evaluated at in the file tagged as fmarg
 		PrintMarginal(U, fmarg);																	// print the marginal distribution for the initial condition, using the DG coefficients in U, in the file tagged as fmarg
@@ -737,19 +770,19 @@ int main()
 			printf("Kinetic Energy Ratio = %g\n", KiEratio);										// print the ratio of the kinetic energy where f is negative to that where it is positive
 
 			//fprintf(fmom, "%11.8g  %11.8g\n", EleE, log(tmp));
-			/*#ifdef TwoStream
-			  if(t==20 || t==50 || t==80 || t==250)
-			  {
-				  for(k=0;k<size;k++)
+			/*if(TwoStream)
+				  if(t==20 || t==50 || t==80 || t==250)
 				  {
-						for(l=0;l<6;l++)
-						{
-							fprintf(fufull, "%g ", U[k*6+l]);
-						}
+					  for(k=0;k<size;k++)
+					  {
+							for(l=0;l<6;l++)
+							{
+								fprintf(fufull, "%g ", U[k*6+l]);
+							}
+					  }
+					  fprintf(fufull,"\n\n");
 				  }
-				  fprintf(fufull,"\n\n");
-			  }
-			  #endif*/
+			  }*/
       
 
 	    	//if(t%400==0)fwrite(U,sizeof(double),size*6,fu);

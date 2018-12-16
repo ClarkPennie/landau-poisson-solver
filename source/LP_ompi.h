@@ -50,7 +50,7 @@ using namespace GRVY;
 //#define TwoHump																					// define the macro TwoHump (UNCOMMENT IF BEING RUN FOR THE TWO HUMP IC PROBLEM)
 
 // CHOOSE IF THIS IS THE INITIAL RUN OR A SUBSEQUENT RUN:
-#define First																						// define the macro First (UNCOMMENT IF RUNNING THE CODE FOR THE FIRST TIME)
+//#define First																						// define the macro First (UNCOMMENT IF RUNNING THE CODE FOR THE FIRST TIME)
 //#define Second																					// define the macro Second (UNCOMMENT IF PICKING UP DATA FROM A PREVIOUS RUN)
 
 
@@ -102,6 +102,7 @@ extern double *fAvgVals;																			// declare fAvgVals (to store the ave
 extern double *fEquiVals;																			// declare f_equivals (to store the equilibrium solution)
 
 extern bool Damping, TwoStream, FourHump, TwoHump;													// declare Boolean variables which will determin the ICs for the problem
+extern bool First, Second;																			// declare Boolean variables which will determine if this is the first or a subsequent run
 extern bool FullandLinear;																			// declare a Boolean variable to determine if running with a mixture
 
 //extern double a[3];

@@ -40,10 +40,6 @@ void SetInit_4H(double *U);
 
 void SetInit_2H(double *U);
 
-#ifdef MPI
 void setInit_spectral(double *U, double **f);
-#else
-void setInit_spectral(double *U, double **f);
-#endif
 
 #endif /* SETINIT_1_H_ */

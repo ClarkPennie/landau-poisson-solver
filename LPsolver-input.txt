@@ -11,7 +11,7 @@
 # Global input variable definitions
 #--------------------------------------------
 
-flag     = GRVY_Tests_N1
+flag     = GRVY_Tests
 
 nT       = 2  		    	# Number of time-steps
 Nx       = 8   		    	# Number of space cells
@@ -29,6 +29,10 @@ Damping          = True         # Landau Damping ICs
 TwoStream        = False        # Two Stream ICs
 FourHump         = False        # Four Hump ICs
 TwoHump          = False        # Two Hump ICs
+
+# Choose if running for the first time or a subsequent run:
+First            = Flase        # Running for the first time with ICs
+Second           = True         # Picking up from a previous run
 
 FullandLinear    = False	# Include electron-ion collisions
 
