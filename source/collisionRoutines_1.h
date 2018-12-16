@@ -53,12 +53,13 @@ void ProjectedNodeValue(fftw_complex *qHat, double *Q_incremental);
 
 void ComputeQ_FandL(double *f, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear);
 
-void RK4_FandL(double *f, int l, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear, double *U, double *dU = NULL);
+void RK4_FandL(double *f, int l, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear, double *U, double *dU);
 
 void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights);
 
-void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U, double *dU = NULL);
+void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U, double *dU);
 
+/*
 void ComputeQ_MPI_FandL(double *f, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear);
 
 void RK4_MPI_FandL(double *f, int l, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear, double *U, double *dU);
@@ -66,5 +67,5 @@ void RK4_MPI_FandL(double *f, int l, fftw_complex *qHat, double **conv_weights, 
 void ComputeQ_MPI(double *f, fftw_complex *qHat, double **conv_weights);
 
 void RK4_MPI(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U, double *dU);
-
+*/
 #endif /* COLLISIONROUTINES_H_ */

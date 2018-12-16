@@ -30,7 +30,7 @@ TwoStream        = False        # Two Stream ICs
 FourHump         = False        # Four Hump ICs
 TwoHump          = False        # Two Hump ICs
 
-#FullandLinear    = True 	# Include electron-ion collisions
+FullandLinear    = False	# Include electron-ion collisions
 
 #--------------------------------------------
 # Parameters associated with certain ICs

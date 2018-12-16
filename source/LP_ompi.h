@@ -103,7 +103,6 @@ extern double *fEquiVals;																			// declare f_equivals (to store the 
 
 extern bool Damping, TwoStream, FourHump, TwoHump;													// declare Boolean variables which will determin the ICs for the problem
 extern bool FullandLinear;																			// declare a Boolean variable to determine if running with a mixture
-//extern bool UseMPI;																					// declare a Boolean variable to determine if running in parallel with MPI
 
 //extern double a[3];
 
