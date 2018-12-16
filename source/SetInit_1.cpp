@@ -255,7 +255,7 @@ void SetInit_2H(double *U)																							// function to calculate the DG
 	}
 }
 
-#ifdef UseMPI
+//#ifdef UseMPI
 void setInit_spectral(double *U, double **f)
 {
   int i, j1, j2, j3, k, l, m ,n;
@@ -277,7 +277,7 @@ void setInit_spectral(double *U, double **f)
     }
   }   
 }
-#else
+/*#else
 void setInit_spectral(double *U, double **f)
 {
   int i, j1, j2, j3, k, l, m ,n;  
@@ -300,3 +300,4 @@ void setInit_spectral(double *U, double **f)
     }   
 }
 #endif
+*/

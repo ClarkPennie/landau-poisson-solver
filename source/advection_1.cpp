@@ -161,7 +161,6 @@ double I5(double *U, int k, int l) 	// Calculate the difference of the fifth and
   	return result;
 }
 
-#ifdef UseMPI
 /*
 void computeH(double *H, double *U)// H_k(i,j)(f, E, phi_l)  
 {
@@ -344,9 +343,8 @@ ce = computePhi_x_0(U1);
 }
 
 
-#else
 /*
-void computeH(double *U)// H_k(i,j)(f, E, phi_l)  
+void computeH_NoMPI(double *U)// H_k(i,j)(f, E, phi_l)
 {
   int i, k, l; // k=i*Nv^3 + (j1*Nv*Nv + j2*Nv + j3)
   double tp0, tp1, tp2, tp3, tp4, tp5;
@@ -389,9 +387,9 @@ void computeH(double *U)// H_k(i,j)(f, E, phi_l)
   }
   
 }
-*/
 
-void RK3(double *U) // RK3 for f_t = H(f)
+
+void RK3_NoMPI(double *U) // RK3 for f_t = H(f)
 {
   int k, l;
   //double **H = (double **)malloc(size*sizeof(double *));
@@ -417,7 +415,7 @@ void RK3(double *U) // RK3 for f_t = H(f)
   for(k=0;k<size;k++){						  
 	for(l=0;l<6;l++) U[k*6+l] = U[k*6+l]/3. + U1[k*6+l]*2./3. + dt*H[k*6+l]*2./3.;			
   }
-  */
+
   //free(H); free(U1);
 }
-#endif
+*/

@@ -59,6 +59,7 @@ double *fEquiVals;																					// declare f_equivals (to store the equil
 
 bool Damping, TwoStream, FourHump, TwoHump;															// declare Boolean variables which will determin the ICs for the problem
 bool FullandLinear;																					// declare a Boolean variable to determine if running with a mixture
+//bool UseMPI;																						// declare a Boolean variable to determine if running in parallel with MPI
 
 int main()
 {
