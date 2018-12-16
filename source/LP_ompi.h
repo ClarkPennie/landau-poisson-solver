@@ -31,7 +31,7 @@
 #include <lapacke.h>
 #endif
 #include<grvy.h>
-
+#include<iostream>																					// allows cout & endl to be used (with Intel compiler)
 using namespace GRVY;
 
 
@@ -40,7 +40,7 @@ using namespace GRVY;
 //************************//
 
 // CHOOSE WHETHER OR NOT TO USE MPI:
-#define UseMPI 																						// define the macro MPI (UNCOMMENT IF THE CODE SHOULD UTILISE MPI)
+//#define UseMPI 																						// define the macro MPI (UNCOMMENT IF THE CODE SHOULD UTILISE MPI)
 
 // CHOOSE WHICH VARIATION OF THE CODE TO RUN:
 //#define Damping																					// define the macro Damping (UNCOMMENT IF BEING RUN FOR THE LANDAU DAMPING PROBLEM)
@@ -103,6 +103,7 @@ extern double *fEquiVals;																			// declare f_equivals (to store the 
 
 extern bool Damping, TwoStream, FourHump, TwoHump;													// declare Boolean variables which will determin the ICs for the problem
 extern bool FullandLinear;																			// declare a Boolean variable to determine if running with a mixture
+//extern bool UseMPI;																					// declare a Boolean variable to determine if running in parallel with MPI
 
 //extern double a[3];
 

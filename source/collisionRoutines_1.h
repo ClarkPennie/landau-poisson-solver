@@ -59,25 +59,12 @@ void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights);
 
 void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U, double *dU = NULL);
 
-/*
-#ifdef UseMPI
-	#ifdef FullandLinear
-	void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear);
+void ComputeQ_MPI_FandL(double *f, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear);
 
-	void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear, double *U, double *dU);
-	#else
-	void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights);
+void RK4_MPI_FandL(double *f, int l, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear, double *U, double *dU);
 
-	void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U, double *dU);
-	#endif
-#else
-	#ifdef FullandLinear
-	void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights, double **conv_weights_linear);
-	#else
-	void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights);
+void ComputeQ_MPI(double *f, fftw_complex *qHat, double **conv_weights);
 
-	void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U);
-	#endif
-#endif  
-*/
+void RK4_MPI(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U, double *dU);
+
 #endif /* COLLISIONROUTINES_H_ */

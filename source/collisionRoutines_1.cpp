@@ -565,43 +565,42 @@ void ProjectedNodeValue(fftw_complex *qHat, double *Q_incremental) // incrementa
 	Q_incremental[k_ft] = u0 + u2*(v[m1]-Gridv((double)j1))/dv + u3*(v[m2]-Gridv((double)j2))/dv + u4*(v[m3]-Gridv((double)j3))/dv + u5*( ((v[m1]-Gridv((double)j1))/dv)*((v[m1]-Gridv((double)j1))/dv) + ((v[m2]-Gridv((double)j2))/dv)*((v[m2]-Gridv((double)j2))/dv) + ((v[m3]-Gridv((double)j3))/dv)*((v[m3]-Gridv((double)j3))/dv) ); 
     }
 }	
-#ifdef UseMPI
-void ComputeQ_FandL(double *f, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear)
-{
-	ComputeQ_MPI_FandL(f, qHat, conv_weights, qHat_linear, conv_weights_linear)
-}
-void RK4_FandL(double *f, int l, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear, double *U, double *dU) //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6
-{
-	RK4_MPI_FandL(f, l, qHat, conv_weights, qHat_linear, conv_weights_linear, U, dU) //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6
-}
-void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights)
-{
-	ComputeQ_MPI(f, qHat, conv_weights)
-}
-void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U, double *dU) //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6
-{
-	RK4_MPI(f, l, qHat, conv_weights, U, dU) //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6
-}
-#else
-void ComputeQ_FandL(double *f, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear)
-{
-	//ComputeQ_NoMPI_FandL(f, qHat, conv_weights, qHat_linear, conv_weights_linear)
-}
-void RK4_FandL(double *f, int l, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear, double *U, double *dU) //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6
-{
-	//RK4_NoMPI_FandL(f, l, qHat, conv_weights, qHat_linear, conv_weights_linear, U) //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6
-}
-void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights)
-{
-	ComputeQ_NoMPI(f, qHat, conv_weights)
-}
-void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U, double *dU) //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6
-{
-	RK4_NoMPI(f, l, qHat, conv_weights, U) //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6
-}
-
 //#ifdef UseMPI
-//#ifdef FullandLinear
+void ComputeQ_FandL(double *f, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear)
+{
+	ComputeQ_MPI_FandL(f, qHat, conv_weights, qHat_linear, conv_weights_linear);
+}
+void RK4_FandL(double *f, int l, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear, double *U, double *dU) //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6
+{
+	RK4_MPI_FandL(f, l, qHat, conv_weights, qHat_linear, conv_weights_linear, U, dU); //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6
+}
+void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights)
+{
+	ComputeQ_MPI(f, qHat, conv_weights);
+}
+void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U, double *dU) //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6
+{
+	RK4_MPI(f, l, qHat, conv_weights, U, dU); //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6
+}
+/*#else
+void ComputeQ_FandL(double *f, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear)
+{
+	//ComputeQ_NoMPI_FandL(f, qHat, conv_weights, qHat_linear, conv_weights_linear);
+}
+void RK4_FandL(double *f, int l, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear, double *U, double *dU) //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6
+{
+	//RK4_NoMPI_FandL(f, l, qHat, conv_weights, qHat_linear, conv_weights_linear, U); //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6
+}
+void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights)
+{
+	ComputeQ_NoMPI(f, qHat, conv_weights);
+}
+void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U, double *dU) //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6
+{
+	RK4_NoMPI(f, l, qHat, conv_weights, U); //4-th RK. yn=yn+(3*k1+k2+k3+k4)/6
+}
+#endif /* UseMPI */
+
 void ComputeQ_MPI_FandL(double *f, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear)
 {
   int i, j, k, l, m, n, x, y, z;
@@ -789,7 +788,7 @@ int i,j,k, j1, j2, j3, k_v, k_eta, kk, l_local;
     dU[(l_local*size_v + kt)*5+3] = tp4;   
   }
 }
-//#else
+
 void ComputeQ_MPI(double *f, fftw_complex *qHat, double **conv_weights)
 {
 	int i, j, k, l, m, n, x, y, z;												// declare (i,j,k) (the indices for a given value of given ki = ki_(i,j,k)), (l,m,n) (counters for the quadrature to calculate the integral w.r.t. eta in the evaluation of qHat and so also represent the indices of a given eta = eta_(l,m,n)) & (x,y,z) (the indices for the value of a subtraction in the calculation, namely eta_(x,y,z) = ki_(i,j,k) - eta_(l,m,n))
@@ -959,11 +958,7 @@ void RK4_MPI(double *f, int l, fftw_complex *qHat, double **conv_weights, double
     dU[(l_local*size_v + kt)*5+3] = tp4;   
   }
 }
-//#endif
- 
-//#else
 
-//#ifdef FullandLinear
 /*void ComputeQ_NoMPI_FandL(double *f, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear)
 {
   int i, j, k, l, m, n, x, y, z;
@@ -1127,7 +1122,7 @@ void RK4_NoMPI_FandL(double *f, int l, fftw_complex *qHat, double **conv_weights
 	//printf("RK4: %g, %g, %g, %g, %g\n", tmp0, tmp2, tmp3, tmp4, 0.5*tmp5);  
 }   
 */
-//#else
+/*
 void ComputeQ_NoMPI(double *f, fftw_complex *qHat, double **conv_weights)
 {
   int i, j, k, l, m, n, x, y, z;
@@ -1285,6 +1280,7 @@ void RK4_NoMPI(double *f, int l, fftw_complex *qHat, double **conv_weights, doub
   ComputeQ(f3, Q3_fft, conv_weights); //collides
   conserveAllMoments(Q3_fft);                //conserves k4
   */
+/*
   #pragma omp parallel for schedule(dynamic) private(j1,j2,j3,i,j,k,k_v,k_eta,kk,Q_re, Q_im, tp0, tp2,tp3,tp4, tp5) shared(l,qHat,U) //reduction(+: tmp0, tmp2, tmp3, tmp4, tmp5)
   for(int kt=0;kt<size_v;kt++){
     j3 = kt % Nv; j2 = ((kt-j3)/Nv) % Nv; j1 = (kt - j3 - Nv*j2)/(Nv*Nv);
@@ -1324,6 +1320,4 @@ void RK4_NoMPI(double *f, int l, fftw_complex *qHat, double **conv_weights, doub
   }
 	//printf("RK4: %g, %g, %g, %g, %g\n", tmp0, tmp2, tmp3, tmp4, 0.5*tmp5);  
 }   
-//#endif
-
-//#endif
+*/

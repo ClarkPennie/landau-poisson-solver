@@ -59,6 +59,7 @@ double *fEquiVals;																					// declare f_equivals (to store the equil
 
 bool Damping, TwoStream, FourHump, TwoHump;															// declare Boolean variables which will determin the ICs for the problem
 bool FullandLinear;																					// declare a Boolean variable to determine if running with a mixture
+//bool UseMPI;																						// declare a Boolean variable to determine if running in parallel with MPI
 
 int main()
 {
@@ -143,6 +144,16 @@ int main()
 	{
 		std::cout << std::endl << "The above initial condition which is set equal to 1 "
 				"is being used for this run." << std::endl << std::endl;
+	}
+
+	if( iparse.Read_Var("FullandLinear",&FullandLinear,false) )										// Check if the TwoHump has been set and, if not, set to the default value of False
+	{
+		std::cout << "--> FullandLinear = " << FullandLinear << std::endl << std::endl;				// Print the set value
+		if(FullandLinear)
+		{
+			std::cout << "Running the code with both regular collisions and mixed collisions."
+				<< std::endl << std::endl;
+		}
 	}
 
 	if(! iparse.Read_Var("flag",&flag))																// Check if the variable Flag has been set and, if not, exit
@@ -441,27 +452,28 @@ int main()
 		  for(k=0;k<size_ft;k++)MPI_Bcast(conv_weights[k], size_ft, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 	  MPI_Barrier(MPI_COMM_WORLD);
   
-		  #ifdef FullandLinear
-		  FILE *fidWeights1;
-		  if(myrank_mpi==0){
-			if(fidWeights1 = fopen(buffer_weights1,"r")) { //checks if we've already stored a file
-		  printf("Stored weights found. Reading in weights... \n");
-		  for(i=0;i<size_ft;i++) {
-			tp=fread(conv_weights_linear[i], sizeof(double), size_ft, fidWeights1);
-			if(tp != size_ft){printf("reaing error! tp=%d\n", tp);exit(0);}
+		  if(FullandLinear)
+		  {
+			  FILE *fidWeights1;
+			  if(myrank_mpi==0){
+				if(fidWeights1 = fopen(buffer_weights1,"r")) { //checks if we've already stored a file
+			  printf("Stored weights found. Reading in weights... \n");
+			  for(i=0;i<size_ft;i++) {
+				tp=fread(conv_weights_linear[i], sizeof(double), size_ft, fidWeights1);
+				if(tp != size_ft){printf("reaing error! tp=%d\n", tp);exit(0);}
+			  }
+			  fclose(fidWeights1);
+				}
+				else {
+				  printf("Stored weights NOT found. Please go back and launch MPI_WeightGenerator. \n");
+				  MPI_Finalize();
+				  exit (1);
+				}
+			  }
+
+			  for(k=0;k<size_ft;k++)MPI_Bcast(conv_weights_linear[k], size_ft, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+			MPI_Barrier(MPI_COMM_WORLD);
 		  }
-		  fclose(fidWeights1);
-			}
-			else {
-			  printf("Stored weights NOT found. Please go back and launch MPI_WeightGenerator. \n");
-			  MPI_Finalize();
-			  exit (1);
-			}
-		  }
-  
-		  for(k=0;k<size_ft;k++)MPI_Bcast(conv_weights_linear[k], size_ft, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-		MPI_Barrier(MPI_COMM_WORLD);
-		  #endif
 		 */
   
 		// Directly compute the weights; not from precomputed (for small number of nodes, it's very fast)
@@ -779,9 +791,13 @@ int main()
 		fftw_free(temp); fftw_free(qHat);															// delete the dynamic memory allocated for temp & qhat
 		fftw_free(Q1_fft); fftw_free(Q2_fft); fftw_free(Q3_fft); fftw_free(fftOut); fftw_free(fftIn); // delete the dynamic memory allocated for Q1_fft, Q2_fft, Q3_fft, fftOut & fftIn
 		free(Q);free(f1);free(Q1); free(Utmp_coll);// free(f2); free(f3);//free(Q3);				// delete the dynamic memory allocated for Q, f1, Q1 & Utmp_coll
-		fftw_free(qHat_linear); fftw_free(Q1_fft_linear); 											// delete the dynamic memory allocated for qHat_linear & Q1_fft_linear
-		fftw_free(Q2_fft_linear); fftw_free(Q3_fft_linear); 										// delete the dynamic memory allocated for Q2_fft_linear & Q3_fft_linear
-		free(conv_weights_linear);																	// delete the dynamic memory allocated for conv_weights_linear
+		if(FullandLinear)																			// only do this if FullandLinear is true
+		{
+			fftw_free(qHat_linear); fftw_free(Q1_fft_linear); 											// delete the dynamic memory allocated for qHat_linear & Q1_fft_linear
+			fftw_free(Q2_fft_linear); fftw_free(Q3_fft_linear); 										// delete the dynamic memory allocated for Q2_fft_linear & Q3_fft_linear
+			free(conv_weights_linear);																	// delete the dynamic memory allocated for conv_weights_linear
+
+		}
 	}
 	free(output_buffer_vp);																			// delete the dynamic memory allocated for output_buffer_vp
 	free(U); free(U1); free(Utmp); // free(H);														// delete the dynamic memory allocated for U, U1 & Utmp
