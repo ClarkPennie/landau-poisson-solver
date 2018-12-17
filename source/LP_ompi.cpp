@@ -71,6 +71,7 @@ int main()
 	double **conv_weights, **conv_weights_linear;													// declare a pointer to conv_weights (a matrix of the weights for the convolution in Fourier space of single species collisions) conv_weights_linear (a matrix of convolution weights in Fourier space of two species collisions)
 	std::string flag;																				// declare a string flag (used to identify files generated associated to the current run)
 	std::string IC_name;																			// declare a string IC_name (used to identify the initial condions being run)
+	std::string old_run_name;																		// declare a string old_run_name (the name of the previous run if running for second time)
 	char IC_flag[30];
 	int IC_count = 0;																				// declare IC_count to count how many ICs have been set
 	int run_count = 0;																				// declare run_count to check if first or second has been set
@@ -84,7 +85,11 @@ int main()
 		exit(1);																					// Exit if it does not exist
 	}
 
-	printf("Boolean options to choose which problem the code is running: \n \n");
+	// Print a header for the Boolean options:
+	std::cout << "#=====================================================#" << std::endl;
+	std::cout << "#   BOOLEAN OPTIONS TO CHOOSE CURRENT RUN BEHAVIOUR   #" << std::endl;
+	std::cout << "#=====================================================#" << std::endl << std::endl;
+
 	if( iparse.Read_Var("Damping",&Damping,false) )													// Check if Damping has been set and, if not, set to the default value of False
 	{
 		std::cout << "--> Damping = " << Damping << std::endl;										// Print the set value
@@ -105,22 +110,22 @@ int main()
 	if(Damping)
 	{
 		IC_count++;																					// Add one to the value of IC_count to indiciate an IC has been set
-		sprintf(IC_flag,"Damping/IC_name");																// Set IC_flag to "Damping/IC_name"
+		sprintf(IC_flag,"Damping/IC_name");															// Set IC_flag to "Damping/IC_name"
 	}
 	if(TwoStream)
 	{
 		IC_count++;																					// Add one to the value of IC_count to indiciate an IC has been set
-		sprintf(IC_flag,"TwoStream/IC_name");																// Set IC_flag to "TwoStream/IC_name"
+		sprintf(IC_flag,"TwoStream/IC_name");														// Set IC_flag to "TwoStream/IC_name"
 	}
 	if(FourHump)
 	{
 		IC_count++;																					// Add one to the value of IC_count to indiciate an IC has been set
-		sprintf(IC_flag,"FourHump/IC_name");																// Set IC_flag to "FourHump/IC_name"
+		sprintf(IC_flag,"FourHump/IC_name");														// Set IC_flag to "FourHump/IC_name"
 	}
 	if(TwoHump)
 	{
 		IC_count++;																					// Add one to the value of IC_count to indiciate an IC has been set
-		sprintf(IC_flag,"TwoHump/IC_name");																// Set IC_flag to "TwoHump/IC_name"
+		sprintf(IC_flag,"TwoHump/IC_name");															// Set IC_flag to "TwoHump/IC_name"
 	}
 	if(IC_count == 0)																				// Exit the program if no IC option has been chosen
 	{
@@ -183,14 +188,23 @@ int main()
 			std::cout << "Running the code with both regular collisions and mixed collisions."
 				<< std::endl << std::endl;
 		}
+		else
+		{
+			std::cout << "Running with regular single-species collisions." << std::endl << std::endl;
+		}
 	}
+
+	// Print a for the input parameters:
+	std::cout << "#=====================================================#" << std::endl;
+	std::cout << "#           INPUT PARAMETERS FOR CURRENT RUN          #" << std::endl;
+	std::cout << "#=====================================================#" << std::endl << std::endl;
 
 	if(! iparse.Read_Var("flag",&flag))																// Check if the variable Flag has been set and, if not, exit
 	{
 		exit(1);
 	}
-
 	std::cout << "--> Flag associated to this run: " << flag << std::endl << std::endl;				// Print the flag associated to this run of the code at the top and of the file
+
 	if (! iparse.Read_Var("nT",&nT) )																// Check if the variable nT has been set and, if not, exit
 	{
 		exit(1);
@@ -278,7 +292,7 @@ int main()
 	printf("--> %-11s = %g\n","A_amp",A_amp);														// Print the value set for A_amp
 	printf("--> %-11s = %g\n","k_wave",k_wave);														// Print the value set for k_wave
 	printf("--> %-11s = %g\n","Lv",Lv);																// Print the value set for Lv
-	printf("--> %-11s = %g\n","Lx",Lx);																// Print the value set for Lx
+	printf("--> %-11s = %g\n\n","Lx",Lx);																// Print the value set for Lx
 
 	size_v=Nv*Nv*Nv;																				// set size_v to Nv^3
 	size=Nx*size_v;																					// set size to size_v*Nx
@@ -557,56 +571,44 @@ int main()
 
 	if(myrank_mpi==0)																				// only the process with rank 0 will do this
 	{
-		if(Damping)																					// only do this if Damping is true
-		{
-			printf("Damping. %s. nu=%g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
-				"N=%d, dt=%g, nT=%d\nchunk_Nx=%d, nprocs_Nx=%d\n",
-				buffer_flags, nu, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT,chunk_Nx,nprocs_Nx);			// display in the output file that this is the Damping calculation, as well as the contents of the string buffer_flags and the values of nu, A_amp,k_wave, Nx, Lv, Nv, N, dt, nT, chunk_Nx & nprocs_Nx
-		}
-    
-		if(TwoStream)																				// only do this if TwoStream is true
-		{
-			printf("2Stream. %s. with 2Gauss. nu=%g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
-				"N=%d, dt=%g, nT=%d\n", buffer_flags, nu, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT);	// display in the output file that this is the TwoStream calculation, as well as the contents of the string buffer_flags and the values of nu, A_amp,k_wave, Nx, Lv, Nv, N, dt & nT
-		}
+		printf("MPI info: chunk_Nx = %d, nprocs_Nx = %d\n\n", chunk_Nx, nprocs_Nx);						// print MPI related info for this run
 
-		if(FourHump)																				// only do this if FourHump is true
-		{
-			printf("4HumpIC. %s. nu=%g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
-				"N=%d, dt=%g, nT=%d\nchunk_Nx=%d, nprocs_Nx=%d\n",
-				buffer_flags, nu, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT,chunk_Nx,nprocs_Nx);			// display in the output file that this is the calculation with the 4Hump IC, as well as the contents of the string buffer_flags and the values of nu, A_amp,k_wave, Nx, Lv, Nv, N, dt, nT, chunk_Nx & nprocs_Nx
-		}
-
-		if(TwoHump)																					// only do this if TwoHump is true
-		{
-			printf("2HumpIC. %s. nu=%g, A_amp=%g, k_wave=%g, Nx=%d, Lv=%g, Nv=%d, "
-				"N=%d, dt=%g, nT=%d\nchunk_Nx=%d, nprocs_Nx=%d\n",
-				buffer_flags, nu, A_amp, k_wave, Nx, Lv, Nv, N, dt, nT,chunk_Nx,nprocs_Nx);			// display in the output file that this is the calculation with the 2Hump IC, as well as the contents of the string buffer_flags and the values of nu, A_amp,k_wave, Nx, Lv, Nv, N, dt, nT, chunk_Nx & nprocs_Nx
-		}
-	
 		if(Second)																					// only do this if Second is true (picking up data from a previous run)
 		{
-			fu=fopen("Data/U_nu0.05A0.2k0.5Nx8Lx12.5664Nv8Lv5.25SpectralN8dt0.01nT2_GRVY_Tests.dc","r"); 		// set fu to be a file with the name U_nu0.02A0.5k0.785398Nx48Lx8Nv48Lv4.5SpectralN24dt0.004nT500_non_nu002_2.dc, stored in the directory Data, and set the file access mode of fu to r (which means the file must exist already and will be read from)
-
-			fseek(fu ,0 ,SEEK_END);																		// find the final entry of the file fu
-			tp = ftell(fu);																				// use the final entry to determine the size of the file
-
-			//printf("tp = %d. \n", tp);																// display in the output file the value of tp
-			float NoSol = (float)tp/(size*6*sizeof(double));											// calculate the number of solutions of U that must be in the file
-			printf("no. of set of U = %f \n", NoSol);													// display in the output file the number of solutions of U that must be in the file
-
-			if(tp%(size*6) != 0)																		// check that the number of elements read was a multiple of 6*size
+			if(! iparse.Read_Var("Second/Name",&old_run_name))										// Check if the variable Second/Name has been set and, if not, exit
 			{
-				printf("Error reading file\n");															// if tp was not a multiple of 6*size then display that there was an error
-				exit(1);																				// then exit the program
+				printf("This run should pick up from a previous run... \n"
+						"Please set the name of the file containing the DG coefficients "
+						"from the previous run under Second/Name in LPsolver-input.txt. \n");
+				exit(1);
+			}
+			std::cout << "--> Name of file from previous run: " << old_run_name
+						<< std::endl << std::endl;													// Print the name of the file being used as the input for this run
+
+//			char old_run_path[old_run_name.size() + 6]												// declare the array old_run_path (to store Data/old_run_name)
+//        	strcpy(old_run_path, "Data/" + old_run_name.c_str());									// copy the contents of old_run_name to old_run_path and prepend Data/
+
+			fu=fopen(("Data/" + old_run_name).c_str(),"r");									 		// set fu to be a file with the name from old_run_name, stored in the directory Data, and set the file access mode of fu to r (which means the file must exist already and will be read from)
+
+			fseek(fu ,0 ,SEEK_END);																	// find the final entry of the file fu
+			tp = ftell(fu);																			// use the final entry to determine the size of the file
+
+			//printf("tp = %d. \n", tp);															// display in the output file the value of tp
+			float NoSol = (float)tp/(size*6*sizeof(double));										// calculate the number of solutions of U that must be in the file
+			//printf("no. of set of U = %f \n", NoSol);												// display in the output file the number of solutions of U that must be in the file
+
+			if(tp%(size*6) != 0)																	// check that the number of elements read was a multiple of 6*size
+			{
+				printf("Error reading file\n");														// if tp was not a multiple of 6*size then display that there was an error
+				exit(1);																			// then exit the program
 			}
 			else
 			{
-				fseek(fu, tp - size*6*sizeof(double), SEEK_SET);										// find the last solution that was printed in the file
-				fread(U,sizeof(double),size*6,fu);														// store the contents of the final solution in the file fu in U, expecting 6*size many entries of datatype double
+				fseek(fu, tp - size*6*sizeof(double), SEEK_SET);									// find the last solution that was printed in the file
+				fread(U,sizeof(double),size*6,fu);													// store the contents of the final solution in the file fu in U, expecting 6*size many entries of datatype double
 			}
 
-			fclose(fu);																					// close the file fu
+			fclose(fu);																				// close the file fu
 		}
       
 		fmom=fopen(buffer_moment,"w");																// set fmom to be a file with the name stored in buffer_moment and set the file access mode of fmom to w (which creates an empty file and allows it to be written to)
@@ -635,6 +637,11 @@ int main()
 		}
 		*/
 
+		// Print a header to introduce the output data:
+		std::cout << "#=====================================================#" << std::endl;
+		std::cout << "#                     OUTPUT DATA                     #" << std::endl;
+		std::cout << "#=====================================================#" << std::endl << std::endl;
+
 		mass=computeMass(U);																		// set mass to the value calculated through computeMass, for the solution f(x,v,t) at the current time t, using its DG coefficients stored U
 		computeMomentum(U, a);																		// calculate the momentum for the solution f(x,v,t) at the current time t, using its DG coefficients stored U, and store it in a
 		KiE=computeKiE(U);																			// set KiE to the value calculated through computeKiE, for the solution f(x,v,t) at the current time t, using its DG coefficients stored U
@@ -643,7 +650,7 @@ int main()
 		ent1 = computeEntropy(U);																	// set ent1 the value calculated through computeEntropy
 		l_ent1 = log(fabs(ent1));																	// set l_ent1 to the log of ent1
 		ll_ent1 = log(fabs(l_ent1));																// set ll_ent1 to the log of l_ent1
-		printf("step #0: %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g %11.8g %11.8g \n",
+		printf("step 0: %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g %11.8g %11.8g \n",
 				mass, a[0], a[1], a[2], KiE, EleE, tmp, log(tmp), KiE+EleE, ent1);					// display in the output file that this is step 0 (so these are the initial conditions), then the mass, 3 components of momentum, kinetic energy, electric energy, sqrt(electric energy), log(sqrt(electric energy)), total energy & entropy
 		fprintf(fmom, "%11.8g %11.8g %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g \n",
 				mass, a[0], a[1], a[2], KiE, EleE, tmp, log(tmp), KiE+EleE);						// in the file tagged as fmom, print the initial mass, 3 components of momentum, kinetic energy, electric energy, sqrt(electric energy), log(sqrt(electric energy)) & total energy
@@ -800,7 +807,7 @@ int main()
 	MPIelapsed = MPI_Wtime() - MPIt1;																// set MPIelapsed to the current time minus MPIt1 to calculate how long nT time-steps took
 	if(myrank_mpi==0)																				// only the process with rank 0 will do this
 	{
-		printf("time duration for %d time steps is %gs\n",nT, MPIelapsed);							// display in the output file how long it took to calculate nT time-steps
+		printf("\nTime duration for %d time steps is %gs\n",nT, MPIelapsed);							// display in the output file how long it took to calculate nT time-steps
     
 		fwrite(U,sizeof(double),size*6,fu);															// write the coefficients of the DG approximation at the end, stored in U, which is 6*size entires, each of the size of a double datatype, in the file tagged as fu
 		PrintPhiVals(U, fphi);																		// print the values of the potential in the file tagged as filephi at the given timestep

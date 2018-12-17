@@ -31,8 +31,8 @@ FourHump         = False        # Four Hump ICs
 TwoHump          = False        # Two Hump ICs
 
 # Choose if running for the first time or a subsequent run:
-First            = Flase        # Running for the first time with ICs
-Second           = True         # Picking up from a previous run
+First            = True         # Running for the first time with ICs
+Second           = False        # Picking up from a previous run
 
 FullandLinear    = False	# Include electron-ion collisions
 
@@ -63,3 +63,11 @@ Lv       = 5.25                 # Width of domain in v-space
 
 IC_name  = 'Two Hump'           # Name of problem associated to ICs
 Lv       = 5.25                 # Width of domain in v-space
+
+#--------------------------------------------
+# Name of file from previous run to pick up
+#--------------------------------------------
+
+[Second]
+
+Name = U_nu0.05A0.2k0.5Nx8Lx12.5664Nv8Lv5.25SpectralN8dt0.01nT2_GRVY_Tests.dc
