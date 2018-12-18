@@ -25,16 +25,16 @@ dt       = 0.01                 # size of each time-step
 #--------------------------------------------
 
 # Options for initial conditions (choose one):
-Damping          = True         # Landau Damping ICs
+Damping          = False        # Landau Damping ICs
 TwoStream        = False        # Two Stream ICs
-FourHump         = False        # Four Hump ICs
+FourHump         = True         # Four Hump ICs
 TwoHump          = False        # Two Hump ICs
 
 # Choose if running for the first time or a subsequent run:
 First            = True         # Running for the first time with ICs
 Second           = False        # Picking up from a previous run
 
-FullandLinear    = False	# Include electron-ion collisions
+FullandLinear    = False 	# Include electron-ion collisions
 
 #--------------------------------------------
 # Parameters associated with certain ICs

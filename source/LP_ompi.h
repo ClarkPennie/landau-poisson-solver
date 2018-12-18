@@ -121,5 +121,6 @@ extern bool FullandLinear;																			// declare a Boolean variable to de
 #include "EquilibriumSolution.h"																	// allows ExportRhoQuadVals, ComputeEquiVals & PrintEquiVals to be used
 #include "NegativityChecks.h"																		// allows computeCellAvg, FindNegVals & CheckNegVals to be used
 #include "FieldCalculations.h"																		// allows PrintPhiVals to be used
+#include "InputParsing.h"																			// allows
 
 #endif /* LP_OMPI_H_ */

@@ -72,227 +72,36 @@ int main()
 	std::string flag;																				// declare a string flag (used to identify files generated associated to the current run)
 	std::string IC_name;																			// declare a string IC_name (used to identify the initial condions being run)
 	std::string old_run_name;																		// declare a string old_run_name (the name of the previous run if running for second time)
-	char IC_flag[30];
-	int IC_count = 0;																				// declare IC_count to count how many ICs have been set
-	int run_count = 0;																				// declare run_count to check if first or second has been set
+	std::string IC_flag;																			// declare a string IC_flag (a reference to where the IC_name is in the input file)
+	std::string input_filename;																		// declare a string input_file_name (the name of the input file to be read from)
 
 	fftw_complex *qHat, *qHat_linear;																// declare pointers to the complex numbers qHat (the DFT of Q) & qHat_linear (the DFT of the two species colission operator Q);
   
-	GRVY_Input_Class iparse;																		// Define a GRVY input parsing object
+	//************************
+	//GRVY input parsing
+	//************************
 
-	if(! iparse.Open("./LPsolver-input.txt"))														// Initialise and read in the GRVY file with the input paramters
+	GRVY_Input_Class iparse;																		// define a GRVY input parsing object
+	input_filename.assign("./LPsolver-input.txt");													// set a name for the input file to be ready by GRVY
+
+	if(! iparse.Open(input_filename.c_str()))														// Initialise and read in the GRVY file with the input paramters
 	{
+		std::cout << "Program cannot run... The file " << input_filename << " cannot be found."
+			<< std::endl << "Please create an appropriate input file before running again."
+			<< std::endl;																			// Print an error message if the file does not exist
 		exit(1);																					// Exit if it does not exist
 	}
 
-	// Print a header for the Boolean options:
-	std::cout << "#=====================================================#" << std::endl;
-	std::cout << "#   BOOLEAN OPTIONS TO CHOOSE CURRENT RUN BEHAVIOUR   #" << std::endl;
-	std::cout << "#=====================================================#" << std::endl << std::endl;
+	ReadICOptions(iparse);																			// Read the initial condition for this run from the input file
+	CheckICOptions(IC_flag);																		// Check just one initial condition was set for this run
+	ReadICName(iparse, IC_flag, IC_name);															// Read in a string of the name of the initial conditions chosen
 
-	if( iparse.Read_Var("Damping",&Damping,false) )													// Check if Damping has been set and, if not, set to the default value of False
-	{
-		std::cout << "--> Damping = " << Damping << std::endl;										// Print the set value
-	}
-	if( iparse.Read_Var("TwoStream",&TwoStream,false) )												// Check if TwoStream has been set and, if not, set to the default value of False
-	{
-		std::cout << "--> TwoStream = " << TwoStream << std::endl;									// Print the set value
-	}
-	if( iparse.Read_Var("FourHump",&FourHump,false) )												// Check if FourHump has been set and, if not, set to the default value of False
-	{
-		std::cout << "--> FourHump = " << FourHump << std::endl;									// Print the set value
-	}
-	if( iparse.Read_Var("TwoHump",&TwoHump,false) )													// Check ife TwoHump has been set and, if not, set to the default value of False
-	{
-		std::cout << "--> TwoHump = " << TwoHump << std::endl;										// Print the set value
-	}
+	ReadFirstOrSecond(iparse);																		// Read in if this is the first or a subsequent run
+	CheckFirstOrSecond();																			// Check that only one of First or Second was chosen
 
-	if(Damping)
-	{
-		IC_count++;																					// Add one to the value of IC_count to indiciate an IC has been set
-		sprintf(IC_flag,"Damping/IC_name");															// Set IC_flag to "Damping/IC_name"
-	}
-	if(TwoStream)
-	{
-		IC_count++;																					// Add one to the value of IC_count to indiciate an IC has been set
-		sprintf(IC_flag,"TwoStream/IC_name");														// Set IC_flag to "TwoStream/IC_name"
-	}
-	if(FourHump)
-	{
-		IC_count++;																					// Add one to the value of IC_count to indiciate an IC has been set
-		sprintf(IC_flag,"FourHump/IC_name");														// Set IC_flag to "FourHump/IC_name"
-	}
-	if(TwoHump)
-	{
-		IC_count++;																					// Add one to the value of IC_count to indiciate an IC has been set
-		sprintf(IC_flag,"TwoHump/IC_name");															// Set IC_flag to "TwoHump/IC_name"
-	}
-	if(IC_count == 0)																				// Exit the program if no IC option has been chosen
-	{
-		printf("Program cannot run... No initial condition has been chosen. \n"
-				"Please set one of Damping, TwoStream, FourHump or TwoHump to true "
-				"in LPsolver-input.txt. \n");
-		exit(1);
-	}
-	if(IC_count > 1)																				// Exit the program if too many IC options are chosen
-	{
-		printf("Program cannot run... %d initial conditions have been chosen. \n"
-				"Please ONLY set ONE of Damping, TwoStream, FourHump or TwoHump to true "
-				"in LPsolver-input.txt. \n", IC_count);
-		exit(1);
-	}
-	if( iparse.Read_Var(IC_flag,&IC_name))															// Check if the variable Flag has been set and, if not, exit
-	{
-		std::cout << std::endl << "Using the " << IC_name
-				<< " initial conditions for this run." << std::endl << std::endl;
-	}
-	else
-	{
-		std::cout << std::endl << "The above initial condition which is set equal to 1 "
-				"is being used for this run." << std::endl << std::endl;
-	}
+	ReadFullandLinear(iparse);																		// Read in the types of collisions used for this run
 
-	if( iparse.Read_Var("First",&First,false) )														// Check if First has been set and, if not, set to the default value of False
-	{
-		std::cout << "--> First = " << First << std::endl;											// Print the set value
-	}
-	if( iparse.Read_Var("Second",&Second,false) )													// Check if Second has been set and, if not, set to the default value of False
-	{
-		std::cout << "--> Second = " << Second << std::endl << std::endl;							// Print the set value
-	}
-
-	if(First)
-	{
-		run_count++;																				// Add one to the value of run_count to indiciate a run sequence has been set
-		printf("Code is running for the first time with the above initial conditions. \n\n");		// Print that this is running the code for the first time
-	}
-	if(Second)
-	{
-		run_count++;																				// Add one to the value of run_count to indiciate a run sequence has been set
-		printf("Code is picking up from a previous run which should have the above "
-				"initial conditions. \n\n");														// Print that this is running the code for the first time
-	}
-	if(run_count != 1)																				// Exit the program if no IC option has been chosen
-	{
-		printf("Program cannot run... Need to choose if this is a first run or a subsequent one. \n"
-				"Please set ONE of First or Second to true in LPsolver-input.txt to decide "
-				"if this is the first run or picking up from a previous run. \n");
-		exit(1);
-	}
-
-	if( iparse.Read_Var("FullandLinear",&FullandLinear,false) )										// Check if TwoHump has been set and, if not, set to the default value of False
-	{
-		std::cout << "--> FullandLinear = " << FullandLinear << std::endl << std::endl;				// Print the set value
-		if(FullandLinear)
-		{
-			std::cout << "Running the code with both regular collisions and mixed collisions."
-				<< std::endl << std::endl;
-		}
-		else
-		{
-			std::cout << "Running with regular single-species collisions." << std::endl << std::endl;
-		}
-	}
-
-	// Print a for the input parameters:
-	std::cout << "#=====================================================#" << std::endl;
-	std::cout << "#           INPUT PARAMETERS FOR CURRENT RUN          #" << std::endl;
-	std::cout << "#=====================================================#" << std::endl << std::endl;
-
-	if(! iparse.Read_Var("flag",&flag))																// Check if the variable Flag has been set and, if not, exit
-	{
-		exit(1);
-	}
-	std::cout << "--> Flag associated to this run: " << flag << std::endl << std::endl;				// Print the flag associated to this run of the code at the top and of the file
-
-	if (! iparse.Read_Var("nT",&nT) )																// Check if the variable nT has been set and, if not, exit
-	{
-		exit(1);
-	}
-	printf("--> %-11s = %d\n","nT",nT);																// Print the set value
-	if (! iparse.Read_Var("Nx",&Nx) )																// Check if the variable Nx has been set and, if not, exit
-	{
-		exit(1);
-	}
-	printf("--> %-11s = %d\n","Nx",Nx);																// Print the set value
-	if (! iparse.Read_Var("Nv",&Nv) )																// Check if the variable Nv has been set and, if not, exit
-	{
-		exit(1);
-	}
-	printf("--> %-11s = %d\n","Nv",Nv);																// Print the set value
-	if (! iparse.Read_Var("N",&N) )																	// Check if the variable N has been set and, if not, exit
-	{
-		exit(1);
-	}
-	printf("--> %-11s = %d\n","N",N);																// Print the set value
-	if (! iparse.Read_Var("nu",&nu) )																// Check if the variable dt has been set and, if not, exit
-	{
-		exit(1);
-	}
-	printf("--> %-11s = %g\n","nu",nu);																// Print the set value
-	if (! iparse.Read_Var("dt",&dt) )																// Check if the variable dt has been set and, if not, exit
-	{
-		exit(1);
-	}
-	printf("--> %-11s = %g\n","dt",dt);																// Print the set value
-
-	if(Damping)																						// only do this if Damping is true
-	{
-		if (! iparse.Read_Var("Damping/A_amp",&A_amp) )												// Check if the variable A_amp has been set and, if not, exit
-		{
-			exit(1);
-		}
-		if (! iparse.Read_Var("Damping/k_wave",&k_wave) )											// Check if the variable k_wave has been set and, if not, exit
-		{
-			exit(1);
-		}
-		if (! iparse.Read_Var("Damping/Lv",&Lv) )													// Check if the variable Lv has been set and, if not, exit
-		{
-			exit(1);
-		}
-		iparse.Read_Var("Damping/Lx",&Lx,2*PI/k_wave);												// Check if the variable Lx has been set and, if not, set to the default value of 2pi/k_wave
-	}
-
-	if(TwoStream)																					// only do this if TwoStream is true
-	{
-		if (! iparse.Read_Var("TwoStream/A_amp",&A_amp) )											// Check if the variable A_amp has been set and, if not, exit
-		{
-			exit(1);
-		}
-		if (! iparse.Read_Var("TwoStream/Lv",&Lv) )													// Check if the variable Lv has been set and, if not, exit
-		{
-			exit(1);
-		}
-		iparse.Read_Var("TwoStream/Lx",&Lx,2*PI/k_wave);											// Check if the variable Lx has been set and, if not, set to the default value of 2pi/k_wave
-		k_wave=2*PI/4.;																				// set k_wave to pi/2
-	}
-
-	if(FourHump)																					// only do this if FourHump is true
-	{
-		iparse.Read_Var("FourHump/A_amp",&A_amp,0.);												// Check if the variable A_amp has been set and, if not, set the value to 0 (it's not needed)
-		iparse.Read_Var("FourHump/k_wave",&k_wave,0.5);												// Check if the variable k_wave has been set and, if not, set to the default value of 0.5 (to calculate Lx)
-		if (! iparse.Read_Var("FourHump/Lv",&Lv) )													// Check if the variable Lv has been set and, if not, exit
-		{
-			exit(1);
-		}
-		iparse.Read_Var("FourHump/Lx",&Lx,2*PI/k_wave);												// Check if the variable Lx has been set and, if not, set to the default value of 2pi/k_wave
-	}
-
-	if(TwoHump)																						// only do this if TwoHump is true
-	{
-		iparse.Read_Var("TwoHump/A_amp",&A_amp,0.);													// Check if the variable A_amp has been set and, if not, set the value to 0 (it's not needed)
-		iparse.Read_Var("TwoHump/k_wave",&k_wave,0.5);												// Check if the variable k_wave has been set and, if not, set to the default value of 0.5 (to calculate Lx)
-		if (! iparse.Read_Var("TwoHump/Lv",&Lv) )													// Check if the variable Lv has been set and, if not, exit
-		{
-			exit(1);
-		}
-		iparse.Read_Var("TwoHump/Lx",&Lx,2*PI/k_wave);													// Check if the variable Lx has been set and, if not, set to the default value of 2pi/k_wave
-	}
-
-	printf("--> %-11s = %g\n","A_amp",A_amp);														// Print the value set for A_amp
-	printf("--> %-11s = %g\n","k_wave",k_wave);														// Print the value set for k_wave
-	printf("--> %-11s = %g\n","Lv",Lv);																// Print the value set for Lv
-	printf("--> %-11s = %g\n\n","Lx",Lx);																// Print the value set for Lx
+	ReadInputParameters(iparse, flag, nT, Nx, Nv, N, nu, dt, A_amp, k_wave, Lv, Lx);				// Read in all input parameters
 
 	size_v=Nv*Nv*Nv;																				// set size_v to Nv^3
 	size=Nx*size_v;																					// set size to size_v*Nx
@@ -807,8 +616,16 @@ int main()
 	MPIelapsed = MPI_Wtime() - MPIt1;																// set MPIelapsed to the current time minus MPIt1 to calculate how long nT time-steps took
 	if(myrank_mpi==0)																				// only the process with rank 0 will do this
 	{
-		printf("\nTime duration for %d time steps is %gs\n",nT, MPIelapsed);							// display in the output file how long it took to calculate nT time-steps
+		printf("\nTime duration for %d time steps is %gs\n\n",nT, MPIelapsed);						// display in the output file how long it took to calculate nT time-steps
     
+		// Dump the input file to stdout with a delimiter
+		std::cout << "#=====================================================#" << std::endl;
+		std::cout << "#        VALUES IN THE INPUT FILE READ BY GRVY        #" << std::endl;
+		std::cout << "#=====================================================#" << std::endl << std::endl;
+		iparse.Fdump("# ");
+		std::cout << std::endl;
+		std::cout << "#----------END OF INPUT FILE DUMP AND PROGRAM---------#" << std::endl << std::endl;
+
 		fwrite(U,sizeof(double),size*6,fu);															// write the coefficients of the DG approximation at the end, stored in U, which is 6*size entires, each of the size of a double datatype, in the file tagged as fu
 		PrintPhiVals(U, fphi);																		// print the values of the potential in the file tagged as filephi at the given timestep
 	
