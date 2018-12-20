@@ -2,7 +2,7 @@
  * the input data.
  *
  * Functions included: 	ReadICOptions, CheckICOptions, ReadICName, ReadFirstOrSecond,
- * CheckFirstOrSecond & ReadFullandLinear(iparse).
+ * CheckFirstOrSecond, ReadFullandLinear & PrintError.
  *
  *  Created on: Dec 18, 2018
  */
@@ -225,6 +225,11 @@ void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 	// (if not, exit)
 	if(! iparse.Read_Var("flag",&flag))
 	{
+		if(myrank_mpi==0)
+		{
+			std::cout << "Program cannot run..." << std::endl;
+			std::cout << "Please set the name of 'flag' in the input file." << std::endl;
+		}
 		exit(1);
 	}
 	if(myrank_mpi==0)
@@ -236,6 +241,7 @@ void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 	// processor with rank 0 (exit if not available)
 	if (! iparse.Read_Var("nT",&nT) )
 	{
+		PrintError("nT");
 		exit(1);
 	}
 	if(myrank_mpi==0)
@@ -244,6 +250,7 @@ void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 	}
 	if (! iparse.Read_Var("Nx",&Nx) )
 	{
+		PrintError("Nx");
 		exit(1);
 	}
 	if(myrank_mpi==0)
@@ -252,6 +259,7 @@ void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 	}
 	if (! iparse.Read_Var("Nv",&Nv) )
 	{
+		PrintError("Nv");
 		exit(1);
 	}
 	if(myrank_mpi==0)
@@ -260,6 +268,7 @@ void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 	}
 	if (! iparse.Read_Var("N",&N) )
 	{
+		PrintError("N");
 		exit(1);
 	}
 	if(myrank_mpi==0)
@@ -268,6 +277,7 @@ void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 	}
 	if (! iparse.Read_Var("nu",&nu) )
 	{
+		PrintError("nu");
 		exit(1);
 	}
 	if(myrank_mpi==0)
@@ -276,6 +286,7 @@ void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 	}
 	if (! iparse.Read_Var("dt",&dt) )
 	{
+		PrintError("dt");
 		exit(1);
 	}
 	if(myrank_mpi==0)
@@ -292,14 +303,17 @@ void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 	{
 		if (! iparse.Read_Var("Damping/A_amp",&A_amp) )
 		{
+			PrintError("Damping/A_amp");
 			exit(1);
 		}
 		if (! iparse.Read_Var("Damping/k_wave",&k_wave) )
 		{
+			PrintError("Damping/k_wave");
 			exit(1);
 		}
 		if (! iparse.Read_Var("Damping/Lv",&Lv) )
 		{
+			PrintError("Damping/Lv");
 			exit(1);
 		}
 		iparse.Read_Var("Damping/Lx",&Lx,2*PI/k_wave);
@@ -311,10 +325,12 @@ void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 	{
 		if (! iparse.Read_Var("TwoStream/A_amp",&A_amp) )
 		{
+			PrintError("TwoStream/A_amp");
 			exit(1);
 		}
 		if (! iparse.Read_Var("TwoStream/Lv",&Lv) )
 		{
+			PrintError("TwoStream/Lv");
 			exit(1);
 		}
 		iparse.Read_Var("TwoStream/Lx",&Lx,2*PI/k_wave);
@@ -329,6 +345,7 @@ void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 		iparse.Read_Var("FourHump/k_wave",&k_wave,0.5);
 		if (! iparse.Read_Var("FourHump/Lv",&Lv) )
 		{
+			PrintError("FourHump/Lv");
 			exit(1);
 		}
 		iparse.Read_Var("FourHump/Lx",&Lx,2*PI/k_wave);
@@ -342,6 +359,7 @@ void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 		iparse.Read_Var("TwoHump/k_wave",&k_wave,0.5);
 		if (! iparse.Read_Var("TwoHump/Lv",&Lv) )
 		{
+			PrintError("TwoHump/Lv");
 			exit(1);
 		}
 		iparse.Read_Var("TwoHump/Lx",&Lx,2*PI/k_wave);
@@ -357,6 +375,15 @@ void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 		printf("--> %-11s = %g\n","k_wave",k_wave);
 		printf("--> %-11s = %g\n","Lv",Lv);
 		printf("--> %-11s = %g\n\n","Lx",Lx);
+	}
+}
+
+void PrintError(std::string var_name)
+{
+	if(myrank_mpi==0)
+	{
+		std::cout << "Program cannot run..." << std::endl;
+		std::cout << "Please set the value of '" << var_name << "' in the input file." << std::endl;
 	}
 }
 
