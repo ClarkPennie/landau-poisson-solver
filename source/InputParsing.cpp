@@ -285,6 +285,9 @@ void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 
 	// Try to read all input parameters associated to the Damping option 
 	// (some have default values but others will exit if not available)
+	
+	grvy_log_setlevel(GRVY_NOLOG);
+	
 	if(Damping)
 	{
 		if (! iparse.Read_Var("Damping/A_amp",&A_amp) )
@@ -343,6 +346,8 @@ void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 		}
 		iparse.Read_Var("TwoHump/Lx",&Lx,2*PI/k_wave);
 	}
+
+	grvy_log_setlevel(GRVY_INFO);
 
 	// Print the values of the parameters read from the specific options from the processor
 	// with rank 0

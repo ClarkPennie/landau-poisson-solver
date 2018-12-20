@@ -78,6 +78,38 @@ int main()
 	fftw_complex *qHat, *qHat_linear;																// declare pointers to the complex numbers qHat (the DFT of Q) & qHat_linear (the DFT of the two species colission operator Q);
   
 	//************************
+	//MPI-related variables!
+	//************************
+	int required=MPI_THREAD_MULTIPLE;																// declare required and set it to MPI_THREAD_MULTIPLE (so that in the hybrid OpenMP/MPI routines, multiple threads may call MPI, with no restrictions)           . MPI_THREAD_SERIALIZED; // Required level of MPI threading support
+	int provided;                       															// declare provided (the actual provided level of MPI thread support)
+	MPI_Status status;																				// declare status (to store any status required for MPI operations)
+
+	MPI_Init_thread(NULL, NULL, required, &provided);												// initialise the hybrid MPI & OpenMP environment, requesting the level of thread support to be required and store the actual thread support provided in provided
+	MPI_Comm_rank(MPI_COMM_WORLD, &myrank_mpi);														// store the rank of the current process in the MPI_COMM_WORLD communicator in myrank_mpi
+	MPI_Comm_size(MPI_COMM_WORLD, &nprocs_mpi);														// store the total number of processes running in the MPI_COMM_WORLD communicator in nprocs_mpi
+
+	int nthread;																					// declare nthread (the number of OpenMP threads)
+	nthread = omp_get_max_threads();																// set nthread to the value of the environment variable OMP_NUM_THREADS by calling the OpenMP function omp_get_max_threads
+  
+	// CHECK THE LEVEL OF THREAD SUPPORT:
+	if (provided < required)																		// only do this if the required thread support was not possible
+	{
+		if (myrank_mpi == 0)
+		{
+			printf( "provided=%d < required=%d. Warning:  This MPI implementation "
+						"provides insufficient threading support.\n", provided, required);			// have the process with rank 0 display in the output file that the required thread support was not possible
+			MPI_Finalize();																			// ensure that MPI exits cleanly
+			exit(0);
+		}
+	}
+	else
+	{
+		omp_set_num_threads(nthread);																// if the thread support required is possible, set the number of OpenMP threads to nthread
+	}
+   
+	double MPIt1, MPIt2, MPIelapsed;																// declare MPIt1 (the start time of an MPI operation), MPIt2 (the end time of an MPI operation) and MPIelapsed (the total time for the MPI operation)
+
+	//************************
 	//GRVY input parsing
 	//************************
 
@@ -112,38 +144,6 @@ int main()
 	L_v=Lv;																							// set L_v to Lv
 	R_v=Lv;																							// set R_v to Lv
 	scaleL=8*Lv*Lv*Lv;																				// set scaleL to 8Lv^3
-
-	//************************
-	//MPI-related variables!
-	//************************
-	int required=MPI_THREAD_MULTIPLE;																// declare required and set it to MPI_THREAD_MULTIPLE (so that in the hybrid OpenMP/MPI routines, multiple threads may call MPI, with no restrictions)           . MPI_THREAD_SERIALIZED; // Required level of MPI threading support
-	int provided;                       															// declare provided (the actual provided level of MPI thread support)
-	MPI_Status status;																				// declare status (to store any status required for MPI operations)
-
-	MPI_Init_thread(NULL, NULL, required, &provided);												// initialise the hybrid MPI & OpenMP environment, requesting the level of thread support to be required and store the actual thread support provided in provided
-	MPI_Comm_rank(MPI_COMM_WORLD, &myrank_mpi);														// store the rank of the current process in the MPI_COMM_WORLD communicator in myrank_mpi
-	MPI_Comm_size(MPI_COMM_WORLD, &nprocs_mpi);														// store the total number of processes running in the MPI_COMM_WORLD communicator in nprocs_mpi
-
-	int nthread;																					// declare nthread (the number of OpenMP threads)
-	nthread = omp_get_max_threads();																// set nthread to the value of the environment variable OMP_NUM_THREADS by calling the OpenMP function omp_get_max_threads
-  
-	// CHECK THE LEVEL OF THREAD SUPPORT:
-	if (provided < required)																		// only do this if the required thread support was not possible
-	{
-		if (myrank_mpi == 0)
-		{
-			printf( "provided=%d < required=%d. Warning:  This MPI implementation "
-						"provides insufficient threading support.\n", provided, required);			// have the process with rank 0 display in the output file that the required thread support was not possible
-			MPI_Finalize();																			// ensure that MPI exits cleanly
-			exit(0);
-		}
-	}
-	else
-	{
-		omp_set_num_threads(nthread);																// if the thread support required is possible, set the number of OpenMP threads to nthread
-	}
-   
-	double MPIt1, MPIt2, MPIelapsed;																// declare MPIt1 (the start time of an MPI operation), MPIt2 (the end time of an MPI operation) and MPIelapsed (the total time for the MPI operation)
 
 	if(size_v%nprocs_mpi != 0)																		// check that size_v/nprocs_mpi has no remainder
 	{
