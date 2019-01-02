@@ -85,13 +85,15 @@ void SetInit_LD(double *U)																						// function to calculate the DG 
     				{
     					for(m3=0;m3<nt;m3++)
     					{
-							#if defined(Damping) || defined(Doping)
-							tp = wt[m1]*wt[m2]*wt[m3]*Mw(Gridv((double)j1)+0.5*dv*vt[m1], Gridv((double)j2)+0.5*dv*vt[m2], Gridv((double)j3)+0.5*dv*vt[m3], T0);	// calculate w_m1*w_m2*w_m3*Mw(v_m1,v_m2,v_m3), which appears in all quadrature integral approximations
-							#endif
+							if(Damping)   // NOTE: WAS #ifdef Doping (Doping or Damping)
+							{
+								tp = wt[m1]*wt[m2]*wt[m3]*Mw(Gridv((double)j1)+0.5*dv*vt[m1], Gridv((double)j2)+0.5*dv*vt[m2], Gridv((double)j3)+0.5*dv*vt[m3], T0);		// calculate w_m1*w_m2*w_m3*Mw(v_m1,v_m2,v_m3), which appears in all quadrature integral approximations
+							}
 
-							#ifdef TwoStream
-							tp = wt[m1]*wt[m2]*wt[m3]*f_2Gauss(Gridv((double)j1)+0.5*dv*vt[m1], Gridv((double)j2)+0.5*dv*vt[m2], Gridv((double)j3)+0.5*dv*vt[m3]);
-							#endif
+							if(TwoStream)
+							{
+								tp = wt[m1]*wt[m2]*wt[m3]*f_2Gauss(Gridv((double)j1)+0.5*dv*vt[m1], Gridv((double)j2)+0.5*dv*vt[m2], Gridv((double)j3)+0.5*dv*vt[m3]);
+							}
 
 							tmp0 += tp;																																// add tp to tmp0 (for the integral int_Kj Mw(v)*phi_6k dv)
 							tmp1 += tp*0.5*vt[m1];																													// add tp*v_m1/2 to tmp1 (for the integral int_Kj Mw(v)*phi_(6k+2) dv)
@@ -123,6 +125,7 @@ void SetInit_LD(double *U)																						// function to calculate the DG 
 #ifdef Doping																									// only do this if Damping was define
 void SetInit_ND(double *U)																						// function to calculate the DG coefficients for the initial condition for Landau Damping
 {
+//	if(myrank_mpi == 0){printf("Inside SetInit_ND\n");}
     int i, j1, j2, j3, k, m1,m2,m3,nt=5;																		// declare i (to represent cell i in x-space), j1, j2, j3 (to represent cell (j1,j2,j3) in v-space), k (the index of cell (i,j1,j2,j3) in U), m1, m2, m3 (counters for the Gaussian quadrature in 3D) & nt (the number of points in the quadrature)
     double a=A_amp, c=k_wave;																					// declare a (the amplitude of cosine wave) and set it to A_amp & c (the frequency of the cosine wave) and set it to k_wave
     double tp, tp0, tp5, tmp0, tmp1, tmp2, tmp3, tmp4;															// declare tp, tp0, tmp0, tmp1, tmp2, tmp3, tmp4 (temporary values while calculating the quadrature for the integral w.r.t. v)
@@ -156,7 +159,7 @@ void SetInit_ND(double *U)																						// function to calculate the DG 
     			for(i=0;i<Nx;i++)																																	// loop through the space cells
     			{
     				ND = DopingProfile(i);																															// set ND to the value of the doping profile at ix
-
+//    				if(myrank_mpi == 0){printf("i = %d: ND = %g \n", i, ND);}
     				k=i*size_v + (j1*Nv*Nv + j2*Nv + j3);																											// calculate the index of cell (i,j1,j2,j3) in U
     				tp0 = ND*tmp0;																																	// calculate b_6k = (int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_6k(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
     				tp5 = ND*tmp4;																																	// calculate b_(6k+5) = (int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_(6k+5)(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
@@ -309,7 +312,6 @@ void SetInit_2H(double *U)																							// function to calculate the DG
 	}
 }
 
-#ifdef UseMPI
 void setInit_spectral(double *U, double **f)
 {
   int i, j1, j2, j3, k, l, m ,n;
@@ -331,26 +333,3 @@ void setInit_spectral(double *U, double **f)
     }
   }   
 }
-#else
-void setInit_spectral(double *U, double **f)
-{
-  int i, j1, j2, j3, k, l, m ,n;  
-  for(l=0;l<N;l++){
-      j1 = (l*h_v)/dv; // integer part = floor() for non-negative integers.
-      if(j1==Nv)j1=Nv-1; // let the right end point lie in the last element
-      for(m=0;m<N;m++){
-	  j2 = (m*h_v)/dv;
-	  if(j2==Nv)j2=Nv-1;
-		for(n=0;n<N;n++){
-		  j3 = (n*h_v)/dv;
-		  if(j3==Nv)j3=Nv-1;
-		  for(i=0;i<Nx;i++){
-		  k=i*size_v + (j1*Nv*Nv + j2*Nv + j3); // determine in which element the Fourier nodes lie	  
-		  f[i][l*N*N+m*N+n] = U[k*6+0] + U[k*6+2]*(v[l]-Gridv((double)j1))/dv + U[k*6+3]*(v[m]-Gridv((double)j2))/dv + U[k*6+4]*(v[n]-Gridv((double)j3))/dv + U[k*6+5]*( ((v[l]-Gridv((double)j1))/dv)*((v[l]-Gridv((double)j1))/dv) + ((v[m]-Gridv((double)j2))/dv)*((v[m]-Gridv((double)j2))/dv) + ((v[n]-Gridv((double)j3))/dv)*((v[n]-Gridv((double)j3))/dv) ); 
-		  //BUG: index was "l*N*N+m*N+n*N" !!!!!!
-		  }
-        }
-      }
-    }   
-}
-#endif

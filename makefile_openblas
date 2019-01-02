@@ -1,0 +1,57 @@
+# Directories
+DIR=$(PWD)
+EXECDIR:=$(DIR)/bin
+OBJDIR:=$(DIR)/build
+SRCDIR:=$(DIR)/source
+
+# Files
+EXEC :=  LPsolver_nu005_LaptopTests.out 
+SRC  :=  $(wildcard $(SRCDIR)/*.cpp) 
+OBJ  :=  $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SRC))
+
+# Intel C compiler
+CC=icc
+
+# Intel C++ compiler
+CPP=icpc
+
+# Intel MPI compiler for C++
+MPICC=mpicxx #-g -p
+
+# Compiler flags: crashed when compiling with -O0
+CFLAGS = -O2 -fopenmp  -I$(FFTW_INC) -I$(OPENBLAS_INC) -I$(SRCDIR)
+FFTFLAGS = -L$(FFTW_LIB) -lfftw3_threads -lfftw3 -lpthread -lm 
+FFTINC = -I$(FFTW_INC)
+MKLFLAGS = -Wl,-rpath,$(OPENBLAS_LIB) -L$(OPENBLAS_LIB) -Wl,--start-group -Wl,--end-group -lopenblas -lpthread # -lmkl_core -lmkl_intel_lp63 -lmkl_intel_thread -liomp5
+
+# Command definition
+RM=rm -f
+
+LP: $(OBJ)
+	@echo "Building Landau-Poisson solver - linking objects"
+	@$(MPICC) $(CFLAGS) -o $(EXECDIR)/$(EXEC) $^ $(FFTFLAGS) $(MKLFLAGS)
+	
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp 
+	@echo "Building $<"
+	@$(MPICC) $(CFLAGS) $(FFTINC) $(MKLFLAGS) -c -o $@ $<
+	
+$(OBJDIR)/LP_ompi.o: $(SRCDIR)/LP_ompi.h $(SRCDIR)/advection_1.h $(SRCDIR)/collisionRoutines_1.h $(SRCDIR)/conservationRoutines.h $(SRCDIR)/EntropyCalculations.h $(SRCDIR)/EquilibriumSolution.h $(SRCDIR)/MarginalCreation.h $(SRCDIR)/MomentCalculations.h $(SRCDIR)/NegativityChecks.h $(SRCDIR)/FieldCalculations.h $(SRCDIR)/SetInit_1.h 
+$(OBJDIR)/advection_1.o: $(SRCDIR)/advection_1.h  $(SRCDIR)/LP_ompi.h $(SRCDIR)/FieldCalculations.h
+$(OBJDIR)/collisionRoutines_1.o: $(SRCDIR)/collisionRoutines_1.h $(SRCDIR)/LP_ompi.h $(SRCDIR)/advection_1.h #$(SRCDIR)/ThreadPriv.h
+$(OBJDIR)/conservationRoutines.o: $(SRCDIR)/conservationRoutines.h $(SRCDIR)/LP_ompi.h
+$(OBJDIR)/EntropyCalculations.o: $(SRCDIR)/EntropyCalculations.h  $(SRCDIR)/LP_ompi.h $(SRCDIR)/advection_1.h
+$(OBJDIR)/EquilibriumSolution.o: $(SRCDIR)/EquilibriumSolution.h  $(SRCDIR)/LP_ompi.h $(SRCDIR)/FieldCalculations.h #$(SRCDIR)/advection_1.h 
+$(OBJDIR)/MarginalCreation.o: $(SRCDIR)/MarginalCreation.h  $(SRCDIR)/LP_ompi.h $(SRCDIR)/advection_1.h
+$(OBJDIR)/MomentCalculations.o: $(SRCDIR)/MomentCalculations.h  $(SRCDIR)/LP_ompi.h $(SRCDIR)/FieldCalculations.h #$(SRCDIR)/advection_1.h
+$(OBJDIR)/NegativityChecks.o: $(SRCDIR)/NegativityChecks.h  $(SRCDIR)/LP_ompi.h $(SRCDIR)/advection_1.h
+$(OBJDIR)/FieldCalculations.o: $(SRCDIR)/FieldCalculations.h $(SRCDIR)/LP_ompi.h $(SRCDIR)/advection_1.h
+$(OBJDIR)/SetInit_1.o: $(SRCDIR)/SetInit_1.h $(SRCDIR)/LP_ompi.h $(SRCDIR)/advection_1.h
+
+
+wts: $(objects_wt)
+	@echo "Building mpi weights"
+	@$(MPICC) -O2 -openmp $(objects_wt) -o $(EXECDIR)weight.out  
+
+clean:
+	$(RM) $(OBJDIR)/*.o 
+#	$(RM) $(EXECDIR)/*.out

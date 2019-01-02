@@ -11,6 +11,8 @@
 #ifndef LP_OMPI_H_
 #define LP_OMPI_H_
 
+#include "config.h"
+
 //************************//
 //        LIBRARIES       //
 //************************//
@@ -22,9 +24,17 @@
 #include <stdlib.h>																					// allows malloc & free to be used
 #include <omp.h>																					// allows all OpenMP routines to be used
 #include <fftw3.h>																					// allows the Fast Fourier Transform to be used
-#include <mkl_lapack.h>
 #include <vector>
 using std::vector;
+#include <cstring>																					// allows c_str & strcpy to be used
+#ifdef HAVE_MKL
+#include <mkl.h>
+#elif HAVE_OPENBLAS
+#include <lapacke.h>
+#endif
+#include<grvy.h>
+#include<iostream>																					// allows cout & endl to be used (with Intel compiler)
+using namespace GRVY;
 
 
 //************************//
@@ -32,7 +42,7 @@ using std::vector;
 //************************//
 
 // CHOOSE WHETHER OR NOT TO USE MPI:
-#define UseMPI 																						// define the macro MPI (UNCOMMENT IF THE CODE SHOULD UTILISE MPI)
+//#define UseMPI 																						// define the macro MPI (UNCOMMENT IF THE CODE SHOULD UTILISE MPI)
 
 // CHOOSE WHICH VARIATION OF THE CODE TO RUN:
 //#define Damping																					// define the macro Damping (UNCOMMENT IF BEING RUN FOR THE LANDAU DAMPING PROBLEM)
@@ -43,14 +53,14 @@ using std::vector;
 #define Doping																						// define the macro Doping (UNCOMMENT IF BEING RUN FOR THE NON-CONSTANT DOPING PROFILE PROBLEM)
 
 // CHOOSE IF THIS IS THE INITIAL RUN OR A SUBSEQUENT RUN:
-#define First																						// define the macro First (UNCOMMENT IF RUNNING THE CODE FOR THE FIRST TIME)
+//#define First																						// define the macro First (UNCOMMENT IF RUNNING THE CODE FOR THE FIRST TIME)
 //#define Second																					// define the macro Second (UNCOMMENT IF PICKING UP DATA FROM A PREVIOUS RUN)
 
 // CHOOSE IF RUNNING THE LINEAR LANDAU EQUATION WITH Q(f,M):
-#define LinearLandau
+//#define LinearLandau
 
 // CHOOSE TO ONLY CONSERVE MASS:
-#define MassConsOnly
+//#define MassConsOnly
 
 
 //************************//
@@ -95,9 +105,8 @@ extern double *U1, *Utmp, *output_buffer_vp;//, **H;												// declare point
 extern double *Q, *f1, *Q1, *Utmp_coll;//*f2, *f3;													// declare pointers to Q (the discretised collision operator), f1 (used to help store the solution during the collisional problem), Q1 (used in calculation of the collision operator) & Utmp_coll (used to store calculations from the RK4 method used in the collisional problem)
 extern fftw_complex *Q1_fft, *Q2_fft, *Q3_fft;														// declare pointers to the complex numbers Q1_fft, Q2_fft & Q3_fft (involved in storing the FFT of Q)
 
-#ifdef FullandLinear																				// only do this if FullandLinear was defined
+// FullandLinear variables:
 extern fftw_complex *Q1_fft_linear, *Q2_fft_linear, *Q3_fft_linear;									// declare pointers to the complex numbers Q1_fft_linear, Q2_fft_linear & Q3_fft_linear (involved in storing the FFT of the two species collison operator Q)
-#endif
 
 extern fftw_complex *fftIn, *fftOut;																// declare pointers to the FFT variables fftIn (a vector to be to have the FFT applied to it) & fftOut (the output of an FFT)
 //extern fftw_complex *fftOutMaxwell;																	// declare a pointer to the FFT variables fftOutMaxwell (the output of the FFT of the initial Maxwellian)
@@ -117,6 +126,10 @@ extern int *fNegVals;																				// declare fNegVals (to store where DG 
 extern double *fAvgVals;																			// declare fAvgVals (to store the average values of f on each cell)
 extern double *fEquiVals;																			// declare f_equivals (to store the equilibrium solution)
 
+extern bool Damping, TwoStream, FourHump, TwoHump;													// declare Boolean variables which will determin the ICs for the problem
+extern bool First, Second;																			// declare Boolean variables which will determine if this is the first or a subsequent run
+extern bool FullandLinear;																			// declare a Boolean variable to determine if running with a mixture
+
 //extern double a[3];
 
 //************************//
@@ -133,5 +146,6 @@ extern double *fEquiVals;																			// declare f_equivals (to store the 
 #include "EquilibriumSolution.h"																	// allows ExportRhoQuadVals, ComputeEquiVals & PrintEquiVals to be used
 #include "NegativityChecks.h"																		// allows computeCellAvg, FindNegVals & CheckNegVals to be used
 #include "FieldCalculations.h"																		// allows PrintPhiVals to be used
+#include "InputParsing.h"																			// allows
 
 #endif /* LP_OMPI_H_ */

@@ -25,11 +25,11 @@ double sinc(double x);
 
 void solveWithCCt(int nElem, double *b);
 
-#ifdef FullandLinear
-void conserveAllMoments(fftw_complex *qHat, fftw_complex *qHat_linear);
-#else
-void conserveAllMoments(fftw_complex *qHat);
-#endif
+void conserveAllMoments(fftw_complex *qHat, fftw_complex *qHat_linear = NULL);
+
+void conserveAllMoments_FandL(fftw_complex *qHat, fftw_complex *qHat_linear);
+
+void conserveAllMoments_normal(fftw_complex *qHat);
 
 void createCCtAndPivot();
 

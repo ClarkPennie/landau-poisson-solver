@@ -1,0 +1,5 @@
+#! /bin/sh
+
+rm aclocal.m4 config.* compile configure depcomp install-sh missing Makefile.in*
+rm -rf autom4te.cache
+rm source/Makefile.in

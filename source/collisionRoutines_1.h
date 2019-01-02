@@ -55,30 +55,29 @@ void IntModes(int k1, int k2,  int k3, int j1, int j2, int j3, double *result);
 
 void ProjectedNodeValue(fftw_complex *qHat, double *Q_incremental);
 
-#ifdef UseMPI
-	#ifdef FullandLinear
-	void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear);
+void ComputeQ_FandL(double *f, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear);
 
-	void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear, double *U, double *dU);
-	#else
-	void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights);
+void RK4_FandL(double *f, int l, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear, double *U, double *dU);
 
-	void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U, double *dU);
+void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights);
 
-	void ComputeDFTofMaxwellian(double *UMaxwell, double **fMaxwell, fftw_complex **DFTMax);
+void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U, double *dU);
 
-	void ComputeQLinear(double *f, fftw_complex *Maxwell_fftOut, fftw_complex *qHat, double **conv_weights);
+/*
+void ComputeQ_MPI_FandL(double *f, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear);
 
-	void RK4Linear(double *f, fftw_complex *MaxwellHat, int l, fftw_complex *qHat, double **conv_weights, double *U, double *dU);
-	#endif
-#else
-	#ifdef FullandLinear
-	void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights, double **conv_weights_linear);
-	#else
-	void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights);
+void RK4_MPI_FandL(double *f, int l, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear, double *U, double *dU);
 
-	void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U);
-	#endif
-#endif  
+void ComputeQ_MPI(double *f, fftw_complex *qHat, double **conv_weights);
+
+void RK4_MPI(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U, double *dU);
+*/
+
+void ComputeDFTofMaxwellian(double *UMaxwell, double **fMaxwell, fftw_complex **DFTMax);
+
+void ComputeQLinear(double *f, fftw_complex *Maxwell_fftOut, fftw_complex *qHat, double **conv_weights);
+
+//void RK4Linear(double *f, fftw_complex *MaxwellHat, int l, double nu_val, fftw_complex *qHat, double **conv_weights, double *U, double *dU); // required for vector nu
+void RK4Linear(double *f, fftw_complex *MaxwellHat, int l, fftw_complex *qHat, double **conv_weights, double *U, double *dU);
 
 #endif /* COLLISIONROUTINES_H_ */
