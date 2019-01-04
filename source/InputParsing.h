@@ -33,6 +33,8 @@ extern void CheckFirstOrSecond();
 
 extern void ReadFullandLinear(GRVY_Input_Class& iparse);
 
+extern void ReadLinearLandau(GRVY_Input_Class& iparse);
+
 extern void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 								int& Nx, int& Nv, int& N, double& nu, double& dt, double& A_amp,
 								double& k_wave, double& Lv, double& Lx);

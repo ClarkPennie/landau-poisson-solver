@@ -36,6 +36,7 @@ First            = True         # Running for the first time with ICs
 Second           = False        # Picking up from a previous run
 
 FullandLinear    = False 	# Include electron-ion collisions
+LinearLandau     = True         # Run with Linear Landau operator Q(f,M)
 
 #--------------------------------------------
 # Parameters associated with certain ICs

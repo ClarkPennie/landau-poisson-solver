@@ -221,6 +221,28 @@ void ReadFullandLinear(GRVY_Input_Class& iparse)												// Function to read 
 	}
 }
 
+void ReadLinearLandau(GRVY_Input_Class& iparse)												// Function to read the Boolean option to decide if running with single species collisions or mixed
+{
+	// Check if FullandLinear has been set and print its value from the
+	// processor with rank 0 (if not, set default value to false):
+	if( iparse.Read_Var("LinearLandau",&LinearLandau,false) )
+	{
+		if(myrank_mpi==0)
+		{
+			std::cout << "--> LinearLandau = " << LinearLandau << std::endl << std::endl;
+			if(LinearLandau)
+			{
+				std::cout << "Collisions are being modeled by the linear Landau operator (particles collide with those with a Maxwellian density)"
+					<< std::endl << std::endl;
+			}
+			else
+			{
+				std::cout << "Running with the full Landau collision operator" << std::endl << std::endl;
+			}
+		}
+	}
+}
+
 void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT, 
 							int& Nx, int& Nv, int& N, double& nu, double& dt, double& A_amp, 
 							double& k_wave, double& Lv, double& Lx)								// Function to read all input parameters (IC_flag, nT,  Nx, Nv, N, nu, dt, A_amp, k_wave, L_v & L_x)

@@ -124,6 +124,7 @@ extern double *fEquiVals;																			// declare f_equivals (to store the 
 extern bool Damping, TwoStream, FourHump, TwoHump, Doping;											// declare Boolean variables which will determin the ICs for the problem
 extern bool First, Second;																			// declare Boolean variables which will determine if this is the first or a subsequent run
 extern bool FullandLinear;																			// declare a Boolean variable to determine if running with a mixture
+extern bool LinearLandau;																			// declare a Boolean variable to determine if running with the full collision operator or linear collisions with a Maxwellian
 
 //extern double a[3];
 
