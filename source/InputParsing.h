@@ -37,6 +37,9 @@ extern void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int
 								int& Nx, int& Nv, int& N, double& nu, double& dt, double& A_amp,
 								double& k_wave, double& Lv, double& Lx);
 
+extern void ReadDopingParameters(GRVY_Input_Class& iparse, double& NL, double& NH,
+								double& T_L, double& T_R, double& eps);
+
 extern void PrintError(std::string var_name);
 
 #endif /* INPUTPARSING_H_ */

@@ -42,7 +42,7 @@ using namespace GRVY;
 //************************//
 
 // CHOOSE WHETHER OR NOT TO USE MPI:
-//#define UseMPI 																						// define the macro MPI (UNCOMMENT IF THE CODE SHOULD UTILISE MPI)
+//#define UseMPI 																					// define the macro MPI (UNCOMMENT IF THE CODE SHOULD UTILISE MPI)
 
 // CHOOSE WHICH VARIATION OF THE CODE TO RUN:
 //#define Damping																					// define the macro Damping (UNCOMMENT IF BEING RUN FOR THE LANDAU DAMPING PROBLEM)
@@ -50,7 +50,7 @@ using namespace GRVY;
 //#define TwoStream																					// define the macro TwoStream (UNCOMMENT IF BEING RUN FOR THE TWO STREAM PROBLEM)
 //#define FourHump																					// define the macro FourHump (UNCOMMENT IF BEING RUN FOR THE FOUR HUMP IC PROBLEM)
 //#define TwoHump																					// define the macro TwoHump (UNCOMMENT IF BEING RUN FOR THE TWO HUMP IC PROBLEM)
-#define Doping																						// define the macro Doping (UNCOMMENT IF BEING RUN FOR THE NON-CONSTANT DOPING PROFILE PROBLEM)
+//#define Doping																					// define the macro Doping (UNCOMMENT IF BEING RUN FOR THE NON-CONSTANT DOPING PROFILE PROBLEM)
 
 // CHOOSE IF THIS IS THE INITIAL RUN OR A SUBSEQUENT RUN:
 //#define First																						// define the macro First (UNCOMMENT IF RUNNING THE CODE FOR THE FIRST TIME)
@@ -78,16 +78,11 @@ extern double dv, dx; 																				// declare dv (the velocity stepsize) 
 extern double L_v, R_v, L_eta;																		// declare L_v (for -Lv < v < Lv in the collision problem) and set it to Lv, R_v (for v in B_(R_v) in the collision problem) and set it to Lv & L_eta (for Fourier space, -L_eta < eta < L_eta)
 extern double h_eta, h_v;																			// declare h_eta (the Fourier stepsize) & h_v (also the velocity stepsize but for the collision problem)
 extern double nu, dt, nthread; 																		// declare nu (1/knudson#) and set it to 0.1, dt (the timestep) and set it to 0.004 & nthread (the number of OpenMP threads)
-extern double eps;																					// declare eps (the dielectric constant in Poisson's equation: div(eps*grad(Phi)) = R(x,t))
 
-#ifdef Doping
-extern double NL;																					// declare NL (the density of ions in the middle of the well, the Lower value)
-extern double NH;																					// declare NH (the density of ions on the edges of the well, the Higher value)
-extern int a_i;																						// declare a_i (the index such that ND(x) = NH, for x <= x_{a_i-1/2}, & ND(x) = NL, for x > x_{a_i+1/2})
-extern int b_i;																						// declare b_i (the index such that ND(x) = NL, for x <= x_{b_i-1/2}, & ND(x) = NH, for x > x_{b_i+1/2})
-extern double T_R;																					// declare T_R (the temperature at the right edge of space)
-extern double T_L;																					// declare T_L (the temperature at the left edge of space)
-#endif
+extern double NL, NH;																				// declare NL & NH (the density of ions in the middle of the well, the Lower value, and the edges, the higher value, respectively)
+extern int a_i, b_i;																				// declare a_i & b_i (the indices such that ND(x) = NL, for x_{a_i+1/2}< x <= x_{b_i-1/2}, and ND(x) = NH otherwise)
+extern double T_L, T_R;																				// declare T_L & T_R (the temperatures at the left & right edges of space if periodic BCs are used, respectively)
+extern double eps;																					// declare eps (the dielectric constant in Poisson's equation: div(eps*grad(Phi)) = R(x,t))
 
 extern double *v, *eta;																				// declare v (the velocity variable) & eta (the Fourier space variable)
 extern double *wtN;																					// declare wtN (the trapezoidal rule weights to be used)
@@ -126,7 +121,7 @@ extern int *fNegVals;																				// declare fNegVals (to store where DG 
 extern double *fAvgVals;																			// declare fAvgVals (to store the average values of f on each cell)
 extern double *fEquiVals;																			// declare f_equivals (to store the equilibrium solution)
 
-extern bool Damping, TwoStream, FourHump, TwoHump;													// declare Boolean variables which will determin the ICs for the problem
+extern bool Damping, TwoStream, FourHump, TwoHump, Doping;											// declare Boolean variables which will determin the ICs for the problem
 extern bool First, Second;																			// declare Boolean variables which will determine if this is the first or a subsequent run
 extern bool FullandLinear;																			// declare a Boolean variable to determine if running with a mixture
 

@@ -20,7 +20,7 @@ double Gridx(double m){ // x in [0,Lx]  (returns the x value at the mth discrete
 	return (m+0.5)*dx;
 }
 
-#ifdef Doping																						// only do this if Damping was defined
+//#ifdef Doping																						// only do this if Damping was defined
 void DirichletBC(vector<double>& Ub_vals, int i, int j1, int j2, int j3)
 {
     int m1,m2,m3,nt=5;																				// declare m1, m2, m3 (counters for the Gaussian quadrature in 3D) & nt (the number of points in the quadrature)
@@ -67,7 +67,7 @@ void DirichletBC(vector<double>& Ub_vals, int i, int j1, int j2, int j3)
 	Ub_vals[3] = ND*tmp2*12;																															// calculate the coefficient U[6k+3] = 12*b_(6k+3) = 12*(int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_(6k+3)(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
 	Ub_vals[4] = ND*tmp3*12;																															// calculate the coefficient U[6k+4] = 12*b_(6k+4) = 12*(int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_(6k+4)(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
 }
-#endif	/* Doping*/
+//#endif	/* Doping*/
 
 double I1(double *U, int k, int l) // Calculate the first inegtral in H_(i,j), namely \int v1*f*phi_x dxdv
 {
@@ -199,8 +199,19 @@ double I3_PB2(double *U, int k, int l) 																		// Calculate the differ
 	return result;
 }
 
-#ifdef Doping																								// only do this if Damping was defined
-double I3(double *U, int k, int l) 																			// Calculate the difference of the second and third integrals in H_(i,j), namely \int_j v1*gh*phi dv at interface x=x_i+1/2 - \int_j v1*gh*phi dv at interface x=x_i-1/2, with Dirichlet BCs
+double I3(double *U, int k, int l)
+{
+	if(Doping)
+	{
+		return I3_Doping(U, k, l);
+	}
+	else
+	{
+		return I3_Normal(U, k, l);
+	}
+}
+
+double I3_Doping(double *U, int k, int l) 																	// Calculate the difference of the second and third integrals in H_(i,j), namely \int_j v1*gh*phi dv at interface x=x_i+1/2 - \int_j v1*gh*phi dv at interface x=x_i-1/2, with Dirichlet BCs
 {
 	vector<double> Ul(6), Ur(6);																			// declare Ul & Ur (the coefficients from U on the left and right edge of the current space cell, respectively)
 	double result, ur, ul;																					// declare result (the result of the integral to be returned), ur (used in the evaluation of gh^+/- on the right space cell edge) & ul (used in the evaluation of gh^+/- on the left space cell edge)
@@ -269,8 +280,8 @@ double I3(double *U, int k, int l) 																			// Calculate the differenc
 
 	return result;
 }
-#else
-double I3(double *U, int k, int l) 																			// Calculate the difference of the second and third integrals in H_(i,j), namely \int_j v1*gh*phi dv at interface x=x_i+1/2 - \int_j v1*gh*phi dv at interface x=x_i-1/2
+
+double I3_Normal(double *U, int k, int l) 																	// Calculate the difference of the second and third integrals in H_(i,j), namely \int_j v1*gh*phi dv at interface x=x_i+1/2 - \int_j v1*gh*phi dv at interface x=x_i-1/2
 {
 	double result, ur, ul;																					// declare result (the result of the integral to be returned), ur (used in the evaluation of gh^+/- on the right space cell edge) & ul (used in the evaluation of gh^+/- on the left space cell edge)
 	int i, j1, j2, j3, iil, iir, kkl, kkr; 																	// declare i (the space cell coordinate), j1, j2, j3 (the coordinates of the velocity cell), iil (the cell from which the flux is flowing on the left of cell i in space), iir (the cell from which the flux is flowing on the right of cell i in space), kkl (the global index of the cell with coordinate (iil, j1, j2, j3)) & kkr (the global index of the cell with coordinate (iir, j1, j2, j3))
@@ -308,8 +319,6 @@ double I3(double *U, int k, int l) 																			// Calculate the differenc
 
 	return result;
 }
-#endif	/* Doping */
-
 
 double I5(double *U, int k, int l) 	// Calculate the difference of the fifth and sixth integrals in H_(i,j), namely \int_i E*f*phi dx at interface v1==v_j+1/2 - \int_i E*f*phi dx at interface v1==v_j-1/2
 {

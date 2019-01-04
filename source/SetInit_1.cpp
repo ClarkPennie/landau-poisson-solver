@@ -85,7 +85,7 @@ void SetInit_LD(double *U)																						// function to calculate the DG 
     				{
     					for(m3=0;m3<nt;m3++)
     					{
-							if(Damping)   // NOTE: WAS #ifdef Doping (Doping or Damping)
+							if(Damping or Doping)   // NOTE: WAS #ifdef Doping (Doping or Damping)
 							{
 								tp = wt[m1]*wt[m2]*wt[m3]*Mw(Gridv((double)j1)+0.5*dv*vt[m1], Gridv((double)j2)+0.5*dv*vt[m2], Gridv((double)j3)+0.5*dv*vt[m3], T0);		// calculate w_m1*w_m2*w_m3*Mw(v_m1,v_m2,v_m3), which appears in all quadrature integral approximations
 							}
@@ -122,7 +122,6 @@ void SetInit_LD(double *U)																						// function to calculate the DG 
 	}
 }
 
-#ifdef Doping																									// only do this if Damping was define
 void SetInit_ND(double *U)																						// function to calculate the DG coefficients for the initial condition for Landau Damping
 {
 //	if(myrank_mpi == 0){printf("Inside SetInit_ND\n");}
@@ -175,7 +174,6 @@ void SetInit_ND(double *U)																						// function to calculate the DG 
     	}
 	}
 }
-#endif /* Doping */
 
 void SetInit_4H(double *U)																							// function to calculate the DG coefficients for the initial condition with four humps, found by adding four Maxwellians
 {

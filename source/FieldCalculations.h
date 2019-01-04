@@ -23,21 +23,9 @@
 //   FUNCTION PROTOTYPES  //
 //************************//
 
-#ifdef Doping
-double DopingProfile(int i);
-
-double computeE(double *U, double x, int ix);
-#endif
-
 double rho_x(double x, double *U, int i);
 
 double rho(double *U, int i);
-
-double computePhi_x_0(double *U);
-
-double computePhi(double *U, double x, int ix);
-
-void PrintPhiVals(double *U, FILE *phifile);
 
 void PrintFieldLoc(FILE *phifile, FILE *Efile);
 
@@ -49,13 +37,57 @@ double Int_Int_rho(double *U, int i);
 
 double Int_Int_rho1st(double *U, int i);
 
+double Int_fE(double *U, int i, int j);
+
+double computePhi_x_0(double *U);
+
+double computePhi(double *U, double x, int ix);
+
+double computeE(double *U, double x, int ix);
+
 double Int_E(double *U, int i);
 
 double Int_E1st(double *U, int i);
 
-double Int_fE(double *U, int i, int j);
+double Int_E2nd(double *U, int i);
+
+void PrintFieldData(double* U_vals, FILE *phifile, FILE *Efile);
+
+double Int_E(double *U, int i);
+
+double Int_E1st(double *U, int i);
 
 double Int_E2nd(double *U, int i);
+
+double computePhi_x_0_Normal(double *U);
+
+double computePhi_Normal(double *U, double x, int ix);
+
+void PrintFieldData_Normal(double* U_vals, FILE *phifile, FILE *Efile);
+
+double Int_E_Normal(double *U, int i);
+
+double Int_E1st_Normal(double *U, int i);
+
+double Int_E2nd_Normal(double *U, int i);
+
+double DopingProfile(int i);
+
+double computePhi_x_0_Doping(double *U);
+
+double computePhi_x_0_Doping(double *U);
+
+double computePhi_Doping(double *U, double x, int ix);
+
+double computeE_Doping(double *U, double x, int ix);
+
+void PrintFieldData_Doping(double* U_vals, FILE *phifile, FILE *Efile);
+
+double Int_E_Doping(double *U, int i);
+
+double Int_E1st_Doping(double *U, int i);
+
+double Int_E2nd_Doping(double *U, int i);
 
 #endif /* FIELDCALCULATIONS_H_ */
 

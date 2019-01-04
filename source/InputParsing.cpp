@@ -49,6 +49,13 @@ void ReadICOptions(GRVY_Input_Class& iparse)													// Function to read the
 			std::cout << "--> TwoHump = " << TwoHump << std::endl;
 		}
 	}
+	if( iparse.Read_Var("Doping",&Doping,false) )
+	{
+		if(myrank_mpi==0)
+		{
+			std::cout << "--> Doping = " << Doping << std::endl;
+		}
+	}
 }
 
 void CheckICOptions(std::string& IC_flag)															// Function to verify the IC options were set correctly
@@ -77,6 +84,11 @@ void CheckICOptions(std::string& IC_flag)															// Function to verify th
 	{
 		IC_count++;
 		IC_flag.assign("TwoHump/IC_name");
+	}
+	if(Doping)
+	{
+		IC_count++;
+		IC_flag.assign("Doping/IC_name");
 	}
 	
 	// Exit the program if no IC option has been chosen and print a messgage from the
@@ -365,6 +377,18 @@ void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 		iparse.Read_Var("TwoHump/Lx",&Lx,2*PI/k_wave);
 	}
 
+	if(Doping)
+	{
+		iparse.Read_Var("Doping/A_amp",&A_amp,0.);
+		iparse.Read_Var("Doping/k_wave",&k_wave,0.5);
+		if (! iparse.Read_Var("Doping/Lv",&Lv) )
+		{
+			PrintError("Doping/Lv");
+			exit(1);
+		}
+		iparse.Read_Var("Doping/Lx",&Lx,2*PI/k_wave);
+	}
+
 	grvy_log_setlevel(GRVY_INFO);
 
 	// Print the values of the parameters read from the specific options from the processor
@@ -375,6 +399,60 @@ void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 		printf("--> %-11s = %g\n","k_wave",k_wave);
 		printf("--> %-11s = %g\n","Lv",Lv);
 		printf("--> %-11s = %g\n\n","Lx",Lx);
+	}
+}
+
+void ReadDopingParameters(GRVY_Input_Class& iparse, double& NL, double& NH,
+							double& T_L, double& T_R, double& eps)								// Function to read all parameters for a non-uniform doping profile (NL, NH, T_L, T_R, eps)
+{
+	if(myrank_mpi==0)
+	{
+		std::cout << "Code is running with a non-uniform background density..." << std::endl;
+		std::cout << "Parameters associated to this non-uniform doping profile:" << std::endl << std::endl;
+	}
+
+	// Try to read all doping parameters to be used for this run and print them from the
+	// processor with rank 0 (exit if not available)
+	if (! iparse.Read_Var("Doping/NL",&NL) )
+	{
+		PrintError("Doping/NL");
+		exit(1);
+	}
+	if(myrank_mpi==0)
+	{
+		printf("--> %-11s = %g\n","NL",NL);
+	}
+	if (! iparse.Read_Var("Doping/NH",&NH) )
+	{
+		PrintError("Doping/NH");
+		exit(1);
+	}
+	if(myrank_mpi==0)
+	{
+		printf("--> %-11s = %g\n","NH",NH);
+	}
+	if (! iparse.Read_Var("Doping/eps",&eps) )
+	{
+		PrintError("Doping/eps");
+		exit(1);
+	}
+	if(myrank_mpi==0)
+	{
+		printf("--> %-11s = %g\n","eps",eps);
+	}
+	if( iparse.Read_Var("Doping/T_L",&T_L,0.4) )
+	{
+		if(myrank_mpi==0)
+		{
+			printf("--> %-11s = %g\n","T_L",T_L);
+		}
+	}
+	if( iparse.Read_Var("Doping/T_R",&T_R,0.4) )
+	{
+		if(myrank_mpi==0)
+		{
+			printf("--> %-11s = %g\n","T_R",T_R);
+		}
 	}
 }
 

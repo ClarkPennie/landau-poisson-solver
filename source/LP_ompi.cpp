@@ -33,16 +33,6 @@ double CCt[5*5], lamb[5];																			// declare matrices CCt (C*C^T, for 
 #endif	/* MassConsOnly */
 double CCt_linear[2*2], lamb_linear[2];																// declare the arrays CCt_linear (C*C^T, for the conservation matrix C, in the two species collision operator) & lamb_linear (to hold 2 values)
 
-#ifdef Doping																						// only do this if Damping was defined
-double NL = 0.001;																					// declare NL (the density of ions in the middle of the well, the Lower value) and set its value
-double NH = 1;																						// declare NH (the density of ions on the edges of the well, the Higher value) and set its value
-int a_i;																							// declare a_i (the index such that ND(x) = NH, for x <= x_{a_i-1/2}, & ND(x) = NL, for x > x_{a_i+1/2}) and set its value
-int b_i;																							// declare b_i (the index such that ND(x) = NL, for x <= x_{b_i-1/2}, & ND(x) = NH, for x > x_{b_i+1/2}) and set its value
-double T_R = 0.4;																					// declare T_R (the temperature at the right edge of space) and set its value
-double T_L = 0.4;																					// declare T_L (the temperature at the left edge of space) and set its value
-double eps = 0.01;																					// declare eps (the dielectric constant in Poisson's equation: div(eps*grad(Phi)) = R(x,t)) and set its value
-#endif /* Doping */
-//#else
 int Nx, Nv, nT, N;			 											 							// declare Nx (no. of x discretised points), Nv (no. of v discretised point), nT (no. of time discretised points) & N (no. of nodes in the spectral method) and setting all their values
 int size_v, size, size_ft; 																			// declare size_v (no. of total v discretised points in 3D), size (the total no. of discretised points) & size_ft (total no. of spectral discretised points in 3D)
 double dv, dx; 																						// declare dv (the velocity stepsize) & dx (the space stepsize)
@@ -51,6 +41,12 @@ double Lx, Lv;																						// declare Lx (for 0 < x < Lx) and set it to
 double L_v, R_v, L_eta;																				// declare L_v (for -Lv < v < Lv in the collision problem), R_v (for v in B_(R_v) in the collision problem) & L_eta (for Fourier space, -L_eta < eta < L_eta)
 double h_eta, h_v;																					// declare h_eta (the Fourier stepsize) & h_v (also the velocity stepsize but for the collision problem)
 double nu, dt; 																						// declare nu (1/knudson#), dt (the timestep) & nthread (the number of OpenMP threads)
+
+// Non-uniform doping profile parameters:
+double NL, NH;																						// declare NL & NH (the density of ions in the middle of the well, the Lower value, and the edges, the higher value, respectively)
+int a_i, b_i;																						// declare a_i & b_i (the indices such that ND(x) = NL, for x_{a_i+1/2}< x <= x_{b_i-1/2}, and ND(x) = NH otherwise)
+double T_L, T_R;																					// declare T_L & T_R (the temperatures at the left & right edges of space if periodic BCs are used, respectively)
+double eps;																							// declare eps (the dielectric constant in Poisson's equation: div(eps*grad(Phi)) = R(x,t))
 
 double *v, *eta;																					// declare v (the velocity variable) & eta (the Fourier space variable)
 double *wtN;																						// declare wtN (the trapezoidal rule weights to be used)
@@ -79,7 +75,7 @@ int *fNegVals;																						// declare fNegVals (to store where DG solut
 double *fAvgVals;																					// declare fAvgVals (to store the average values of f on each cell)
 double *fEquiVals;																					// declare f_equivals (to store the equilibrium solution)
 
-bool Damping, TwoStream, FourHump, TwoHump;															// declare Boolean variables which will determine the ICs for the problem
+bool Damping, TwoStream, FourHump, TwoHump, Doping;													// declare Boolean variables which will determine the ICs for the problem
 bool FullandLinear;																					// declare a Boolean variable to determine if running with a mixture
 bool First, Second;																					// declare Boolean variables which will determine if this is the first or a subsequent run
 
@@ -151,20 +147,27 @@ int main()
 	}
 
 	ReadICOptions(iparse);																			// Read the initial condition for this run from the input file
+	CheckICOptions(IC_flag);																		// Check just one initial condition was set for this run
+	ReadICName(iparse, IC_flag, IC_name);															// Read in a string of the name of the initial conditions chosen
+
 	ReadFirstOrSecond(iparse);																		// Read in if this is the first or a subsequent run
 	CheckFirstOrSecond();																			// Check that only one of First or Second was chosen
 
 	ReadFullandLinear(iparse);																		// Read in the types of collisions used for this run
 
 	ReadInputParameters(iparse, flag, nT, Nx, Nv, N, nu, dt, A_amp, k_wave, Lv, Lx);				// Read in all input parameters
-	#ifndef Doping
-	CheckICOptions(IC_flag);																		// Check just one initial condition was set for this run
-	ReadICName(iparse, IC_flag, IC_name);															// Read in a string of the name of the initial conditions chosen
 
-	#else
-	a_i = Nx/3-1;																					// declare a_i (the index such that ND(x) = NH, for x <= x_{a_i-1/2}, & ND(x) = NL, for x > x_{a_i+1/2}) and set its value
-	b_i = 2*Nx/3-1;																					// declare b_i (the index such that ND(x) = NL, for x <= x_{b_i-1/2}, & ND(x) = NH, for x > x_{b_i+1/2}) and set its value
-	#endif /* Doping */
+	if(Doping)
+	{
+		ReadDopingParameters(iparse, NL, NH, T_L, T_R, eps);										// Read in the input parameters required for a non-uniform doping profile
+		a_i = Nx/3-1;																				// declare a_i (the index such that ND(x) = NH, for x <= x_{a_i-1/2}, & ND(x) = NL, for x > x_{a_i+1/2}) and set its value
+		b_i = 2*Nx/3-1;																				// declare b_i (the index such that ND(x) = NL, for x <= x_{b_i-1/2}, & ND(x) = NH, for x > x_{b_i+1/2}) and set its value
+		if(myrank_mpi==0)
+		{
+			printf("--> %-11s = %d\n","a_i",a_i);
+			printf("--> %-11s = %d\n\n","b_i",b_i);
+		}
+	}
 
 	size_v=Nv*Nv*Nv;																				// set size_v to Nv^3
 	size=Nx*size_v;																					// set size to size_v*Nx
@@ -416,9 +419,6 @@ int main()
 
 	if(First)																						// only do this if First is True (setting initial conditions)
 	{
-		#ifdef Doping																				// only do this if Damping was defined
-		SetInit_ND(U);																				// set initial DG solution appropriate for the non-constant doping profile. For the first time run t=0, use this to give init solution (otherwise, comment out)
-		#else
 		if(Damping)																					// only do this if Damping is true
 		{
 			SetInit_LD(U);																			// set initial DG solution for Landau Damping. For the first time run t=0, use this to give init solution (otherwise, comment out)
@@ -435,7 +435,10 @@ int main()
 		{
 			SetInit_2H(U);																			// set initial DG solution with the 2Hump IC. For the first time run t=0, use this to give init solution (otherwise, comment out)
 		}
-		#endif	/* Doping */
+		if(Doping)																					// only do this if Damping was defined
+		{
+			SetInit_ND(U);																			// set initial DG solution appropriate for the non-constant doping profile. For the first time run t=0, use this to give init solution (otherwise, comment out)
+		}
 
 		#ifdef LinearLandau																			// only do this is LinearLandau was defined, for using Q(f,M)
 		ComputeDFTofMaxwellian(U, f, DFTMaxwell);													// compute the Fourier transform of the initial Maxwellian currently stored in U and store the output in DFTMaxwell
