@@ -87,14 +87,10 @@ extern double eps;																					// declare eps (the dielectric constant i
 extern double *v, *eta;																				// declare v (the velocity variable) & eta (the Fourier space variable)
 extern double *wtN;																					// declare wtN (the trapezoidal rule weights to be used)
 extern double scale, scale3, scaleL, scalev;														// declare scale (the 1/sqrt(2pi) factor appearing in Gaussians), scale (the 1/(sqrt(2pi))^3 factor appearing in the Maxwellian), scaleL (the volume of the velocity domain) and set it to 8Lv^3 & scalev (the volume of a discretised velocity element) and set it to dv^3
-#ifdef MassConsOnly																					// only do this if MassConsOnly was defined and only conserving mass
-extern double *C1;																					// declare pointers to matrices C1 (the real part of the conservation matrix C) & C2 (the imaginary part of the conservation matrix C), CCt (of dimension 5x5) & CCt_linear (of dimension 2x2)
-extern double CCt[1*1], lamb[1];																	// declare matrices CCt (C*C^T, for the conservation matrix C) & lamb (to hold 1 values)
-#else
-extern double **C1, **C2;																			// declare pointers to matrices C1 (the real part of the conservation matrix C) & C2 (the imaginary part of the conservation matrix C), CCt (of dimension 5x5) & CCt_linear (of dimension 2x2)
+extern double *C1_1, **C1_5, **C2;																	// declare pointers to matrices C1_1 (the real part of the conservation matrix C if conserving only mass), C1_5 (the real part of the conservation matrix C if conserving all moments) & C2 (the imaginary part of the conservation matrix C), CCt (of dimension 5x5) & CCt_linear (of dimension 2x2)
 extern double CCt[5*5], lamb[5];																	// declare matrices CCt (C*C^T, for the conservation matrix C) & lamb (to hold 5 values)
-#endif	/* MassConsOnly */
 extern double CCt_linear[2*2], lamb_linear[2];														// declare the arrays CCt_linear (C*C^T, for the conservation matrix C, in the two species collision operator) & lamb_linear (to hold 2 values)
+extern int M;																						// declare M (the number of collision invarients)
 
 extern double *U1, *Utmp, *output_buffer_vp;//, **H;												// declare pointers to U1, Utmp (both used to help store the values in U, declared later) & output_buffer_vp (a buffer used when sending the data between MPI processes during the VP method)
 extern double *Q, *f1, *Q1, *Utmp_coll;//*f2, *f3;													// declare pointers to Q (the discretised collision operator), f1 (used to help store the solution during the collisional problem), Q1 (used in calculation of the collision operator) & Utmp_coll (used to store calculations from the RK4 method used in the collisional problem)
@@ -104,9 +100,6 @@ extern fftw_complex *Q1_fft, *Q2_fft, *Q3_fft;														// declare pointers 
 extern fftw_complex *Q1_fft_linear, *Q2_fft_linear, *Q3_fft_linear;									// declare pointers to the complex numbers Q1_fft_linear, Q2_fft_linear & Q3_fft_linear (involved in storing the FFT of the two species collison operator Q)
 
 extern fftw_complex *fftIn, *fftOut;																// declare pointers to the FFT variables fftIn (a vector to be to have the FFT applied to it) & fftOut (the output of an FFT)
-//extern fftw_complex *fftOutMaxwell;																	// declare a pointer to the FFT variables fftOutMaxwell (the output of the FFT of the initial Maxwellian)
-//extern double IntM[10];																			// declare an array IntM to hold 10 double variables
-//#pragma omp threadprivate(IntM)																	// start the OpenMP parallel construct to start the threads which will run in parallel, passing IntM to each thread as private variables which will have their contents deleted when the threads finish (doesn't seem to be doing anything since no {} afterwards???)
 
 extern double ce, *cp, *intE, *intE1, *intE2;														// declare ce and pointers to cp, intE, intE1 & intE2 (precomputed quantities for advections)
 
@@ -125,8 +118,7 @@ extern bool Damping, TwoStream, FourHump, TwoHump, Doping;											// declare 
 extern bool First, Second;																			// declare Boolean variables which will determine if this is the first or a subsequent run
 extern bool FullandLinear;																			// declare a Boolean variable to determine if running with a mixture
 extern bool LinearLandau;																			// declare a Boolean variable to determine if running with the full collision operator or linear collisions with a Maxwellian
-
-//extern double a[3];
+extern bool MassConsOnly;																			// declare a Boolean variable to determine if conserving all moments or all mass
 
 //************************//
 //        INCLUDES        //

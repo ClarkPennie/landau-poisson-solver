@@ -35,8 +35,10 @@ Doping           = True         # Non-uniform doping ICs
 First            = True         # Running for the first time with ICs
 Second           = False        # Picking up from a previous run
 
-FullandLinear    = False 	# Include electron-ion collisions
+# Choose how the collisions are being modelled:
+FullandLinear    = False        # Include electron-ion collisions
 LinearLandau     = True         # Run with Linear Landau operator Q(f,M)
+MassConsOnly     = True         # Run with only conservation of mass
 
 #--------------------------------------------
 # Parameters associated with certain ICs

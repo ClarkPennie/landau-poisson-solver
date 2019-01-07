@@ -25,12 +25,24 @@ double sinc(double x);
 
 void solveWithCCt(int nElem, double *b);
 
-void conserveAllMoments(fftw_complex *qHat, fftw_complex *qHat_linear = NULL);
+void conserveMoments(fftw_complex *qHat, fftw_complex *qHat_linear = NULL);
+
+void createCCtAndPivot();
+
+void conserveAllMoments(fftw_complex *qHat, fftw_complex *qHat_linear);
 
 void conserveAllMoments_FandL(fftw_complex *qHat, fftw_complex *qHat_linear);
 
-void conserveAllMoments_normal(fftw_complex *qHat);
+void conserveAllMoments_Normal(fftw_complex *qHat);
 
-void createCCtAndPivot();
+void createCCtAndPivot_AllMoments();
+
+void conserveMass(fftw_complex *qHat, fftw_complex *qHat_linear);
+
+void conserveMass_FandL(fftw_complex *qHat, fftw_complex *qHat_linear);
+
+void conserveMass_Normal(fftw_complex *qHat);
+
+void createCCtAndPivot_OnlyMass();
 
 #endif /* CONSERVATIONROUTINES_H_ */

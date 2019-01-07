@@ -232,16 +232,39 @@ void ReadLinearLandau(GRVY_Input_Class& iparse)												// Function to read t
 			std::cout << "--> LinearLandau = " << LinearLandau << std::endl << std::endl;
 			if(LinearLandau)
 			{
-				std::cout << "Collisions are being modeled by the linear Landau operator (particles collide with those with a Maxwellian density)"
+				std::cout << "Collisions are being modeled by the linear Landau operator (particles collide with those with a Maxwellian density)."
 					<< std::endl << std::endl;
 			}
 			else
 			{
-				std::cout << "Running with the full Landau collision operator" << std::endl << std::endl;
+				std::cout << "Running with the full Landau collision operator." << std::endl << std::endl;
 			}
 		}
 	}
 }
+
+void ReadMassConsOnly(GRVY_Input_Class& iparse)												// Function to read the Boolean option to decide if running with single species collisions or mixed
+{
+	// Check if FullandLinear has been set and print its value from the
+	// processor with rank 0 (if not, set default value to false):
+	if( iparse.Read_Var("MassConsOnly",&MassConsOnly,false) )
+	{
+		if(myrank_mpi==0)
+		{
+			std::cout << "--> MassConsOnly = " << MassConsOnly << std::endl << std::endl;
+			if(MassConsOnly)
+			{
+				std::cout << "Only mass is being conserved."
+					<< std::endl << std::endl;
+			}
+			else
+			{
+				std::cout << "All of mass, momentum and energy are being conserved." << std::endl << std::endl;
+			}
+		}
+	}
+}
+
 
 void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT, 
 							int& Nx, int& Nv, int& N, double& nu, double& dt, double& A_amp, 

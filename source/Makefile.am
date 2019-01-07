@@ -9,7 +9,6 @@ h_sources   = EntropyCalculations.h LP_ompi.h NegativityChecks.h collisionRoutin
 
 cpp_sources = EntropyCalculations.cpp LP_ompi.cpp NegativityChecks.cpp  collisionRoutines_1.cpp \
               EquilibriumSolution.cpp MarginalCreation.cpp SetInit_1.cpp conservationRoutines.cpp \
-	      FieldCalculations.cpp MomentCalculations.cpp advection_1.cpp InputParsing.cpp \
-          conservationRoutines_OnlyMass.cpp
+	      FieldCalculations.cpp MomentCalculations.cpp advection_1.cpp InputParsing.cpp
 
 solver_SOURCES = $(cpp_sources) $(h_sources)

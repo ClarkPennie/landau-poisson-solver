@@ -18,20 +18,11 @@
 #include "LP_ompi.h"																				// LP_ompi.h is where the libraries required by the program included, all macros (to decide the behaviour of a given run) are defined and all variables to be used throughout the various files are defined as external
 
 double PI=M_PI;																						// declare PI and set it to M_PI (the value stored in the library math.h)
-#ifdef MassConsOnly																					// only do this if MassConsOnly was defined and only conserving mass
-int M=1;																							// declare M (the number of collision invarients) and set it equal to 5
-#else
-int M=5;																							// declare M (the number of collision invarients) and set it equal to 5
-#endif	/* MassConsOnly */
 
-#ifdef MassConsOnly																					// only do this if MassConsOnly was defined and only conserving mass
-double *C1;																							// declare pointers to matrices C1 (the real part of the conservation matrix C) & C2 (the imaginary part of the conservation matrix C), CCt (of dimension 5x5) & CCt_linear (of dimension 2x2)
-double CCt[1*1], lamb[1];																			// declare matrices CCt (C*C^T, for the conservation matrix C) & lamb (to hold 1 values)
-#else
-double **C1, **C2;																					// declare pointers to matrices C1 (the real part of the conservation matrix C) & C2 (the imaginary part of the conservation matrix C), CCt (of dimension 5x5) & CCt_linear (of dimension 2x2)
+double *C1_1, **C1_5, **C2;																			// declare pointers to matrices C1_1 (the real part of the conservation matrix C if conserving only mass), C1_5 (the real part of the conservation matrix C if conserving all moments) & C2 (the imaginary part of the conservation matrix C), CCt (of dimension 5x5) & CCt_linear (of dimension 2x2)
 double CCt[5*5], lamb[5];																			// declare matrices CCt (C*C^T, for the conservation matrix C) & lamb (to hold 5 values)
-#endif	/* MassConsOnly */
 double CCt_linear[2*2], lamb_linear[2];																// declare the arrays CCt_linear (C*C^T, for the conservation matrix C, in the two species collision operator) & lamb_linear (to hold 2 values)
+int M;																								// declare M (the number of collision invarients)
 
 int Nx, Nv, nT, N;			 											 							// declare Nx (no. of x discretised points), Nv (no. of v discretised point), nT (no. of time discretised points) & N (no. of nodes in the spectral method) and setting all their values
 int size_v, size, size_ft; 																			// declare size_v (no. of total v discretised points in 3D), size (the total no. of discretised points) & size_ft (total no. of spectral discretised points in 3D)
@@ -79,6 +70,7 @@ bool Damping, TwoStream, FourHump, TwoHump, Doping;													// declare Boole
 bool FullandLinear;																					// declare a Boolean variable to determine if running with a mixture
 bool First, Second;																					// declare Boolean variables which will determine if this is the first or a subsequent run
 bool LinearLandau;																					// declare a Boolean variable to determine if running with the full collision operator or linear collisions with a Maxwellian
+bool MassConsOnly;																					// declare a Boolean variable to determine if conserving all moments or all mass
 
 int main()
 {
@@ -153,6 +145,8 @@ int main()
 	CheckFirstOrSecond();																			// Check that only one of First or Second was chosen
 
 	ReadFullandLinear(iparse);																		// Read in if running multi-species collisions
+	ReadLinearLandau(iparse);																	// Read in if running full or linear Landau
+	ReadMassConsOnly(iparse);																		// Read in if running conservation of all moments or just mass
 
 	ReadInputParameters(iparse, flag, nT, Nx, Nv, N, nu, dt, A_amp, k_wave, Lv, Lx);				// Read in all input parameters
 
@@ -166,8 +160,6 @@ int main()
 			printf("--> %-11s = %d\n","a_i",a_i);
 			printf("--> %-11s = %d\n\n","b_i",b_i);
 		}
-
-		ReadLinearLandau(iparse);																	// Read in if running full or linear Landau
 	}
 
 	size_v=Nv*Nv*Nv;																				// set size_v to Nv^3
@@ -179,6 +171,15 @@ int main()
 	L_v=Lv;																							// set L_v to Lv
 	R_v=Lv;																							// set R_v to Lv
 	scaleL=8*Lv*Lv*Lv;																				// set scaleL to 8Lv^3
+
+	if(MassConsOnly)																				// only do this if MassConsOnly is true and only conserving mass
+	{
+		M=1;																						// set M equal to 1
+	}
+	else
+	{
+		M=5;																						// set M equal to 5
+	}
 
 	if(size_v%nprocs_mpi != 0)																		// check that size_v/nprocs_mpi has no remainder
 	{
@@ -222,17 +223,20 @@ int main()
 
 	if(nu > 0.)
 	{
-		#ifdef MassConsOnly																			// only do this if MassConsOnly was defined and only conserving mass
-		C1 = (double *)malloc(size_ft*sizeof(double));												// allocate enough space at the ith entry of C1 for size_ft many double numbers
-		#else
-		C1 = (double**)malloc(M*sizeof(double *)); 													// allocate enough space at the pointer C1 for M many pointers to double numbers
-		C2 = (double**)malloc(M*sizeof(double *));													// allocate enough space at the pointer C2 for M many pointers to double numbers
-		for(i=0;i<M;i++)
+		if(MassConsOnly)																			// only do this if MassConsOnly is true and only conserving mass
 		{
-			C1[i] = (double *)malloc(size_ft*sizeof(double));										// allocate enough space at the ith entry of C1 for size_ft many double numbers
-			C2[i] = (double *)malloc(size_ft*sizeof(double));										// allocate enough space at the ith entry of C2 for size_ft many double numbers
+			C1_1 = (double *)malloc(size_ft*sizeof(double));										// allocate enough space at the ith entry of C1_1 for size_ft many double numbers
 		}
-		#endif /* MassConsOnly */
+		else
+		{
+			C1_5 = (double**)malloc(M*sizeof(double *)); 											// allocate enough space at the pointer C1_5 for M many pointers to double numbers
+			C2 = (double**)malloc(M*sizeof(double *));												// allocate enough space at the pointer C2 for M many pointers to double numbers
+			for(i=0;i<M;i++)
+			{
+				C1_5[i] = (double *)malloc(size_ft*sizeof(double));									// allocate enough space at the ith entry of C1_5 for size_ft many double numbers
+				C2[i] = (double *)malloc(size_ft*sizeof(double));									// allocate enough space at the ith entry of C2 for size_ft many double numbers
+			}
+		}
 		f = (double **)malloc(chunk_Nx*sizeof(double *));											// allocate enough space at the pointer f for chunk_Nx many pointers to double numbers
 		for (i=0;i<chunk_Nx;i++)
 		{
@@ -444,7 +448,7 @@ int main()
 
 		if(LinearLandau)																			// only do this is LinearLandau is true, for using Q(f,M)
 		{
-			ComputeDFTofMaxwellian(U, f, DFTMaxwell);													// compute the Fourier transform of the initial Maxwellian currently stored in U and store the output in DFTMaxwell
+			ComputeDFTofMaxwellian(U, f, DFTMaxwell);												// compute the Fourier transform of the initial Maxwellian currently stored in U and store the output in DFTMaxwell
 		}
 	}
 
@@ -452,7 +456,7 @@ int main()
 
 	if(myrank_mpi==0)																				// only the process with rank 0 will do this
 	{
-		printf("MPI info: chunk_Nx = %d, nprocs_Nx = %d\n\n", chunk_Nx, nprocs_Nx);						// print MPI related info for this run
+		printf("MPI info: chunk_Nx = %d, nprocs_Nx = %d\n\n", chunk_Nx, nprocs_Nx);					// print MPI related info for this run
 
 		if(Second)																					// only do this if Second is true (picking up data from a previous run)
 		{
@@ -466,14 +470,10 @@ int main()
 			std::cout << "--> Name of file from previous run: " << old_run_name
 						<< std::endl << std::endl;													// Print the name of the file being used as the input for this run
 
-			#ifdef MassConsOnly																			// only do this if MassConsOnly was defined and only conserving mass
-			printf("Only mass conservation is being enforced...\n");									// display in the output file that only mass conservation is being enforced
-			#endif /* MassConsOnly */
-
-			if(LinearLandau)																			// only do this is LinearLandau is true, for using Q(f,M)
+			if(LinearLandau)																		// only do this is LinearLandau is true, for using Q(f,M)
 			{
-				//SetInit_ND(U);																				// set initial DG solution appropriate for the non-constant doping profile. For the first time run t=0, use this to give init solution (otherwise, comment out)
-				ComputeDFTofMaxwellian(U, f, DFTMaxwell);													// compute the Fourier transform of the initial Maxwellian currently stored in U and store the output in DFTMaxwell
+				//SetInit_ND(U);																	// set initial DG solution appropriate for the non-constant doping profile. For the first time run t=0, use this to give init solution (otherwise, comment out)
+				ComputeDFTofMaxwellian(U, f, DFTMaxwell);											// compute the Fourier transform of the initial Maxwellian currently stored in U and store the output in DFTMaxwell
 			}
 
 //			char old_run_path[old_run_name.size() + 6]												// declare the array old_run_path (to store Data/old_run_name)
@@ -586,23 +586,23 @@ int main()
 				if(FullandLinear)																	// only do this if FullandLinear is true
 				{
 					ComputeQ_FandL(f[l%chunk_Nx], qHat, conv_weights, qHat_linear, conv_weights_linear);	// using the coefficients of the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), calculate the Fourier tranform of Q(f,f) using conv_weights for the weights in the convolution in the full part of Q & conv_weights_linear in the convolution in the linear part of Q, then store the results of each Fourier transform in qHat & qHat_linear, respectively
-					conserveAllMoments(qHat, qHat_linear);											// perform the explicit conservation calculation
+					conserveMoments(qHat, qHat_linear);											// perform the explicit conservation calculation
 					RK4_FandL(f[l%chunk_Nx], l, qHat, conv_weights, qHat_linear, conv_weights_linear,
 							U, Utmp_coll);															// advance to the next time step in the collisional problem using RK4 at the given space-step l, taking the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), as well as qHat, conv_weights, qHat_linear & conv_weights_linear (to allow more Fourier transforms of Q to be made), storing the output partially in U and partially in Utmp_coll
 				}
 				else																				// otherwise, if FullandLinear is false...
 				{
-					if(LinearLandau)																	// only do this is LinearLandau is true, for using Q(f,M)
+					if(LinearLandau)																// only do this is LinearLandau is true, for using Q(f,M)
 					{
-						ComputeQLinear(f[l%chunk_Nx], DFTMaxwell[l%chunk_Nx], qHat, conv_weights);		// using the coefficients of the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), calculate the Fourier tranform of Q(f,M) using conv_weights1 & conv_weights2 for the weights in the convolution, then store the results of the Fourier transform in qHat
-						conserveAllMoments(qHat);														// perform the explicit conservation calculation
+						ComputeQLinear(f[l%chunk_Nx], DFTMaxwell[l%chunk_Nx], qHat, conv_weights);	// using the coefficients of the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), calculate the Fourier tranform of Q(f,M) using conv_weights1 & conv_weights2 for the weights in the convolution, then store the results of the Fourier transform in qHat
+						conserveMoments(qHat);														// perform the explicit conservation calculation
 						RK4Linear(f[l%chunk_Nx], DFTMaxwell[l%chunk_Nx], l, qHat, conv_weights, U, Utmp_coll);		// advance to the next time step in the collisional problem using RK4 at the given space-step l, taking the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), as well as qHat, conv_weights1 & conv_weights2 (to allow more Fourier transforms of Q to be made), storing the output partially in U and partially in Utmp_coll
 					}
-					else																				// otherwise, if FullandLinear is false...
+					else																			// otherwise, if FullandLinear is false...
 					{
-						ComputeQ(f[l%chunk_Nx], qHat, conv_weights);									// using the coefficients of the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), calculate the Fourier tranform of Q(f,f) using conv_weights for the weights in the convolution, then store the results of the Fourier transform in qHat
-						conserveAllMoments(qHat);														// perform the explicit conservation calculation
-						RK4(f[l%chunk_Nx], l, qHat, conv_weights, U, Utmp_coll);						// advance to the next time step in the collisional problem using RK4 at the given space-step l, taking the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), as well as qHat & conv_weights (to allow more Fourier transforms of Q to be made), storing the output partially in U and partially in Utmp_coll
+						ComputeQ(f[l%chunk_Nx], qHat, conv_weights);								// using the coefficients of the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), calculate the Fourier tranform of Q(f,f) using conv_weights for the weights in the convolution, then store the results of the Fourier transform in qHat
+						conserveMoments(qHat);														// perform the explicit conservation calculation
+						RK4(f[l%chunk_Nx], l, qHat, conv_weights, U, Utmp_coll);					// advance to the next time step in the collisional problem using RK4 at the given space-step l, taking the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), as well as qHat & conv_weights (to allow more Fourier transforms of Q to be made), storing the output partially in U and partially in Utmp_coll
 					}
 	/*				//DEBUG CHECK:
 					double qHat_real, qHat_imag;
@@ -739,7 +739,7 @@ int main()
 		std::cout << "#----------END OF INPUT FILE DUMP AND PROGRAM---------#" << std::endl << std::endl;
 
 		fwrite(U,sizeof(double),size*6,fu);															// write the coefficients of the DG approximation at the end, stored in U, which is 6*size entires, each of the size of a double datatype, in the file tagged as fu
-		//PrintPhiVals(U, fphi);																		// print the values of the potential in the file tagged as filephi at the given timestep
+		//PrintPhiVals(U, fphi);																	// print the values of the potential in the file tagged as filephi at the given timestep
 	
 		fclose(fu);  																				// remove the tag fu to close the file
 	}
@@ -755,10 +755,15 @@ int main()
 	}
 	if(nu > 0.)
 	{
-		free(C1); free(v); free(eta); free(wtN); 													// delete the dynamic memory allocated for C1, v, eta & wtN
-		#ifndef MassConsOnly																		// only do this if MassConsOnly was not defined and conserving all moments
-		free(C2);																					// delete the dynamic memory allocated for C2
-		#endif	/* MassConsOnly */
+		free(v); free(eta); free(wtN); 																// delete the dynamic memory allocated for v, eta & wtN
+		if(MassConsOnly)																			// only do this if MassConsOnly is true and only conserving mass
+		{
+			free(C1_1);																				// delete the dynamic memory allocated for C1_1
+		}
+		else
+		{
+			free(C1_5); free(C2);																	// delete the dynamic memory allocated for C1_5 & C2
+		}
 		free(f); free(conv_weights); free(output_buffer); 											// delete the dynamic memory allocated for f, conv_weights, output_buffer
 		fftw_free(temp); fftw_free(qHat);															// delete the dynamic memory allocated for temp & qhat
 		free(conv_weights1); free(conv_weights2); 													// delete the dynamic memory allocated for conv_weights1 & conv_weights2
