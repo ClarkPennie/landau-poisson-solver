@@ -41,28 +41,6 @@ using namespace GRVY;
 //         MACROS         //
 //************************//
 
-// CHOOSE WHETHER OR NOT TO USE MPI:
-//#define UseMPI 																					// define the macro MPI (UNCOMMENT IF THE CODE SHOULD UTILISE MPI)
-
-// CHOOSE WHICH VARIATION OF THE CODE TO RUN:
-//#define Damping																					// define the macro Damping (UNCOMMENT IF BEING RUN FOR THE LANDAU DAMPING PROBLEM)
-//#define FullandLinear 																			// define the macro FullandLinear (UNCOMMENT IF THE LINEAR ELE-ION COLLISION OPERATOR IS NEEDED; OTHERWISE, ONLY ELE-ELE COLLISIONS)
-//#define TwoStream																					// define the macro TwoStream (UNCOMMENT IF BEING RUN FOR THE TWO STREAM PROBLEM)
-//#define FourHump																					// define the macro FourHump (UNCOMMENT IF BEING RUN FOR THE FOUR HUMP IC PROBLEM)
-//#define TwoHump																					// define the macro TwoHump (UNCOMMENT IF BEING RUN FOR THE TWO HUMP IC PROBLEM)
-//#define Doping																					// define the macro Doping (UNCOMMENT IF BEING RUN FOR THE NON-CONSTANT DOPING PROFILE PROBLEM)
-
-// CHOOSE IF THIS IS THE INITIAL RUN OR A SUBSEQUENT RUN:
-//#define First																						// define the macro First (UNCOMMENT IF RUNNING THE CODE FOR THE FIRST TIME)
-//#define Second																					// define the macro Second (UNCOMMENT IF PICKING UP DATA FROM A PREVIOUS RUN)
-
-// CHOOSE IF RUNNING THE LINEAR LANDAU EQUATION WITH Q(f,M):
-//#define LinearLandau
-
-// CHOOSE TO ONLY CONSERVE MASS:
-//#define MassConsOnly
-
-
 //************************//
 //   EXTERNAL VARIABLES   //
 //************************//
