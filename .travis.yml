@@ -9,7 +9,7 @@ before_install:
   - export DOCKER_RUN="docker run -v ${TRAVIS_BUILD_DIR}:/home/test/ clarkp/test-env:v1.0"
 
 script:
-  - ${DOCKER_RUN} /bin/bash -l -c "module load fftw openblas && module list && echo $LD_LIBRARY_PATH && autoreconf -f -i && ./configure && make"
+  - ${DOCKER_RUN} /bin/bash -l -c "module load fftw openblas && module list && export LD_LIBRARY_PATH=/usr/local/lib && autoreconf -f -i && ./configure && make"
 
 notifications:
   email: false
