@@ -25,11 +25,27 @@
 
 double computeMass(double *U);
 
+double computeMass_Inhomo(double *U);
+
+double computeMass_Homo(double *U);
+
 void computeMomentum(double *U, double *a);
+
+void computeMomentum_Inhomo(double *U, double *a);
+
+void computeMomentum_Homo(double *U, double *a);
 
 double computeKiE(double *U);
 
+double computeKiE_Inhomo(double *U);
+
+double computeKiE_Homo(double *U);
+
 double computeKiEratio(double *U, int *NegVals);
+
+double computeKiEratio_Inhomo(double *U, int *NegVals);
+
+double computeKiEratio_Homo(double *U, int *NegVals);
 
 double computeEleE(double *U);
 

@@ -22,10 +22,20 @@
 //   FUNCTION PROTOTYPES  //
 //************************//
 
-double f_marg(double *U, int i, int j1, double x, double v1);
+double f_marg_Homo(double *U, int i, int j1, double x, double v1);
+
+double f_marg_Inhomo(double *U, int i, int j1, double x, double v1);
 
 void PrintMarginalLoc(FILE *margfile);
 
+void PrintMarginalLoc_Homo(FILE *margfile);
+
+void PrintMarginalLoc_Inhomo(FILE *margfile);
+
 void PrintMarginal(double *U, FILE *margfile);
+
+void PrintMarginal_Homo(double *U, FILE *margfile);
+
+void PrintMarginal_Inhomo(double *U, FILE *margfile);
 
 #endif /* MARGINALCREATION_H_ */

@@ -172,7 +172,7 @@ void CheckFirstOrSecond()																		// Function to verify the First or Se
 		run_count++;
 		if(myrank_mpi==0)
 		{
-			std::cout << "Code is running for the first time with the above initial conditions." 
+			std::cout << "Running for the first time with the above initial conditions."
 						<< std::endl << std::endl;
 		}
 	}
@@ -210,12 +210,34 @@ void ReadFullandLinear(GRVY_Input_Class& iparse)												// Function to read 
 			std::cout << "--> FullandLinear = " << FullandLinear << std::endl << std::endl;
 			if(FullandLinear)
 			{
-				std::cout << "Running the code with both regular collisions and mixed collisions."
+				std::cout << "Running with both regular collisions and mixed collisions."
 					<< std::endl << std::endl;
 			}
 			else
 			{
 				std::cout << "Running with regular single-species collisions." << std::endl << std::endl;
+			}
+		}
+	}
+}
+
+void ReadHomogeneous(GRVY_Input_Class& iparse)												// Function to read the Boolean option to decide if running with single species collisions or mixed
+{
+	// Check if Homogeneous has been set and print its value from the
+	// processor with rank 0 (if not, set default value to false):
+	if( iparse.Read_Var("Homogeneous",&Homogeneous,false) )
+	{
+		if(myrank_mpi==0)
+		{
+			std::cout << "--> Homogeneous = " << Homogeneous << std::endl << std::endl;
+			if(Homogeneous)
+			{
+				std::cout << "Running the code in the space homogeneous setting."
+					<< std::endl << std::endl;
+			}
+			else
+			{
+				std::cout << "Running the code in the full space inhomogeneous setting." << std::endl << std::endl;
 			}
 		}
 	}

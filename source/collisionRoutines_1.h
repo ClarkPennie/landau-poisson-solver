@@ -57,11 +57,19 @@ void ProjectedNodeValue(fftw_complex *qHat, double *Q_incremental);
 
 void ComputeQ_FandL(double *f, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear);
 
-void RK4_FandL(double *f, int l, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear, double *U, double *dU);
-
 void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights);
 
+void RK4_FandL(double *f, int l, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear, double *U, double *dU);
+
 void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U, double *dU);
+
+void RK4_FandL_Inhomo(double *f, int l, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear, double *U, double *dU);
+
+void RK4_Inhomo(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U, double *dU);
+
+void RK4_FandL_Homo(double *f, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear, double *U, double *dU);
+
+void RK4_Homo(double *f, fftw_complex *qHat, double **conv_weights, double *U, double *dU);
 
 /*
 void ComputeQ_MPI_FandL(double *f, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear);

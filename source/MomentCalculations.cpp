@@ -10,6 +10,18 @@
 
 double computeMass(double *U)
 {
+	if(Homogeneous)
+	{
+		return computeMass_Homo(U);
+	}
+	else
+	{
+		return computeMass_Inhomo(U);
+	}
+}
+
+double computeMass_Inhomo(double *U)
+{
   int k;
   double tmp=0.;
   #pragma omp parallel for shared(U) reduction(+:tmp)
@@ -18,7 +30,29 @@ double computeMass(double *U)
   return tmp*dx*scalev;
 }
 
+double computeMass_Homo(double *U)
+{
+  int k;
+  double tmp=0.;
+  #pragma omp parallel for shared(U) reduction(+:tmp)
+  for(k=0;k<size_v;k++) tmp += U[k*6+0] + U[k*6+5]/4.;
+
+  return tmp*scalev;
+}
+
 void computeMomentum(double *U, double *a)
+{
+	if(Homogeneous)
+	{
+		return computeMomentum_Homo(U, a);
+	}
+	else
+	{
+		return computeMomentum_Inhomo(U, a);
+	}
+}
+
+void computeMomentum_Inhomo(double *U, double *a)
 {
   int k, i, j,j1,j2,j3; //k=i*Nv*Nv*Nv + (j1*Nv*Nv + j2*Nv + j3);
   double tmp1=0., tmp2=0., tmp3=0.;
@@ -34,7 +68,35 @@ void computeMomentum(double *U, double *a)
   a[0]=tmp1*dx*dv*dv; a[1]=tmp2*dx*dv*dv; a[2]=tmp3*dx*dv*dv;
 }
 
+void computeMomentum_Homo(double *U, double *a)
+{
+  int k, j,j1,j2,j3; //k=i*Nv*Nv*Nv + (j1*Nv*Nv + j2*Nv + j3);
+  double tmp1=0., tmp2=0., tmp3=0.;
+  a[0]=0.; a[1]=0.; a[2]=0.; // the three momentum
+  #pragma omp parallel for shared(U) reduction(+:tmp1, tmp2, tmp3)  //reduction directive may change the result a little bit
+  for(k=0;k<size_v;k++){
+    j=k%size_v;
+    j3=j%Nv; j2=((j-j3)%(Nv*Nv))/Nv; j1=(j-j3-j2*Nv)/(Nv*Nv);
+    tmp1 += Gridv((double)j1)*dv*U[k*6+0] + U[k*6+2]*dv*dv/12. + U[k*6+5]*Gridv((double)j1)*dv/4.;
+    tmp2 += Gridv((double)j2)*dv*U[k*6+0] + U[k*6+3]*dv*dv/12. + U[k*6+5]*Gridv((double)j2)*dv/4.;
+    tmp3 += Gridv((double)j3)*dv*U[k*6+0] + U[k*6+4]*dv*dv/12. + U[k*6+5]*Gridv((double)j3)*dv/4.;
+  }
+  a[0]=tmp1*dv*dv; a[1]=tmp2*dv*dv; a[2]=tmp3*dv*dv;
+}
+
 double computeKiE(double *U)
+{
+	if(Homogeneous)
+	{
+		return computeKiE_Homo(U);
+	}
+	else
+	{
+		return computeKiE_Inhomo(U);
+	}
+}
+
+double computeKiE_Inhomo(double *U)
 {
   int k, i, j,j1,j2,j3;
   double tmp=0., tp=0., tp1=0.;
@@ -51,7 +113,36 @@ double computeKiE(double *U)
   return 0.5*tmp;
 }
 
+double computeKiE_Homo(double *U)			// int f |v|^2 dv
+{
+  int k, j,j1,j2,j3;
+  double tmp=0., tp=0., tp1=0.;
+  //#pragma omp parallel for private(k,j,j1,j2,j3,tp, tp1) shared(U) reduction(+:tmp)
+  for(k=0;k<size_v;k++){
+    j=k%size_v;
+    j3=j%Nv; j2=((j-j3)%(Nv*Nv))/Nv; j1=(j-j3-j2*Nv)/(Nv*Nv);
+    //tp = ( pow(Gridv(j1+0.5), 3)- pow(Gridv(j1-0.5), 3) + pow(Gridv(j2+0.5), 3)- pow(Gridv(j2-0.5), 3) + pow(Gridv(j3+0.5), 3)- pow(Gridv(j3-0.5), 3) )/3.;
+    tp1 = Gridv((double)j1)*Gridv((double)j1) + Gridv((double)j2)*Gridv((double)j2) + Gridv((double)j3)*Gridv((double)j3);
+    //tmp += U[k][0]*tp + (Gridv(j1)*U[k][2]+Gridv(j2)*U[k][3]+Gridv(j3)*U[k][4])*dv*dv/6. + U[k][5]*( dv*(dv*dv*3./80. + tp1/12.) + tp/6. );
+    tmp += U[k*6+0]*(tp1 + dv*dv/4.)*dv + (Gridv(j1)*U[k*6+2]+Gridv(j2)*U[k*6+3]+Gridv(j3)*U[k*6+4])*dv*dv/6. + U[k*6+5]*( dv*dv*dv*19./240. + tp1*dv/4.);
+  }
+  tmp *= dv*dv;
+  return 0.5*tmp;
+}
+
 double computeKiEratio(double *U, int *NegVals)
+{
+	if(Homogeneous)
+	{
+		return computeKiEratio_Homo(U, NegVals);
+	}
+	else
+	{
+		return computeKiEratio_Inhomo(U, NegVals);
+	}
+}
+
+double computeKiEratio_Inhomo(double *U, int *NegVals)
 {
 	int k, i, j,j1,j2,j3;
 	double KiEpos, KiEneg;																	// declare KiEpos (the kinetic energy where f is positive all over the cells) & KiEneg (the kinetic energy where f goes negative in the cells)
@@ -71,6 +162,34 @@ double computeKiEratio(double *U, int *NegVals)
 		else
 		{
 			j=k%size_v; i=(k-j)/size_v;
+			j3=j%Nv; j2=((j-j3)%(Nv*Nv))/Nv; j1=(j-j3-j2*Nv)/(Nv*Nv);
+			tp1 = Gridv((double)j1)*Gridv((double)j1) + Gridv((double)j2)*Gridv((double)j2) + Gridv((double)j3)*Gridv((double)j3);
+			KiEneg += U[k*6+0]*(tp1 + dv*dv/4.)*dv + (Gridv(j1)*U[k*6+2]+Gridv(j2)*U[k*6+3]+Gridv(j3)*U[k*6+4])*dv*dv/6. + U[k*6+5]*( dv*dv*dv*19./240. + tp1*dv/4.);
+		}
+	}
+	return KiEneg/KiEpos;
+}
+
+double computeKiEratio_Homo(double *U, int *NegVals)
+{
+	int k, j,j1,j2,j3;
+	double KiEpos, KiEneg;																	// declare KiEpos (the kinetic energy where f is positive all over the cells) & KiEneg (the kinetic energy where f goes negative in the cells)
+	double tmp=0., tp=0., tp1=0.;
+	KiEpos = 0;
+	KiEneg = 0;
+	#pragma omp parallel for private(k,j,j1,j2,j3,tp, tp1) shared(U) reduction(+:KiEpos,KiEneg)
+	for(k=0;k<size_v;k++)
+	{
+		if(NegVals[k] == 0)
+		{
+			j=k%size_v;
+			j3=j%Nv; j2=((j-j3)%(Nv*Nv))/Nv; j1=(j-j3-j2*Nv)/(Nv*Nv);
+			tp1 = Gridv((double)j1)*Gridv((double)j1) + Gridv((double)j2)*Gridv((double)j2) + Gridv((double)j3)*Gridv((double)j3);
+			KiEpos += U[k*6+0]*(tp1 + dv*dv/4.)*dv + (Gridv(j1)*U[k*6+2]+Gridv(j2)*U[k*6+3]+Gridv(j3)*U[k*6+4])*dv*dv/6. + U[k*6+5]*( dv*dv*dv*19./240. + tp1*dv/4.);
+		}
+		else
+		{
+			j=k%size_v;
 			j3=j%Nv; j2=((j-j3)%(Nv*Nv))/Nv; j1=(j-j3-j2*Nv)/(Nv*Nv);
 			tp1 = Gridv((double)j1)*Gridv((double)j1) + Gridv((double)j2)*Gridv((double)j2) + Gridv((double)j3)*Gridv((double)j3);
 			KiEneg += U[k*6+0]*(tp1 + dv*dv/4.)*dv + (Gridv(j1)*U[k*6+2]+Gridv(j2)*U[k*6+3]+Gridv(j3)*U[k*6+4])*dv*dv/6. + U[k*6+5]*( dv*dv*dv*19./240. + tp1*dv/4.);

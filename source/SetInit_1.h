@@ -39,6 +39,8 @@ void SetInit_LD(double *U);
 
 void SetInit_4H(double *U);
 
+void SetInit_4H_Homo(double *U);
+
 void SetInit_2H(double *U);
 
 void SetInit_ND(double *U);

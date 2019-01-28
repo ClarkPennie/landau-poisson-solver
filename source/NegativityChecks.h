@@ -22,12 +22,24 @@
 //   FUNCTION PROTOTYPES  //
 //************************//
 
-double computeCellAvg(double *U, int i, int j1, int j2, int j3);
+//double computeCellAvg(double *U, int i, int j1, int j2, int j3);
+
+double computeCellAvg_Inhomo(double *U, int i, int j1, int j2, int j3);
+
+double computeCellAvg_Homo(double *U, int i, int j1, int j2, int j3);
 
 void FindNegVals(double *U, int *NegVals, double *AvgVals);
 
-void FindNegVals_old(double *U, int *NegVals);
+void FindNegVals_Inhomo(double *U, int *NegVals, double *AvgVals);
+
+void FindNegVals_Homo(double *U, int *NegVals, double *AvgVals);
+
+//void FindNegVals_old(double *U, int *NegVals);
 
 void CheckNegVals(double *U, int *NegVals, double *AvgVals);
+
+void CheckNegVals_Inhomo(double *U, int *NegVals, double *AvgVals);
+
+void CheckNegVals_Homo(double *U, int *NegVals, double *AvgVals);
 
 #endif /* NEGATIVITYCHECKS_H_ */
