@@ -219,6 +219,7 @@ int main()
 	else
 	{
 		chunk_Nx = 1;
+		nprocs_Nx = nprocs_mpi;
 	}
 	
 	U = (double*)malloc(size*6*sizeof(double));														// allocate enough space at the pointer U for 6*size many double numbers
