@@ -383,6 +383,18 @@ void SetInit_2H(double *U)																							// function to calculate the DG
 
 void setInit_spectral(double *U, double **f)
 {
+	if(Homogeneous)
+	{
+		setInit_spectral_Homo(U, f);
+	}
+	else
+	{
+		setInit_spectral_Inhomo(U, f);
+	}
+}
+
+void setInit_spectral_Inhomo(double *U, double **f)
+{
   int i, j1, j2, j3, k, l, m ,n;
   for(i=chunk_Nx*myrank_mpi;i<chunk_Nx*(myrank_mpi+1) && i<Nx;i++){  
     for(l=0;l<N;l++){
@@ -401,4 +413,24 @@ void setInit_spectral(double *U, double **f)
       }
     }
   }   
+}
+
+void setInit_spectral_Homo(double *U, double **f)
+{
+  int j1, j2, j3, k, l, m ,n;
+  for(l=0;l<N;l++){
+      j1 = (l*h_v)/dv; // integer part = floor() for non-negative integers.
+      if(j1==Nv)j1=Nv-1; // let the right end point lie in the last element
+      for(m=0;m<N;m++){
+		j2 = (m*h_v)/dv;
+		if(j2==Nv)j2=Nv-1;
+		for(n=0;n<N;n++){
+			j3 = (n*h_v)/dv;
+			if(j3==Nv)j3=Nv-1;
+			k=(j1*Nv*Nv + j2*Nv + j3); // determine in which element the Fourier nodes lie
+			f[0][l*N*N+m*N+n] = U[k*6+0] + U[k*6+2]*(v[l]-Gridv((double)j1))/dv + U[k*6+3]*(v[m]-Gridv((double)j2))/dv + U[k*6+4]*(v[n]-Gridv((double)j3))/dv + U[k*6+5]*( ((v[l]-Gridv((double)j1))/dv)*((v[l]-Gridv((double)j1))/dv) + ((v[m]-Gridv((double)j2))/dv)*((v[m]-Gridv((double)j2))/dv) + ((v[n]-Gridv((double)j3))/dv)*((v[n]-Gridv((double)j3))/dv) );
+		  //BUG: index was "l*N*N+m*N+n*N" !!!!!!
+		}
+      }
+    }
 }

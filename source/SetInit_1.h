@@ -47,4 +47,8 @@ void SetInit_ND(double *U);
 
 void setInit_spectral(double *U, double **f);
 
+void setInit_spectral_Homo(double *U, double **f);
+
+void setInit_spectral_Inhomo(double *U, double **f);
+
 #endif /* SETINIT_1_H_ */
