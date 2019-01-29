@@ -739,20 +739,15 @@ int main()
 					{
 						MPI_Recv(output_buffer, chunksize_dg*5, MPI_DOUBLE, i, i,
 								MPI_COMM_WORLD, &status);											 	// receive a message of 5*chunk_Nx_size_v entries of datatype MPI_DOUBLE from the process with rank i (storing the i-th space chunk of U, containing the DG coefficients calculate on the processor with corresponding rank), storing the data in output_buffer, with tag i in the communicator MPI_COMM_WORLD, storing the status of the receive in status
-						for(i=1;i<nprocs_mpi;i++)															// store the DG coefficients of the current solution in U that were calculated by the remaining processes (with ranks i = 1, 2, ..., nprocs_Nx-1) for their corresponding chunk of space
+						for(int k_loc=0;k_loc<chunksize_dg;k_loc++)													// cycle through all size_v (= Nv^3) many velocity-steps (which will exist for each space-step)
 						{
-							MPI_Recv(output_buffer, chunksize_dg*5, MPI_DOUBLE, i, i,
-							MPI_COMM_WORLD, &status);											 	// receive a message of 5*chunk_Nx_size_v entries of datatype MPI_DOUBLE from the process with rank i (storing the i-th space chunk of U, containing the DG coefficients calculate on the processor with corresponding rank), storing the data in output_buffer, with tag i in the communicator MPI_COMM_WORLD, storing the status of the receive in status
-							for(int k_loc=0;k_loc<chunksize_dg;k_loc++)													// cycle through all size_v (= Nv^3) many velocity-steps (which will exist for each space-step)
-							{
-								k_v = chunksize_dg*i + k_loc; 															// set k_v to be the value associated with the k-th velocity-step for the (chunk_Nx*i + l)-th space-step (which is the l-th space-step in the current chunk)
-								// Store contents of the receive buffer in the correct portion of U to add this part of the solution
-								U[k_v*6+0] = output_buffer[k_loc*5];								// set the 6*k_v-th entry of U to the 5*k_local-th entry of Utmp_coll
-								U[k_v*6+5] = output_buffer[k_loc*5+4];							// set the (6*k_v + 5)-th entry of U to the (5*k_local + 4)-th entry of Utmp_coll
-								U[k_v*6+2] = output_buffer[k_loc*5+1];  							// set the (6*k_v + 2)-th entry of U to the (5*k_local + 1)-th entry of Utmp_coll
-								U[k_v*6+3] = output_buffer[k_loc*5+2];	 						// set the (6*k_v + 3)-th entry of U to the (5*k_local + 2)-th entry of Utmp_coll
-								U[k_v*6+4] = output_buffer[k_loc*5+3];							// set the (6*k_v + 4)-th entry of U to the (5*k_local + 3)-th entry of Utmp_coll
-							}
+							k_v = chunksize_dg*i + k_loc; 															// set k_v to be the value associated with the k-th velocity-step for the (chunk_Nx*i + l)-th space-step (which is the l-th space-step in the current chunk)
+							// Store contents of the receive buffer in the correct portion of U to add this part of the solution
+							U[k_v*6+0] = output_buffer[k_loc*5];								// set the 6*k_v-th entry of U to the 5*k_local-th entry of Utmp_coll
+							U[k_v*6+5] = output_buffer[k_loc*5+4];							// set the (6*k_v + 5)-th entry of U to the (5*k_local + 4)-th entry of Utmp_coll
+							U[k_v*6+2] = output_buffer[k_loc*5+1];  							// set the (6*k_v + 2)-th entry of U to the (5*k_local + 1)-th entry of Utmp_coll
+							U[k_v*6+3] = output_buffer[k_loc*5+2];	 						// set the (6*k_v + 3)-th entry of U to the (5*k_local + 2)-th entry of Utmp_coll
+							U[k_v*6+4] = output_buffer[k_loc*5+3];							// set the (6*k_v + 4)-th entry of U to the (5*k_local + 3)-th entry of Utmp_coll
 						}
 					}
 					else
