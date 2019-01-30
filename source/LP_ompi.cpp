@@ -87,6 +87,7 @@ int main()
 	std::string old_run_name;																		// declare a string old_run_name (the name of the previous run if running for second time)
 	std::string IC_flag;																			// declare a string IC_flag (a reference to where the IC_name is in the input file)
 	std::string input_filename;																		// declare a string input_file_name (the name of the input file to be read from)
+	int gamma;																						// declare gamma (the power of |u| in the collision kernel))
 
 	fftw_complex *qHat, *qHat_linear;																// declare pointers to the complex numbers qHat (the DFT of Q) & qHat_linear (the DFT of the two species colission operator Q);
 	fftw_complex **DFTMaxwell;																		// declare pointer to the FFT variable DFTMaxwell (to store the FFT of the initial Maxwellian)
@@ -145,6 +146,7 @@ int main()
 	ReadFirstOrSecond(iparse);																		// Read in if this is the first or a subsequent run
 	CheckFirstOrSecond();																			// Check that only one of First or Second was chosen
 
+	ReadGamma(iparse, gamma);																		// Read in gamma to find the types of collisions being used
 	ReadHomogeneous(iparse);																		// Read in if running the space homogeneous case
 	ReadFullandLinear(iparse);																		// Read in if running multi-species collisions
 	ReadLinearLandau(iparse);																		// Read in if running full or linear Landau
@@ -419,7 +421,7 @@ int main()
 		 */
   
 		// Directly compute the weights; not from precomputed (for small number of nodes, it's very fast)
-		generate_conv_weights(conv_weights); 														// calculate the values of the convolution weights (the matrix G_Hat(xi, omega), for xi = (xi_i, xi_j, xi_k), omega = (omega_l, omega_m, omega_n), i,j,k,l,m,n = 0,1,...,N-1) and store the values in conv_weights
+		generate_conv_weights(conv_weights, gamma); 														// calculate the values of the convolution weights (the matrix G_Hat(xi, omega), for xi = (xi_i, xi_j, xi_k), omega = (omega_l, omega_m, omega_n), i,j,k,l,m,n = 0,1,...,N-1) and store the values in conv_weights
 		generate_conv_weights2(conv_weights1, 0); 													// calculate the values in the first matrix of the convolution weights (the matrix G_Hat(xi, omega), for xi = (xi_i, xi_j, xi_k), omega = (omega_l, omega_m, omega_n), i,j,k,l,m,n = 0,1,...,N-1) and store the values in conv_weights1
 		generate_conv_weights2(conv_weights2, 1); 													// calculate the values in the second matrix of the convolution weights (the matrix G_Hat(xi, omega), for xi = (xi_i, xi_j, xi_k), omega = (omega_l, omega_m, omega_n), i,j,k,l,m,n = 0,1,...,N-1) and store the values in conv_weights2
 		if(FullandLinear)																			// only do this FullandLinear is true

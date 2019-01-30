@@ -29,13 +29,25 @@ double S233hat(double ki1, double ki2, double ki3);
 
 double S213hat(double ki1, double ki2, double ki3);
 
-double gHat3(double eta1, double eta2, double eta3, double ki1, double ki2, double ki3 );
+double S1hat_maxmols(double ki1,double ki2,double ki3);
+
+double S233hat_maxmols(double ki1, double ki2, double ki3);
+
+double S213hat_maxmols(double ki1, double ki2, double ki3);
+
+double S1hat_hardspheres(double ki1,double ki2,double ki3);
+
+double S233hat_hardspheres(double ki1, double ki2, double ki3);
+
+double S213hat_hardspheres(double ki1, double ki2, double ki3);
+
+double gHat3(double eta1, double eta2, double eta3, double ki1, double ki2, double ki3, int gamma);
 
 double gHat3_linear(double eta1, double eta2, double eta3, double ki1, double ki2, double ki3 );
 
 double gHat3_2(double eta1, double eta2, double eta3, double ki1, double ki2, double ki3, int id);
 
-void generate_conv_weights(double **conv_weights);
+void generate_conv_weights(double **conv_weights, int gamma);
 
 void generate_conv_weights_linear(double **conv_weights_linear);
 

@@ -35,45 +35,129 @@ double S213hat(double ki1, double ki2, double ki3)
   else return -sqrt(2/PI)*ki1*ki3*(2.*R_v*r+R_v*r*cos(R_v*r)-3.*sin(R_v*r))/(R_v*pow(r,5.));
 }
 
-double gHat3(double eta1, double eta2, double eta3, double ki1, double ki2, double ki3 ) 
+double S1hat_maxmols(double ki1,double ki2,double ki3)
+{
+	double r = sqrt(ki1*ki1+ki2*ki2+ki3*ki3);
+	double Rr = R_v*r;
+	double cos_Rr = cos(Rr);
+	double sin_Rr = sin(Rr);
+	if(r==0.) return 2*sqrt(1./(2.*PI))*pow(R_v,5.)/5.;
+	else return sqrt(2./PI)*(-Rr*Rr*Rr*cos_Rr + 3*Rr*Rr*sin_Rr + 6*Rr*cos_Rr - 6*sin_Rr)/pow(r,5.);
+}
+
+double S233hat_maxmols(double ki1, double ki2, double ki3)
+{
+	double r = sqrt(ki1*ki1+ki2*ki2+ki3*ki3);
+	double Rr = R_v*r;
+	double cos_Rr = cos(Rr);
+	double sin_Rr = sin(Rr);
+	if(r==0.) return 2*sqrt(1./(2.*PI))*pow(R_v,5.)/15.;
+	else return sqrt(2./PI)*((ki1*ki1+ki2*ki2)*(-Rr*Rr*sin_Rr - 3*Rr*cos_Rr + 3*sin_Rr) + ki3*ki3*(-Rr*Rr*Rr*cos_Rr + 5*Rr*Rr*sin_Rr + 12*Rr*cos_Rr - 12*sin_Rr))/pow(r,7.);
+}
+
+double S213hat_maxmols(double ki1, double ki2, double ki3)
+{
+	double r = sqrt(ki1*ki1+ki2*ki2+ki3*ki3);
+	double Rr = R_v*r;
+	double cos_Rr = cos(Rr);
+	double sin_Rr = sin(Rr);
+	if(ki1==0. || ki3==0.) return 0.;
+	else return sqrt(2./PI)*ki1*ki3*(-Rr*Rr*Rr*cos_Rr + 6*Rr*Rr*sin_Rr + 15*Rr*cos_Rr - 15*sin_Rr)/(pow(r,7.));
+}
+
+double S1hat_hardspheres(double ki1,double ki2,double ki3)
+{
+	double r = sqrt(ki1*ki1+ki2*ki2+ki3*ki3);
+	double Rr = R_v*r;
+	double cos_Rr = cos(Rr);
+	double sin_Rr = sin(Rr);
+	if(r==0.) return sqrt(1./(2.*PI))*pow(R_v,6.)/3.;
+	else return sqrt(2./PI)*(4.*(Rr*Rr - 6.)*Rr*sin_Rr - (Rr*Rr*(Rr*Rr - 12.) + 24.)*cos_Rr + 24.)/pow(r,6.);
+}
+
+double S233hat_hardspheres(double ki1, double ki2, double ki3)
+{
+	double r = sqrt(ki1*ki1+ki2*ki2+ki3*ki3);
+	double Rr = R_v*r;
+	double cos_Rr = cos(Rr);
+	double sin_Rr = sin(Rr);
+	if(r==0.) return sqrt(1./(2.*PI))*pow(R_v,6.)/9.;
+	else return sqrt(2./PI)*((ki1*ki1+ki2*ki2)*((8. - Rr*Rr)*Rr*sin_Rr + 4.*(2. - Rr*Rr)*cos_Rr - 8.) + ki3*ki3*((Rr*Rr*(20. - Rr*Rr) - 40.)*cos_Rr + (6.*Rr*Rr - 40.)*Rr*sin_Rr + 40.))/pow(r,8.);
+}
+
+double S213hat_hardspheres(double ki1, double ki2, double ki3)
+{
+	double r = sqrt(ki1*ki1+ki2*ki2+ki3*ki3);
+	double Rr = R_v*r;
+	double cos_Rr = cos(Rr);
+	double sin_Rr = sin(Rr);
+	if(ki1==0. || ki3==0.) return 0.;
+	else return sqrt(2./PI)*ki1*ki3*((Rr*Rr*(24. - Rr*Rr) - 48.)*cos_Rr + (7.*Rr*Rr - 48.)*Rr*sin_Rr + 48.)/(pow(r,8.));
+}
+
+double gHat3(double eta1, double eta2, double eta3, double ki1, double ki2, double ki3, int gamma)
 {
 	double result = 0.;
 	double ki[3]={ki1,ki2,ki3}, zeta[3]={eta1,eta2,eta3}; // ki=w, zeta=xi in the notes
 	double Shat[3][3];
 	double r=sqrt(ki1*ki1+ki2*ki2+ki3*ki3);
-	//double darg[3][2];
 	int i,j;
 	
-	/*Shat[0][0]=S1hat(-ki1,-ki2,-ki3)-S233hat(-ki2,-ki3,-ki1)-S1hat(eta1-ki1,eta2-ki2,eta3-ki3)+S233hat(eta2-ki2,eta3-ki3,eta1-ki1);
-	Shat[1][1]=S1hat(-ki1,-ki2,-ki3)-S233hat(-ki1,-ki3,-ki2)-S1hat(eta1-ki1,eta2-ki2,eta3-ki3)+S233hat(eta1-ki1,eta3-ki3,eta2-ki2);
-	Shat[2][2]=S1hat(-ki1,-ki2,-ki3)-S233hat(-ki1,-ki2,-ki3)-S1hat(eta1-ki1,eta2-ki2,eta3-ki3)+S233hat(eta1-ki1,eta2-ki2,eta3-ki3);
-	Shat[0][1]=-S212hat(-ki1,-ki2,-ki3)+S212hat(eta1-ki1,eta2-ki2,eta3-ki3);
-	Shat[0][2]=-S212hat(-ki1,-ki3,-ki2)+S212hat(eta1-ki1,eta3-ki3,eta2-ki2);
-	Shat[1][2]=-S212hat(-ki2,-ki3,-ki1)+S212hat(eta2-ki2,eta3-ki3,eta1-ki1);
-	Shat[1][0]=Shat[0][1]; Shat[2][0]=Shat[0][2]; Shat[2][1]=Shat[1][2]; */
+	if(gamma==-3)
+	{
+		Shat[0][0]=S1hat(ki1,ki2,ki3)-S233hat(ki2,ki3,ki1);
+		Shat[1][1]=S1hat(ki1,ki2,ki3)-S233hat(ki1,ki3,ki2);
+		Shat[2][2]=S1hat(ki1,ki2,ki3)-S233hat(ki1,ki2,ki3);
+		Shat[0][1]=-S213hat(ki1,ki3,ki2);
+		Shat[0][2]=-S213hat(ki1,ki2,ki3);
+		Shat[1][2]=-S213hat(ki2,ki1,ki3);
+		Shat[1][0]=Shat[0][1]; Shat[2][0]=Shat[0][2]; Shat[2][1]=Shat[1][2];
+	}
+	else if(gamma==0)
+	{
+		Shat[0][0]=S1hat_maxmols(ki1,ki2,ki3)-S233hat_maxmols(ki2,ki3,ki1);
+		Shat[1][1]=S1hat_maxmols(ki1,ki2,ki3)-S233hat_maxmols(ki1,ki3,ki2);
+		Shat[2][2]=S1hat_maxmols(ki1,ki2,ki3)-S233hat_maxmols(ki1,ki2,ki3);
+		Shat[0][1]=-S213hat_maxmols(ki1,ki3,ki2);
+		Shat[0][2]=-S213hat_maxmols(ki1,ki2,ki3);
+		Shat[1][2]=-S213hat_maxmols(ki2,ki1,ki3);
+		Shat[1][0]=Shat[0][1]; Shat[2][0]=Shat[0][2]; Shat[2][1]=Shat[1][2];
+	}
+	else if(gamma==1)
+	{
+		Shat[0][0]=S1hat_hardspheres(ki1,ki2,ki3)-S233hat_hardspheres(ki2,ki3,ki1);
+		Shat[1][1]=S1hat_hardspheres(ki1,ki2,ki3)-S233hat_hardspheres(ki1,ki3,ki2);
+		Shat[2][2]=S1hat_hardspheres(ki1,ki2,ki3)-S233hat_hardspheres(ki1,ki2,ki3);
+		Shat[0][1]=-S213hat_hardspheres(ki1,ki3,ki2);
+		Shat[0][2]=-S213hat_hardspheres(ki1,ki2,ki3);
+		Shat[1][2]=-S213hat_hardspheres(ki2,ki1,ki3);
+		Shat[1][0]=Shat[0][1]; Shat[2][0]=Shat[0][2]; Shat[2][1]=Shat[1][2];
+	}
 
-	Shat[0][0]=S1hat(ki1,ki2,ki3)-S233hat(ki2,ki3,ki1);
-	Shat[1][1]=S1hat(ki1,ki2,ki3)-S233hat(ki1,ki3,ki2);
-	Shat[2][2]=S1hat(ki1,ki2,ki3)-S233hat(ki1,ki2,ki3);
-	Shat[0][1]=-S213hat(ki1,ki3,ki2);
-	Shat[0][2]=-S213hat(ki1,ki2,ki3);
-	Shat[1][2]=-S213hat(ki2,ki1,ki3);
-	Shat[1][0]=Shat[0][1]; Shat[2][0]=Shat[0][2]; Shat[2][1]=Shat[1][2];
-	
-	/*darg[0][0]=ki[0];darg[0][1]=sqrt(ki[1]*ki[1]+ki[2]*ki[2]);
-	darg[1][0]=ki[1];darg[1][1]=sqrt(ki[2]*ki[2]+ki[0]*ki[0]);
-	darg[2][0]=ki[2];darg[2][1]=sqrt(ki[0]*ki[0]+ki[1]*ki[1]);
-	for(i=0;i<3;i++)result += 4*gauss_legendre(GL, Divg0, darg, 0, 1)*zeta[i];*/
-
-	for(i=0;i<3;i++){
-	  for(j=0;j<3;j++){
-	    //result += Shat[i][j]*(2.*ki[j]-zeta[j])*zeta[i];
-	    result += Shat[i][j]*(zeta[i]-ki[i])*(zeta[j]-ki[j]);
-	  }
-	}	
-	if(r==0.)result = -result;
-	else result = (sqrt(8./PI))*(R_v*r-sin(R_v*r))/(R_v*r) - result;
-  	return result;	
+	if(gamma==-3)
+	{
+		for(i=0;i<3;i++)
+		{
+			for(j=0;j<3;j++)
+			{
+				//result += Shat[i][j]*(2.*ki[j]-zeta[j])*zeta[i];
+				result += Shat[i][j]*(zeta[i]-ki[i])*(zeta[j]-ki[j]);
+			}
+		}
+		if(r==0.)result = -result;
+		else result = (sqrt(8./PI))*(R_v*r-sin(R_v*r))/(R_v*r) - result;
+	}
+	else
+	{
+		for(i=0;i<3;i++)
+		{
+			for(j=0;j<3;j++)
+			{
+			  result += Shat[i][j]*(2.*ki[j]-zeta[j])*zeta[i];
+			}
+		}
+	}
+	return result;
 }
 
 double gHat3_2( double eta1, double eta2, double eta3, double ki1, double ki2, double ki3, int id)
@@ -133,7 +217,7 @@ double gHat3_linear(double eta1, double eta2, double eta3, double ki1, double ki
   	return result;	
 }
 
-void generate_conv_weights(double **conv_weights)
+void generate_conv_weights(double **conv_weights, int gamma)
 {
   int i, j, k, l, m, n;
    #pragma omp parallel for private(i,j,k,l,m,n) shared(conv_weights)
@@ -143,7 +227,7 @@ void generate_conv_weights(double **conv_weights)
 	for(l=0;l<N;l++){
 	  for(m=0;m<N;m++){
 	    for(n=0;n<N;n++) {
-	     conv_weights[k + N*(j + N*i)][n + N*(m + N*l)] = gHat3(eta[i], eta[j], eta[k], eta[l], eta[m], eta[n]); // in the notes, correspondingly, (i,j,k)-kxi, (l,m,n)-w	      	      
+	     conv_weights[k + N*(j + N*i)][n + N*(m + N*l)] = gHat3(eta[i], eta[j], eta[k], eta[l], eta[m], eta[n], gamma); // in the notes, correspondingly, (i,j,k)-kxi, (l,m,n)-w
 	    }
 	  }
 	}
