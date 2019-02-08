@@ -103,7 +103,7 @@ int main()
 
 	int nthread;																					// declare nthread (the number of OpenMP threads)
 	nthread = omp_get_max_threads();																// set nthread to the value of the environment variable OMP_NUM_THREADS by calling the OpenMP function omp_get_max_threads
-  
+
 	// CHECK THE LEVEL OF THREAD SUPPORT:
 	if (provided < required)																		// only do this if the required thread support was not possible
 	{

@@ -1,3 +1,3 @@
 AUTOMAKE_OPTIONS = foreign
-SUBDIRS = source
+SUBDIRS = source tests
 #EXTRA_DIST = CHANGES AUTHORS COPYING LICENSE dist_version

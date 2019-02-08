@@ -111,5 +111,5 @@ AC_CHECK_HEADERS([malloc.h stdlib.h])
 AC_FUNC_MALLOC
 AC_CHECK_FUNCS([floor pow sqrt])
 
-AC_OUTPUT(Makefile source/Makefile)
+AC_OUTPUT(Makefile source/Makefile tests/Makefile)
 AX_SUMMARIZE_CONFIG

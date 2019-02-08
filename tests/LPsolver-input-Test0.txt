@@ -13,7 +13,7 @@
 
 flag     = Test0
 
-nT       = 2  		            # Number of time-steps
+nT       = 10  		            # Number of time-steps
 Nx       = 16  		            # Number of space cells
 Nv       = 16		            # Number of velocity cells in each direction
 N        = 8		            # Number of Fourier modes
