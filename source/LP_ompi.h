@@ -97,6 +97,7 @@ extern bool First, Second;																			// declare Boolean variables which 
 extern bool FullandLinear;																			// declare a Boolean variable to determine if running with a mixture
 extern bool LinearLandau;																			// declare a Boolean variable to determine if running with the full collision operator or linear collisions with a Maxwellian
 extern bool MassConsOnly;																			// declare a Boolean variable to determine if conserving all moments or all mass
+extern bool NoField;																				// declare a Boolean variable to turn off the field in the advection step
 
 //************************//
 //        INCLUDES        //

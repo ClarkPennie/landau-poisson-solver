@@ -265,6 +265,23 @@ void ReadMassConsOnly(GRVY_Input_Class& iparse)												// Function to read t
 	}
 }
 
+void ReadNoField(GRVY_Input_Class& iparse)												// Function to read the Boolean option to decide if running without a field
+{
+	// Check if NoField has been set and print its value from the
+	// processor with rank 0 (if not, set default value to false):
+	if( iparse.Read_Var("NoField",&NoField,false) )
+	{
+		if(myrank_mpi==0)
+		{
+			std::cout << "--> NoField = " << NoField << std::endl << std::endl;
+			if(NoField)
+			{
+				std::cout << "The advection process is being run without a field."
+					<< std::endl << std::endl;
+			}
+		}
+	}
+}
 
 void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT, 
 							int& Nx, int& Nv, int& N, double& nu, double& dt, double& A_amp, 

@@ -13,10 +13,10 @@
 
 flag     = GRVYDopingResults
 
-nT       = 2  		            # Number of time-steps
-Nx       = 24  		            # Number of space cells
-Nv       = 24		            # Number of velocity cells in each direction
-N        = 16 		            # Number of Fourier modes
+nT       = 10  	                # Number of time-steps
+Nx       = 16  	                # Number of space cells
+Nv       = 16	                # Number of velocity cells in each direction
+N        = 8 	                # Number of Fourier modes
 nu       = 0.05                 # Value of (Knudsen number)^{-1}
 dt       = 0.01                 # Size of each time-step
 
@@ -25,11 +25,11 @@ dt       = 0.01                 # Size of each time-step
 #--------------------------------------------
 
 # Options for initial conditions (choose one):
-Damping          = False        # Landau Damping ICs
+Damping          = True         # Landau Damping ICs
 TwoStream        = False        # Two Stream ICs
 FourHump         = False        # Four Hump ICs
 TwoHump          = False        # Two Hump ICs
-Doping           = True         # Non-uniform doping ICs
+Doping           = False        # Non-uniform doping ICs
 
 # Choose if running for the first time or a subsequent run:
 First            = True         # Running for the first time with ICs
@@ -37,8 +37,11 @@ Second           = False        # Picking up from a previous run
 
 # Choose how the collisions are being modelled:
 FullandLinear    = False        # Include electron-ion collisions
-LinearLandau     = True         # Run with Linear Landau operator Q(f,M)
-MassConsOnly     = True         # Run with only conservation of mass
+LinearLandau     = False        # Run with Linear Landau operator Q(f,M)
+MassConsOnly     = False        # Run with only conservation of mass
+
+# Choose if running with a self-consistent field or not:
+NoField          = True         # Run without a field
 
 #--------------------------------------------
 # Parameters associated with certain ICs
