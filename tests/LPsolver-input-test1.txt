@@ -11,7 +11,7 @@
 # Global input variable definitions
 #--------------------------------------------
 
-flag     = Test0
+flag     = Test1
 
 nT       = 5  		            # Number of time-steps
 Nx       = 16  		            # Number of space cells
@@ -25,11 +25,11 @@ dt       = 0.01                     # Size of each time-step
 #--------------------------------------------
 
 # Options for initial conditions (choose one):
-Damping          = True         # Landau Damping ICs
+Damping          = False        # Landau Damping ICs
 TwoStream        = False        # Two Stream ICs
 FourHump         = False        # Four Hump ICs
 TwoHump          = False        # Two Hump ICs
-Doping           = False        # Non-uniform doping ICs
+Doping           = True         # Non-uniform doping ICs
 
 # Choose if running for the first time or a subsequent run:
 First            = True         # Running for the first time with ICs
@@ -37,8 +37,8 @@ Second           = False        # Picking up from a previous run
 
 # Choose how the collisions are being modelled:
 FullandLinear    = False        # Include electron-ion collisions
-LinearLandau     = False        # Run with Linear Landau operator Q(f,M)
-MassConsOnly     = False        # Run with only conservation of mass
+LinearLandau     = True         # Run with Linear Landau operator Q(f,M)
+MassConsOnly     = True         # Run with only conservation of mass
 
 #--------------------------------------------
 # Parameters associated with certain ICs
@@ -74,7 +74,7 @@ IC_name  = 'Non-uniform Doping' # Name of problem associated to ICs
 Lv       = 5.25                 # Width of domain in v-space
 NL       = 0.001                # Value of background density in lower regions
 NH       = 1                    # Value of background density in higher regions
-eps      = 0.1                 # Value of dielectric constant
+eps      = 0.1                  # Value of dielectric constant
 T_L      = 0.4                  # Temperature at left wall (if using Dirichlet BCs)
 T_R      = 0.4                  # Temperature at right wall (if using Dirichlet BCs)
 

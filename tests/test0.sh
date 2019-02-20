@@ -1,60 +1,56 @@
 #!/bin/bash
 
-mv LPsolver-input-Test0.txt LPsolver-input.txt
-../source/solver
-mv LPsolver-input.txt LPsolver-input-Test0.txt
+#==============================================
+# Test for the Landau Damping ICs
+#==============================================
+echo "Testing Landau Damping ICs..."
 
-# Read mass values after time-step 10
-m_0=$(awk 'NR == 11 {print $1}' Moments_Test0.dc)
-m=$(awk 'NR == 11 {print $1}' Data/Moments_nu0.05A0.2k0.5Nx16Lx12.5664Nv16Lv5.25SpectralN8dt0.01nT10_Test0.dc)
+# Set the name of the files with the moment values to be compared
+moment_filename_expected=Moments_Test0.dc
+moment_filename_test=Data/Moments_nu0.05A0.2k0.5Nx16Lx12.5664Nv16Lv5.25SpectralN8dt0.01nT5_Test0.dc
 
-if [ $(echo "$m - $m_0 > 0.000002" | bc) == 1 ] || [ $(echo "$m_0 - $m > 0.000002" | bc) == 1 ]; then
-	echo "Error in mass value!"
-	exit 1
+# Remove the file containing the moments to be produced in case it already exists
+rm $moment_filename_test
+
+echo "Running code for 5 timesteps..." 
+mv LPsolver-input-test0.txt LPsolver-input.txt
+../source/solver 
+mv LPsolver-input.txt LPsolver-input-test0.txt
+
+echo "Checking values of moments are as expected..."
+sh moment_differ.sh $moment_filename_expected $moment_filename_test
+exit_val=$?
+
+if [ $exit_val -eq 1 ]; then
+	exit $exit_val
 fi
 
-# Read first component of velocity values after time-step 10
-u1_0_in=$(awk 'NR == 11 {print $2}' Moments_Test0.dc)
-u1_0=$(echo "$u1_0_in" | sed -E 's/([+-]?[0-9.]+)[eE]\+?(-?)([0-9]+)/(\1*10^\2\3)/g')
-u1_in=$(awk 'NR == 11 {print $2}' Data/Moments_nu0.05A0.2k0.5Nx16Lx12.5664Nv16Lv5.25SpectralN8dt0.01nT10_Test0.dc)
-u1=$(echo "$u1_in" | sed -E 's/([+-]?[0-9.]+)[eE]\+?(-?)([0-9]+)/(\1*10^\2\3)/g')
+#==============================================
+# Test for the non-uniform doping ICs
+#==============================================
+echo "Testing non-uniform doping ICs..."
 
-if [ $(echo "$u1 - $u1_0 > 10^-10" | bc -l) == 1 ] || [ $(echo "$u1_0 - $u1 > 10^-10" | bc -l) == 1 ]; then
-	echo "Error in first component of velocity!"
-	exit 1
-fi
+# Set the name of the files with the moment values to be compared
+moment_filename_expected=Moments_Test1.dc
+moment_filename_test=Data/Moments_nu0.05A0k0.5Nx16Lx12.5664Nv16Lv5.25SpectralN8dt0.01nT5_Test1.dc
 
-# Read second component of velocity values after time-step 10
-u2_0_in=$(awk 'NR == 11 {print $3}' Moments_Test0.dc)
-u2_0=$(echo "$u2_0_in" | sed -E 's/([+-]?[0-9.]+)[eE]\+?(-?)([0-9]+)/(\1*10^\2\3)/g')
-u2_in=$(awk 'NR == 11 {print $3}' Data/Moments_nu0.05A0.2k0.5Nx16Lx12.5664Nv16Lv5.25SpectralN8dt0.01nT10_Test0.dc)
-u2=$(echo "$u2_in" | sed -E 's/([+-]?[0-9.]+)[eE]\+?(-?)([0-9]+)/(\1*10^\2\3)/g')
+# Remove the file containing the moments to be produced in case it already exists
+rm $moment_filename_test
 
-echo $u2_0
-echo $u2
+# This version does not conserve all moments, so set new thresholds
+m_thresh=0.000002
+u1_thresh=0.01
+u2_thresh=2*10^-7
+u3_thresh=2*10^-7
+T_thresh=0.01
 
-if [ $(echo "$u2 - $u2_0 > 10^-10" | bc -l) == 1 ] || [ $(echo "$u2_0 - $u2 > 10^-10" | bc -l) == 1 ]; then
-	echo "Error in second component of velocity!"
-	exit 1
-fi
+echo "Running code for 5 timesteps..." 
+mv LPsolver-input-test1.txt LPsolver-input.txt
+../source/solver 
+mv LPsolver-input.txt LPsolver-input-test1.txt
 
-# Read third component of velocity values after time-step 10
-u3_0_in=$(awk 'NR == 11 {print $4}' Moments_Test0.dc)
-u3_0=$(echo "$u3_0_in" | sed -E 's/([+-]?[0-9.]+)[eE]\+?(-?)([0-9]+)/(\1*10^\2\3)/g')
-u3_in=$(awk 'NR == 11 {print $4}' Data/Moments_nu0.05A0.2k0.5Nx16Lx12.5664Nv16Lv5.25SpectralN8dt0.01nT10_Test0.dc)
-u3=$(echo "$u3_in" | sed -E 's/([+-]?[0-9.]+)[eE]\+?(-?)([0-9]+)/(\1*10^\2\3)/g')
+echo "Checking values of moments are as expected..."
+sh moment_differ.sh $moment_filename_expected $moment_filename_test $m_thresh $u1_thresh $u2_thresh $u3_thresh $T_thresh
+exit_val=$?
 
-if [ $(echo "$u3 - $u3_0 > 10^-10" | bc -l) == 1 ] || [ $(echo "$u3_0 - $u3 > 10^-10" | bc -l) == 1 ]; then
-	echo "Error in third component of velocity!"
-	exit 1
-fi
-
-# Read total energy values after time-step 10
-T_0=$(awk 'NR == 11 {print $9}' Moments_Test0.dc)
-T=$(awk 'NR == 11 {print $9}' Data/Moments_nu0.05A0.2k0.5Nx16Lx12.5664Nv16Lv5.25SpectralN8dt0.01nT10_Test0.dc)
-if [ $(echo "$T - $T_0 > 0.00003" | bc) == 1 ] || [ $(echo "$T_0 - $T > 0.00003" | bc) == 1 ]; then
-	echo "Error in total energy!"
-	exit 1
-fi
-
-exit 0
+exit $exit_val

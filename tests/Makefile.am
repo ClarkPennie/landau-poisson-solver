@@ -1,1 +1,1 @@
-TESTS = success.sh Test0.sh
+TESTS = test0.sh
