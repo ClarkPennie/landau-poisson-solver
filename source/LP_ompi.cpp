@@ -501,6 +501,8 @@ int main()
 
 			fclose(fu);																				// close the file fu
 		}
+
+		grvy_check_file_path(buffer_moment);														// have GRVY check if the directory Data/ exists and, if not, create it
       
 		fmom=fopen(buffer_moment,"w");																// set fmom to be a file with the name stored in buffer_moment and set the file access mode of fmom to w (which creates an empty file and allows it to be written to)
 		fu=fopen(buffer_u, "w");																	// set fu to be a file with the name stored in buffer_u and set the file access mode of fu to w (which creates an empty file and allows it to be written to)
