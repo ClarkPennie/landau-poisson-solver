@@ -1,1 +1,1 @@
-TESTS = test0.sh test1
+TESTS = test1

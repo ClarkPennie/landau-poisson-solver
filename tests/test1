@@ -8,7 +8,7 @@
 
     # run snazzy executable
     run cp LPsolver-input-test0.txt LPsolver-input.txt
-#    [ "$status" -eq 0 ]
+    [ "$status" -eq 0 ]
     run ../source/solver
     [ "$status" -eq 0 ]
 
