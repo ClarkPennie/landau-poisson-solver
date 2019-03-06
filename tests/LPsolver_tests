@@ -1,0 +1,125 @@
+#!/usr/bin/env bats
+# -*-sh-*-
+
+@test "Landau Damping IC test" {
+    echo -e "#\n# TESTING LANDAU DAMPING IC" >&3
+    echo "#----------------------------------------------------------" >&3
+    # verify executable is there
+    run ls ../source/solver
+    [ "$status" -eq 0 ]
+
+    # Set the name of the files with the moment values to be compared
+    moment_filename_expected=Moments_Test0.dc
+    moment_filename_test=Data/Moments_nu0.05A0.2k0.5Nx16Lx12.5664Nv16Lv5.25SpectralN8dt0.01nT5_Test0.dc
+
+    # Remove the file containing the moments to be produced if it already exists
+    run rm $moment_filename_test
+
+    # run snazzy executable
+    echo "# Running code for 5 timesteps..." >&3
+    run cp LPsolver-input-test0.txt LPsolver-input.txt
+    [ "$status" -eq 0 ]
+    run ../source/solver
+    [ "$status" -eq 0 ]
+    run rm LPsolver-input.txt
+
+    echo "# Checking values of moments are as expected..." >&3
+    run ./moment_differ.sh $moment_filename_expected $moment_filename_test
+    [ "$status" -eq 0 ]
+    
+#    assert_success
+}
+
+@test "Non-uniform doping IC test" {
+    echo -e "#\n# TESTING NON-UNIFORM DOPING IC" >&3
+    echo "#----------------------------------------------------------" >&3
+    # verify executable is there
+    run ls ../source/solver
+    [ "$status" -eq 0 ]
+
+    # Set the name of the files with the moment values to be compared
+    moment_filename_expected=Moments_Test1.dc
+    moment_filename_test=Data/Moments_nu0.05A0k0.5Nx16Lx12.5664Nv16Lv5.25SpectralN8dt0.01nT5_Test1.dc
+
+    # This version does not conserve all moments, so set new thresholds
+    m_thresh=0.000002
+    u1_thresh=0.01
+    u2_thresh=2*10^-7
+    u3_thresh=2*10^-7
+    T_thresh=0.01
+
+    # Remove the file containing the moments to be produced if it already exists
+    run rm $moment_filename_test
+
+    # run snazzy executable
+    echo "# Running code for 5 timesteps..." >&3
+    run cp LPsolver-input-test1.txt LPsolver-input.txt
+    [ "$status" -eq 0 ]
+    run ../source/solver
+    [ "$status" -eq 0 ]
+    run rm LPsolver-input.txt
+
+    echo "# Checking values of moments are as expected..." >&3
+    run ./moment_differ.sh $moment_filename_expected $moment_filename_test
+    [ "$status" -eq 0 ]
+
+#    assert_success
+}
+
+@test "4 Hump IC test" {
+    echo -e "#\n# TESTING FOUR HUMP IC" >&3
+    echo "#----------------------------------------------------------" >&3
+    # verify executable is there
+    run ls ../source/solver
+    [ "$status" -eq 0 ]
+
+    # Set the name of the files with the moment values to be compared
+    moment_filename_expected=Moments_Test2.dc
+    moment_filename_test=Data/Moments_nu0.05A0k0.5Nx16Lx12.5664Nv16Lv5.25SpectralN8dt0.01nT5_Test2.dc
+
+    # Remove the file containing the moments to be produced if it already exists
+    run rm $moment_filename_test
+
+    # run snazzy executable
+    echo "# Running code for 5 timesteps..." >&3
+    run cp LPsolver-input-test2.txt LPsolver-input.txt
+    [ "$status" -eq 0 ]
+    run ../source/solver
+    [ "$status" -eq 0 ]
+    run rm LPsolver-input.txt
+
+    echo "# Checking values of moments are as expected..." >&3
+    run ./moment_differ.sh $moment_filename_expected $moment_filename_test
+    [ "$status" -eq 0 ]
+    
+#    assert_success
+}
+
+@test "FullandLinear test" {
+    echo -e "#\n# TESTING FULL AND LINEAR COLLISION OPERATORS" >&3
+    echo "#----------------------------------------------------------" >&3
+    # verify executable is there
+    run ls ../source/solver
+    [ "$status" -eq 0 ]
+
+    # Set the name of the files with the moment values to be compared
+    moment_filename_expected=Moments_Test3.dc
+    moment_filename_test=Data/Moments_nu0.05A0.2k0.5Nx16Lx12.5664Nv16Lv5.25SpectralN8dt0.01nT5_Test3.dc
+
+    # Remove the file containing the moments to be produced if it already exists
+    run rm $moment_filename_test
+
+    # run snazzy executable
+    echo "# Running code for 5 timesteps..." >&3
+    run cp LPsolver-input-test3.txt LPsolver-input.txt
+    [ "$status" -eq 0 ]
+    run ../source/solver
+    [ "$status" -eq 0 ]
+    run rm LPsolver-input.txt
+
+    echo "# Checking values of moments are as expected..." >&3
+    run ./moment_differ.sh $moment_filename_expected $moment_filename_test
+    [ "$status" -eq 0 ]
+    
+#    assert_success
+}

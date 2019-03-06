@@ -1,1 +1,1 @@
-TESTS = test1
+TESTS = LPsolver_tests
