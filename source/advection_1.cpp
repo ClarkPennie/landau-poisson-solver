@@ -16,6 +16,14 @@ double Gridv(double m){ //v in [-Lv,Lv]
 	return (-Lv+(m+0.5)*dv);
 }
 
+double Gridv_L(double m){ //v in [-Lv_L,Lv_L]
+    return (-Lv_L+(m+0.5)*dv_L);
+}
+
+double Gridv_H(double m){ //v in [-Lv_H,Lv_H]
+    return (-Lv_H+(m+0.5)*dv_H);
+}
+
 double Gridx(double m){ // x in [0,Lx]  (returns the x value at the mth discrete space-step, in the middle of the cell I_m)
 	return (m+0.5)*dx;
 }

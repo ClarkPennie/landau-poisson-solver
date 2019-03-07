@@ -27,10 +27,14 @@ int M;																								// declare M (the number of collision invarients)
 int Nx, Nv, nT, N;			 											 							// declare Nx (no. of x discretised points), Nv (no. of v discretised point), nT (no. of time discretised points) & N (no. of nodes in the spectral method) and setting all their values
 int size_v, size, size_ft; 																			// declare size_v (no. of total v discretised points in 3D), size (the total no. of discretised points) & size_ft (total no. of spectral discretised points in 3D)
 double dv, dx; 																						// declare dv (the velocity stepsize) & dx (the space stepsize)
+double dv_L, dv_H;
 double A_amp, k_wave;																				// declare A_amp (the amplitude of the perturbing wave) & k_wave (the wave number of the perturbing wave)
 double Lx, Lv;																						// declare Lx (for 0 < x < Lx) and set it to & Lv (for -Lv < v < Lv in the advection problem)
+double Lv_L, Lv_H;
 double L_v, R_v, L_eta;																				// declare L_v (for -Lv < v < Lv in the collision problem), R_v (for v in B_(R_v) in the collision problem) & L_eta (for Fourier space, -L_eta < eta < L_eta)
+double L_v_L, L_v_H;
 double h_eta, h_v;																					// declare h_eta (the Fourier stepsize) & h_v (also the velocity stepsize but for the collision problem)
+double h_eta_L, h_eta_H, h_v_L, h_v_H;
 double nu, dt; 																						// declare nu (1/knudson#), dt (the timestep) & nthread (the number of OpenMP threads)
 
 // Non-uniform doping profile parameters:
@@ -74,13 +78,15 @@ bool MassConsOnly;																					// declare a Boolean variable to determin
 
 int main()
 {
+    double eps;                                                                                     // declare epsilon
 	int i, j, k, j1, j2, j3, l; 																	// declare i, j, k (counters), j1, j2, j3 (velocity space counters) & l (the index of the current DG basis function being integrated against)
 	int  tp, t=0; 																					// declare tp (the amount size of the data which stores the DG coefficients of the solution read from a previous run) & t (the current time-step) and set it to 0
 	int k_v, k_eta, k_local, nprocs_vlasov;															// declare k_v (the index of a DG coefficient), k_eta (the index of a DG coefficient in Fourier space), k_local (the index of a DG coefficient, local to the space chunk on the current process) & nprocs_vlasov (the number of processes used for solving the Vlasov equation)
 	double tmp, mass, a[3], KiE, EleE, KiEratio, ent1, l_ent1, ll_ent1;								// declare tmp (the square root of electric energy), mass (the mass/density rho), a (the momentum vector J), KiE (the kinetic energy), EleE (the electric energy), KiEratio (the ratio of kinetic energy between where f is positive and negative),  ent1 (the entropy with negatives discarded), l_ent1 (log of the ent1) & ll_ent1 (log of log of ent1)
 	double *U, **f, *output_buffer;//, **conv_weights_local;										// declare pointers to U (the vector containing the coefficients of the DG basis functions for the solution f(x,v,t) at the given time t), f (the solution which has been transformed from the DG discretisation to the appropriate spectral discretisation) & output_buffer (from where to send MPI messages)
-	double **conv_weights, **conv_weights_linear;													// declare a pointer to conv_weights (a matrix of the weights for the convolution in Fourier space of single species collisions) & conv_weights_linear (a matrix of convolution weights in Fourier space of two species collisions)
-	double **conv_weights1, **conv_weights2;														// declare a pointer to conv_weights1 (the first matrix in the sum of matrices for the weights of the convolution in Fourier space of single species collisions) & conv_weights2 (the second matrix in the sum of matrices for the weights of the convolution in Fourier space of single species collisions)
+	double **conv_weights, **conv_weights_linear; 												// declare a pointer to conv_weights (a matrix of the weights for the convolution in Fourier space of single species collisions) & conv_weights_linear (a matrix of convolution weights in Fourier space of two species collisions)
+    double **conv_weights_LH, **conv_weights_HL;
+    double **conv_weights1, **conv_weights2;														// declare a pointer to conv_weights1 (the first matrix in the sum of matrices for the weights of the convolution in Fourier space of single species collisions) & conv_weights2 (the second matrix in the sum of matrices for the weights of the convolution in Fourier space of single species collisions)
 	std::string flag;																				// declare a string flag (used to identify files generated associated to the current run)
 	std::string IC_name;																			// declare a string IC_name (used to identify the initial condions being run)
 	std::string old_run_name;																		// declare a string old_run_name (the name of the previous run if running for second time)
@@ -165,11 +171,15 @@ int main()
 	size_v=Nv*Nv*Nv;																				// set size_v to Nv^3
 	size=Nx*size_v;																					// set size to size_v*Nx
 	size_ft=N*N*N; 																					// set size_ft to N^3
-	dv=2.*Lv/Nv;																					// set dv to 2Lv/Nv
+	dv=2.*Lv/Nv;  // set dv to 2Lv/Nv
+    dv_L=2.*Lv_L/Nv;
+    dv_H=2.*Lv_H/Nv;
 	dx=Lx/Nx; 																						// set dx to Lx/Nx
 	scalev=dv*dv*dv;																				// set scalev to dv^3
 	L_v=Lv;																							// set L_v to Lv
-	R_v=Lv;																							// set R_v to Lv
+	R_v=Lv; // set R_v to Lv
+    L_v_L=Lv_L;
+    L_v_H=Lv_H;
 	scaleL=8*Lv*Lv*Lv;																				// set scaleL to 8Lv^3
 
 	if(MassConsOnly)																				// only do this if MassConsOnly is true and only conserving mass
@@ -247,6 +257,19 @@ int main()
 		{
 			conv_weights[i] = (double *)malloc(size_ft*sizeof(double));								// allocate enough space at the ith entry of conv_weights for size_ft many float numbers
 		}
+        
+        conv_weights_LH = (double **)malloc(size_ft*sizeof(double *));                                    // allocate enough space at the pointer conv_weights for size_ft many pointers to float numbers
+        for (i=0;i<size_ft;i++)
+        {
+            conv_weights_LH[i] = (double *)malloc(size_ft*sizeof(double));                                // allocate enough space at the ith entry of conv_weights for size_ft many float numbers
+        }
+        
+        conv_weights_HL = (double **)malloc(size_ft*sizeof(double *));                                    // allocate enough space at the pointer conv_weights for size_ft many pointers to float numbers
+        for (i=0;i<size_ft;i++)
+        {
+            conv_weights_HL[i] = (double *)malloc(size_ft*sizeof(double));                                // allocate enough space at the ith entry of conv_weights for size_ft many float numbers
+        }
+        
 
 		conv_weights1 = (double **)malloc(size_ft*sizeof(double *));								// allocate enough space at the pointer conv_weights1 for size_ft many pointers to float numbers
 		for (i=0;i<size_ft;i++)
@@ -333,8 +356,10 @@ int main()
 		//INITIALISE VELOCITY AND FOURIER DOMAINS:
 		L_v = Lv;//sqrt(0.5*(double)N*PI); 															// set L_v to Lv
 		L_eta = 0.5*(double)(N-1)*PI/L_v;					// BUG: N-1?							// set L_eta to (N-1)*Pi/(2*L_v)
-		h_v = 2.0*L_v/(double)(N-1);						// BUG: N-1?							// set h_v to 2*L_v/(N-1)
-		h_eta = 2.0*L_eta/(double)(N);						// BUG: N?								// set h_eta to 2*L_eta/N
+		h_v = 2.0*L_v/(double)(N-1);						// BUG: N-1?// set h_v to 2*L_v/(N-1)
+		h_v_L = 2.0*L_v_L/(double)(N-1);
+        h_v_H = 2.0*L_v_H/(double)(N-1);
+        h_eta = 2.0*L_eta/(double)(N);						// BUG: N?								// set h_eta to 2*L_eta/N
 		for(i=0;i<N;i++)																			// store the discretised velocity and Fourier space points
 		{
 			eta[i] = -L_eta + (double)i*h_eta;														// set the ith value of eta to -L_eta + i*h_eta
@@ -392,8 +417,11 @@ int main()
 		 */
   
 		// Directly compute the weights; not from precomputed (for small number of nodes, it's very fast)
-		generate_conv_weights(conv_weights); 														// calculate the values of the convolution weights (the matrix G_Hat(xi, omega), for xi = (xi_i, xi_j, xi_k), omega = (omega_l, omega_m, omega_n), i,j,k,l,m,n = 0,1,...,N-1) and store the values in conv_weights
-		generate_conv_weights2(conv_weights1, 0); 													// calculate the values in the first matrix of the convolution weights (the matrix G_Hat(xi, omega), for xi = (xi_i, xi_j, xi_k), omega = (omega_l, omega_m, omega_n), i,j,k,l,m,n = 0,1,...,N-1) and store the values in conv_weights1
+	//	generate_conv_weights(conv_weights); 														// calculate the values of the convolution weights (the matrix G_Hat(xi, omega), for xi = (xi_i, xi_j, xi_k), omega = (omega_l, omega_m, omega_n), i,j,k,l,m,n = 0,1,...,N-1) and store the values in conv_weights
+		
+        generate_conv_weights(conv_weights, conv_weights_LH, conv_weights_HL);
+        
+        generate_conv_weights2(conv_weights1, 0); 													// calculate the values in the first matrix of the convolution weights (the matrix G_Hat(xi, omega), for xi = (xi_i, xi_j, xi_k), omega = (omega_l, omega_m, omega_n), i,j,k,l,m,n = 0,1,...,N-1) and store the values in conv_weights1
 		generate_conv_weights2(conv_weights2, 1); 													// calculate the values in the second matrix of the convolution weights (the matrix G_Hat(xi, omega), for xi = (xi_i, xi_j, xi_k), omega = (omega_l, omega_m, omega_n), i,j,k,l,m,n = 0,1,...,N-1) and store the values in conv_weights2
 		if(FullandLinear)																			// only do this FullandLinear is true
 		{
