@@ -1,4 +1,4 @@
-bin_PROGRAMS  = solver
+bin_PROGRAMS  = solver_NoField
 AM_CPPFLAGS   = $(FFTW_CFLAGS) 
 AM_CPPFLAGS  += -I$(OPENBLAS_INC)
 LIBS          = $(BLAS_LIBS) $(MKL_LIBS)
@@ -11,4 +11,4 @@ cpp_sources = EntropyCalculations.cpp LP_ompi.cpp NegativityChecks.cpp  collisio
               EquilibriumSolution.cpp MarginalCreation.cpp SetInit_1.cpp conservationRoutines.cpp \
 	      FieldCalculations.cpp MomentCalculations.cpp advection_1.cpp InputParsing.cpp
 
-solver_SOURCES = $(cpp_sources) $(h_sources)
+solver_NoField_SOURCES = $(cpp_sources) $(h_sources)

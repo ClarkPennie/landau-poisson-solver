@@ -11,12 +11,12 @@
 # Global input variable definitions
 #--------------------------------------------
 
-flag     = 4HumpEntTest
+flag     = T01.2_T400
 
-nT       = 5  	                # Number of time-steps
-Nx       = 16  	                # Number of space cells
-Nv       = 16	                # Number of velocity cells in each direction
-N        = 8 	                # Number of Fourier modes
+nT       = 20000                # Number of time-steps
+Nx       = 24  	                # Number of space cells
+Nv       = 24	                # Number of velocity cells in each direction
+N        = 16 	                # Number of Fourier modes
 nu       = 0.05                 # Value of (Knudsen number)^{-1}
 dt       = 0.01                 # Size of each time-step
 
@@ -25,9 +25,9 @@ dt       = 0.01                 # Size of each time-step
 #--------------------------------------------
 
 # Options for initial conditions (choose one):
-Damping          = False        # Landau Damping ICs
+Damping          = True         # Landau Damping ICs
 TwoStream        = False        # Two Stream ICs
-FourHump         = True         # Four Hump ICs
+FourHump         = False        # Four Hump ICs
 TwoHump          = False        # Two Hump ICs
 Doping           = False        # Non-uniform doping ICs
 
@@ -49,7 +49,7 @@ NoField          = True         # Run without a field
 
 [Damping]
 
-IC_name  = 'Landau Damping'	# Name of problem associated to ICs
+IC_name  = 'Landau Damping'    	# Name of problem associated to ICs
 A_amp    = 0.05                 # Amplitude of the perturbation
 k_wave   = 0.5					# Frequency of the perturbation
 Lv       = 5.25                 # Width of domain in v-space
@@ -65,8 +65,8 @@ Lx       = 4.                   # Width of domain in x-space
 
 IC_name  = 'Four Hump'          # Name of problem associated to ICs
 Lv       = 5.25                 # Width of domain in v-space
-T_hump   = 0.4		        # Variance of each of the four humps
-shift    = 1	 	 	# Shift from zero of each of the four humps
+T_hump   = 0.4		            # Variance of each of the four humps
+shift    = 1	          	 	# Shift from zero of each of the four humps
 
 [TwoHump]
 
@@ -89,4 +89,4 @@ T_R      = 0.4                  # Temperature at right wall (if using Dirichlet 
 
 [Second]
 
-Name = U_nu0.05A0.05k0.5Nx24Lx12.5664Nv24Lv5.25SpectralN16dt0.01nT10000_NoFieldT01.2_T100.dc
+Name = U_nuMax0.05A0.05k0.5Nx24Lx12.5664Nv24Lv5.25SpectralN16dt0.01nT20000_InhomEnt_LDIC_SmallA_T200.dc
