@@ -1,5 +1,5 @@
 AC_PREREQ([2.69])
-AC_INIT([landau], [0.3.1], [BUG-REPORT-ADDRESS])
+AC_INIT([landau], [0.4.0], [BUG-REPORT-ADDRESS])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([/source/collisionRoutines_1.h])
 AC_CONFIG_HEADERS([config.h])
