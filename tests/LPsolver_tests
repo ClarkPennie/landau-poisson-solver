@@ -15,7 +15,7 @@
     # Remove the file containing the moments to be produced if it already exists
     run rm $moment_filename_test
 
-    # run snazzy executable
+    # run executable
     echo "# Running code for 5 timesteps..." >&3
     run cp LPsolver-input-test0.txt LPsolver-input.txt
     [ "$status" -eq 0 ]
@@ -51,7 +51,7 @@
     # Remove the file containing the moments to be produced if it already exists
     run rm $moment_filename_test
 
-    # run snazzy executable
+    # run executable
     echo "# Running code for 5 timesteps..." >&3
     run cp LPsolver-input-test1.txt LPsolver-input.txt
     [ "$status" -eq 0 ]
@@ -80,7 +80,7 @@
     # Remove the file containing the moments to be produced if it already exists
     run rm $moment_filename_test
 
-    # run snazzy executable
+    # run executable
     echo "# Running code for 5 timesteps..." >&3
     run cp LPsolver-input-test2.txt LPsolver-input.txt
     [ "$status" -eq 0 ]
@@ -109,7 +109,7 @@
     # Remove the file containing the moments to be produced if it already exists
     run rm $moment_filename_test
 
-    # run snazzy executable
+    # run executable
     echo "# Running code for 5 timesteps..." >&3
     run cp LPsolver-input-test3.txt LPsolver-input.txt
     [ "$status" -eq 0 ]

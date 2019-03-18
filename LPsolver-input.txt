@@ -11,9 +11,9 @@
 # Global input variable definitions
 #--------------------------------------------
 
-flag     = Test3
+flag     = GRVY_DirCheck_Test
 
-nT       = 5  		            # Number of time-steps
+nT       = 2 		            # Number of time-steps
 Nx       = 16  		            # Number of space cells
 Nv       = 16		            # Number of velocity cells in each direction
 N        = 8		            # Number of Fourier modes
@@ -36,7 +36,7 @@ First            = True         # Running for the first time with ICs
 Second           = False        # Picking up from a previous run
 
 # Choose how the collisions are being modelled:
-FullandLinear    = True         # Include electron-ion collisions
+FullandLinear    = False        # Include electron-ion collisions
 LinearLandau     = False        # Run with Linear Landau operator Q(f,M)
 MassConsOnly     = False        # Run with only conservation of mass
 
