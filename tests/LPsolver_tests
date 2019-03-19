@@ -123,3 +123,32 @@
     
 #    assert_success
 }
+
+@test "Space homogeneous test" {
+    echo -e "#\n# TESTING SPACE HOMOGENEOUS VERSION" >&3
+    echo "#----------------------------------------------------------" >&3
+    # verify executable is there
+    run ls ../source/solver
+    [ "$status" -eq 0 ]
+
+    # Set the name of the files with the moment values to be compared
+    moment_filename_expected=Moments_Test4.dc
+    moment_filename_test=Data/Moments_nu0.05A0k0.5Nv16Lv5.25SpectralN8dt0.01nT5_Test4.dc
+
+    # Remove the file containing the moments to be produced if it already exists
+    run rm $moment_filename_test
+
+    # run executable
+    echo "# Running code for 5 timesteps..." >&3
+    run cp LPsolver-input-test4.txt LPsolver-input.txt
+    [ "$status" -eq 0 ]
+    run ../source/solver
+    [ "$status" -eq 0 ]
+    run rm LPsolver-input.txt
+
+    echo "# Checking values of moments are as expected..." >&3
+    run ./moment_differ.sh $moment_filename_expected $moment_filename_test
+    [ "$status" -eq 0 ]
+    
+#    assert_success
+}

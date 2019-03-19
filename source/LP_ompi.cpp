@@ -617,10 +617,10 @@ int main()
 		ll_ent1 = log(fabs(l_ent1));																// set ll_ent1 to the log of l_ent1
 		if(Homogeneous)
 		{
-			printf("step #0: %11.8g  %11.8g  %11.8g  %11.8g  %11.8g %11.8g \n",
+			printf("step 0: %11.8g  %11.8g  %11.8g  %11.8g  %11.8g %11.8g \n",
 					mass, a[0], a[1], a[2], KiE, ent1);									// display in the output file that this is step 0 (so these are the initial conditions), then the mass, 3 components of momentum, kinetic energy, entropy & Strain and Guo weighted L2 norm
-			fprintf(fmom, "%11.8g %11.8g %11.8g  %11.8g  %11.8g \n",
-					mass, a[0], a[1], a[2], KiE);														// in the file tagged as fmom, print the initial mass, 3 components of momentum & kinetic energy
+			fprintf(fmom, "%11.8g %11.8g %11.8g %11.8g %11.8g %11.8g %11.8g %11.8g \n",
+					mass, a[0], a[1], a[2], 0.0, 0.0, 0.0, KiE);														// in the file tagged as fmom, print the initial mass, 3 components of momentum & kinetic energy
 		}
 		else
 		{
@@ -833,8 +833,8 @@ int main()
 			{
 				printf("step %d: %11.8g  %11.8g  %11.8g  %11.8g  %11.8g %11.8g \n",
 						t+1, mass, a[0], a[1], a[2], KiE, ent1);									// display in the output file that this is step 0 (so these are the initial conditions), then the mass, 3 components of momentum, kinetic energy, entropy & Strain and Guo weighted L2 norm
-				fprintf(fmom, "%11.8g %11.8g %11.8g  %11.8g  %11.8g \n",
-						mass, a[0], a[1], a[2], KiE);														// in the file tagged as fmom, print the initial mass, 3 components of momentum & kinetic energy
+				fprintf(fmom, "%11.8g %11.8g %11.8g %11.8g %11.8g %11.8g %11.8g %11.8g \n",
+						mass, a[0], a[1], a[2], 0.0, 0.0, 0.0, KiE);														// in the file tagged as fmom, print the initial mass, 3 components of momentum & kinetic energy
 			}
 			else
 			{
