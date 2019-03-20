@@ -71,6 +71,7 @@ bool Homogeneous;																					// declare a Boolean variable to determine
 bool FullandLinear;																					// declare a Boolean variable to determine if running with a mixture
 bool First, Second;																					// declare Boolean variables which will determine if this is the first or a subsequent run
 bool LinearLandau;																					// declare a Boolean variable to determine if running with the full collision operator or linear collisions with a Maxwellian
+bool Conservation;																					// declare a Boolean variable to determine if running the conservation routine with the spectral method
 bool MassConsOnly;																					// declare a Boolean variable to determine if conserving all moments or all mass
 
 int main()
@@ -150,7 +151,8 @@ int main()
 	ReadHomogeneous(iparse);																		// Read in if running the space homogeneous case
 	ReadFullandLinear(iparse);																		// Read in if running multi-species collisions
 	ReadLinearLandau(iparse);																		// Read in if running full or linear Landau
-	ReadMassConsOnly(iparse);																		// Read in if running conservation of all moments or just mass
+	ReadConsOptions(iparse);																		// Read in how conservation is enforced
+	//ReadMassConsOnly(iparse);																		// Read in if running conservation of all moments or just mass
 
 	ReadInputParameters(iparse, flag, nT, Nx, Nv, N, nu, dt, A_amp, k_wave, Lv, Lx);				// Read in all input parameters
 
@@ -683,7 +685,10 @@ int main()
 				if(FullandLinear)																	// only do this if FullandLinear is true
 				{
 					ComputeQ_FandL(f[l%chunk_Nx], qHat, conv_weights, qHat_linear, conv_weights_linear);	// using the coefficients of the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), calculate the Fourier tranform of Q(f,f) using conv_weights for the weights in the convolution in the full part of Q & conv_weights_linear in the convolution in the linear part of Q, then store the results of each Fourier transform in qHat & qHat_linear, respectively
-					conserveMoments(qHat, qHat_linear);											// perform the explicit conservation calculation
+					if(Conservation)
+					{
+						conserveMoments(qHat, qHat_linear);											// perform the explicit conservation calculation
+					}
 					RK4_FandL(f[l%chunk_Nx], l, qHat, conv_weights, qHat_linear, conv_weights_linear,
 							U, Utmp_coll);															// advance to the next time step in the collisional problem using RK4 at the given space-step l, taking the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), as well as qHat, conv_weights, qHat_linear & conv_weights_linear (to allow more Fourier transforms of Q to be made), storing the output partially in U and partially in Utmp_coll
 				}
@@ -692,13 +697,19 @@ int main()
 					if(LinearLandau)																// only do this is LinearLandau is true, for using Q(f,M)
 					{
 						ComputeQLinear(f[l%chunk_Nx], DFTMaxwell[l%chunk_Nx], qHat, conv_weights);	// using the coefficients of the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), calculate the Fourier tranform of Q(f,M) using conv_weights1 & conv_weights2 for the weights in the convolution, then store the results of the Fourier transform in qHat
-						conserveMoments(qHat);														// perform the explicit conservation calculation
+						if(Conservation)
+						{
+							conserveMoments(qHat);													// perform the explicit conservation calculation
+						}
 						RK4Linear(f[l%chunk_Nx], DFTMaxwell[l%chunk_Nx], l, qHat, conv_weights, U, Utmp_coll);		// advance to the next time step in the collisional problem using RK4 at the given space-step l, taking the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), as well as qHat, conv_weights1 & conv_weights2 (to allow more Fourier transforms of Q to be made), storing the output partially in U and partially in Utmp_coll
 					}
 					else																			// otherwise, if FullandLinear is false...
 					{
 						ComputeQ(f[l%chunk_Nx], qHat, conv_weights);								// using the coefficients of the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), calculate the Fourier tranform of Q(f,f) using conv_weights for the weights in the convolution, then store the results of the Fourier transform in qHat
-						conserveMoments(qHat);														// perform the explicit conservation calculation
+						if(Conservation)
+						{
+							conserveMoments(qHat);													// perform the explicit conservation calculation
+						}
 						RK4(f[l%chunk_Nx], l, qHat, conv_weights, U, Utmp_coll);					// advance to the next time step in the collisional problem using RK4 at the given space-step l, taking the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), as well as qHat & conv_weights (to allow more Fourier transforms of Q to be made), storing the output partially in U and partially in Utmp_coll
 					}
 	/*				//DEBUG CHECK:

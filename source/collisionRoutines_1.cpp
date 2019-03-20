@@ -818,7 +818,10 @@ int i,j,k, j1, j2, j3, k_v, k_eta, kk, l_local;
   }
 
   ComputeQ_FandL(f1, Q1_fft, conv_weights, Q1_fft_linear, conv_weights_linear);
-  conserveMoments(Q1_fft, Q1_fft_linear);   	//conserves k2
+  if(Conservation)
+  {
+	  conserveMoments(Q1_fft, Q1_fft_linear);   	//conserves k2
+  }
   
   #pragma omp parallel for private(i) shared(Q1_fft, Q1_fft_linear)
   for(i=0;i<size_ft;i++){
@@ -835,7 +838,10 @@ int i,j,k, j1, j2, j3, k_v, k_eta, kk, l_local;
   }
  
   ComputeQ_FandL(f1, Q2_fft, conv_weights, Q2_fft_linear, conv_weights_linear);
-  conserveMoments(Q2_fft, Q2_fft_linear);   //conserves k3
+  if(Conservation)
+  {
+	  conserveMoments(Q2_fft, Q2_fft_linear);   //conserves k3
+  }
 
   #pragma omp parallel for private(i) shared(Q2_fft, Q2_fft_linear)
   for(i=0;i<size_ft;i++){
@@ -851,7 +857,10 @@ int i,j,k, j1, j2, j3, k_v, k_eta, kk, l_local;
   }
 
   ComputeQ_FandL(f1, Q3_fft, conv_weights, Q3_fft_linear, conv_weights_linear);
-  conserveMoments(Q3_fft, Q3_fft_linear);                //conserves k4
+  if(Conservation)
+  {
+	  conserveMoments(Q3_fft, Q3_fft_linear);                //conserves k4
+  }
 
   #pragma omp parallel for private(i) shared(Q3_fft, Q3_fft_linear)
   for(i=0;i<size_ft;i++){
@@ -917,7 +926,10 @@ void RK4_Inhomo(double *f, int l, fftw_complex *qHat, double **conv_weights, dou
   }
 
   ComputeQ(f1, Q1_fft, conv_weights);								// calculate the Fourier transform of Q(f1,M) using conv_weights1 & conv_weights2 for the weights in the convolution, then store the results of the Fourier transform in Q1_fft
-  conserveMoments(Q1_fft);   														// perform the explicit conservation calculation on Kn2^ = Q^(f1,f1) = Q1_fft
+  if(Conservation)
+  {
+	  conserveMoments(Q1_fft);   														// perform the explicit conservation calculation on Kn2^ = Q^(f1,f1) = Q1_fft
+  }
 
   FS(Q1_fft, fftOut);																	// set fftOut to the Fourier series representation of Q1_fft (i.e. the IFFT of Q1_fft, so that Kn^2 = fftOut = Q(Fn + dt*Kn^1, Fn + dt*Kn^1) )
   //ifft3D(Q1_fft, fftOut);
@@ -929,7 +941,10 @@ void RK4_Inhomo(double *f, int l, fftw_complex *qHat, double **conv_weights, dou
   }
 
   ComputeQ(f1, Q2_fft, conv_weights);								// calculate the Fourier tranform of Q(f1,M) using conv_weights1 & conv_weights2 for the weights in the convolution, then store the results of the Fourier transform in Q2_fft
-  conserveMoments(Q2_fft);   //conserves k3
+  if(Conservation)
+  {
+	  conserveMoments(Q2_fft);   //conserves k3
+  }
 
   FS(Q2_fft, fftOut);
   //ifft3D(Q2_fft, fftOut);
@@ -941,7 +956,10 @@ void RK4_Inhomo(double *f, int l, fftw_complex *qHat, double **conv_weights, dou
   }
 
   ComputeQ(f1, Q3_fft, conv_weights);								// calculate the Fourier transform of Q(f1,M) using conv_weights1 & conv_weights2 for the weights in the convolution, then store the results of the Fourier transform in Q3_fft
-  conserveMoments(Q3_fft);                //conserves k4
+  if(Conservation)
+  {
+	  conserveMoments(Q3_fft);                //conserves k4
+  }
 
   #pragma omp parallel for schedule(dynamic) private(j1,j2,j3,i,j,k,k_v,k_eta,kk,Q_re, Q_im) shared(l, l_local, qHat,U, dU) reduction(+:tp0, tp2,tp3,tp4, tp5)  // calculate the fourth step of RK4 (still in Fourier space though?!) - reduction(+: tmp0, tmp2, tmp3, tmp4, tmp5)
   for(int kt=0;kt<size_v;kt++){
@@ -1003,7 +1021,10 @@ int i,j,k, j1, j2, j3, k_v, k_eta, kk, l_local, k_loc;
   }
 
   ComputeQ_FandL(f1, Q1_fft, conv_weights, Q1_fft_linear, conv_weights_linear);
-  conserveMoments(Q1_fft, Q1_fft_linear);   	//conserves k2
+  if(Conservation)
+  {
+	  conserveMoments(Q1_fft, Q1_fft_linear);   	//conserves k2
+  }
 
   #pragma omp parallel for private(i) shared(Q1_fft, Q1_fft_linear)
   for(i=0;i<size_ft;i++){
@@ -1020,7 +1041,10 @@ int i,j,k, j1, j2, j3, k_v, k_eta, kk, l_local, k_loc;
   }
 
   ComputeQ_FandL(f1, Q2_fft, conv_weights, Q2_fft_linear, conv_weights_linear);
-  conserveMoments(Q2_fft, Q2_fft_linear);   //conserves k3
+  if(Conservation)
+  {
+	  conserveMoments(Q2_fft, Q2_fft_linear);   //conserves k3
+  }
 
   #pragma omp parallel for private(i) shared(Q2_fft, Q2_fft_linear)
   for(i=0;i<size_ft;i++){
@@ -1036,7 +1060,10 @@ int i,j,k, j1, j2, j3, k_v, k_eta, kk, l_local, k_loc;
   }
 
   ComputeQ_FandL(f1, Q3_fft, conv_weights, Q3_fft_linear, conv_weights_linear);
-  conserveMoments(Q3_fft, Q3_fft_linear);                //conserves k4
+  if(Conservation)
+  {
+	  conserveMoments(Q3_fft, Q3_fft_linear);                //conserves k4
+  }
 
   #pragma omp parallel for private(i) shared(Q3_fft, Q3_fft_linear)
   for(i=0;i<size_ft;i++){
@@ -1099,7 +1126,10 @@ void RK4_Homo(double *f, fftw_complex *qHat, double **conv_weights, double *U, d
   }
 
   ComputeQ(f1, Q1_fft, conv_weights);													// calculate the Fourier tranform of Q(f1,f1) using conv_weights for the weights in the convolution, then store the results of the Fourier transform in Q1_fft
-  conserveMoments(Q1_fft);   															// perform the explicit conservation calculation on Kn2^ = Q^(f1,f1) = Q1_fft
+  if(Conservation)
+  {
+	  conserveMoments(Q1_fft);   															// perform the explicit conservation calculation on Kn2^ = Q^(f1,f1) = Q1_fft
+  }
 
   FS(Q1_fft, fftOut);																	// set fftOut to the Fourier series representation of Q1_fft (i.e. the IFFT of Q1_fft, so that Kn^2 = fftOut = Q(Fn + dt*Kn^1, Fn + dt*Kn^1) )
   //ifft3D(Q1_fft, fftOut);
@@ -1111,7 +1141,10 @@ void RK4_Homo(double *f, fftw_complex *qHat, double **conv_weights, double *U, d
   }
 
   ComputeQ(f1, Q2_fft, conv_weights); //collides
-  conserveMoments(Q2_fft);   //conserves k3
+  if(Conservation)
+  {
+	  conserveMoments(Q2_fft);   //conserves k3
+  }
 
   FS(Q2_fft, fftOut);
   //ifft3D(Q2_fft, fftOut);
@@ -1123,7 +1156,10 @@ void RK4_Homo(double *f, fftw_complex *qHat, double **conv_weights, double *U, d
   }
 
   ComputeQ(f1, Q3_fft, conv_weights); //collides
-  conserveMoments(Q3_fft);                //conserves k4
+  if(Conservation)
+  {
+	  conserveMoments(Q3_fft);                //conserves k4
+  }
 
   #pragma omp parallel for schedule(dynamic) private(k_loc,j1,j2,j3,i,j,k,k_v,k_eta,kk,Q_re, Q_im, tp0, tp2,tp3,tp4, tp5) shared(qHat,U, dU)   // calculate the fourth step of RK4 (still in Fourier space though?!) - reduction(+: tmp0, tmp2, tmp3, tmp4, tmp5)
   for(k_v = myrank_mpi*chunksize_dg; k_v < (myrank_mpi+1)*chunksize_dg; k_v++){
@@ -1287,7 +1323,10 @@ void RK4Linear(double *f, fftw_complex *MaxwellHat, int l, fftw_complex *qHat, d
   }
 
   ComputeQLinear(f1, MaxwellHat, Q1_fft, conv_weights);								// calculate the Fourier transform of Q(f1,M) using conv_weights1 & conv_weights2 for the weights in the convolution, then store the results of the Fourier transform in Q1_fft
-  conserveMoments(Q1_fft);   														// perform the explicit conservation calculation on Kn2^ = Q^(f1,f1) = Q1_fft
+  if(Conservation)
+  {
+	  conserveMoments(Q1_fft);   														// perform the explicit conservation calculation on Kn2^ = Q^(f1,f1) = Q1_fft
+  }
 
   FS(Q1_fft, fftOut);																	// set fftOut to the Fourier series representation of Q1_fft (i.e. the IFFT of Q1_fft, so that Kn^2 = fftOut = Q(Fn + dt*Kn^1, Fn + dt*Kn^1) )
   //ifft3D(Q1_fft, fftOut);
@@ -1299,7 +1338,10 @@ void RK4Linear(double *f, fftw_complex *MaxwellHat, int l, fftw_complex *qHat, d
   }
 
   ComputeQLinear(f1, MaxwellHat, Q2_fft, conv_weights);								// calculate the Fourier tranform of Q(f1,M) using conv_weights1 & conv_weights2 for the weights in the convolution, then store the results of the Fourier transform in Q2_fft
-  conserveMoments(Q2_fft);   //conserves k3
+  if(Conservation)
+  {
+	  conserveMoments(Q2_fft);   //conserves k3
+  }
 
   FS(Q2_fft, fftOut);
   //ifft3D(Q2_fft, fftOut);
@@ -1311,7 +1353,10 @@ void RK4Linear(double *f, fftw_complex *MaxwellHat, int l, fftw_complex *qHat, d
   }
 
   ComputeQLinear(f1, MaxwellHat, Q3_fft, conv_weights);								// calculate the Fourier transform of Q(f1,M) using conv_weights1 & conv_weights2 for the weights in the convolution, then store the results of the Fourier transform in Q3_fft
-  conserveMoments(Q3_fft);                //conserves k4
+  if(Conservation)
+  {
+	  conserveMoments(Q3_fft);                //conserves k4
+  }
 
   #pragma omp parallel for schedule(dynamic) private(j1,j2,j3,i,j,k,k_v,k_eta,kk,Q_re, Q_im) shared(l, l_local, qHat,U, dU) reduction(+:tp0, tp2,tp3,tp4, tp5)  // calculate the fourth step of RK4 (still in Fourier space though?!) - reduction(+: tmp0, tmp2, tmp3, tmp4, tmp5)
   for(int kt=0;kt<size_v;kt++){

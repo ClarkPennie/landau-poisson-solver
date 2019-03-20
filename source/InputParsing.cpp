@@ -305,9 +305,43 @@ void ReadLinearLandau(GRVY_Input_Class& iparse)												// Function to read t
 	}
 }
 
+void ReadConsOptions(GRVY_Input_Class& iparse)												// Function to read the Boolean options to decide if conservation is enforced in the spectral method and at what level
+{
+	// Check if Conservation has been set (if not, set default value to true):
+	iparse.Read_Var("Conservation",&Conservation,true);
+	// Check if MassConsOnly has been set (if not, set default value to false):
+	iparse.Read_Var("MassConsOnly",&MassConsOnly,false);
+	// Print the value of Conservation from the processor with rank 0:
+	if(myrank_mpi==0)
+	{
+		std::cout << "--> Conservation = " << Conservation << std::endl << std::endl;
+		// If conserveation routines are enforced, also print if conserving only mass or all moments:
+		if(Conservation)
+		{
+			std::cout << "Conservation is being enforced on the collision routines."
+				<< std::endl << std::endl;
+			std::cout << "--> MassConsOnly = " << MassConsOnly << std::endl << std::endl;
+			if(MassConsOnly)
+			{
+				std::cout << "Only mass is being conserved."
+					<< std::endl << std::endl;
+			}
+			else
+			{
+				std::cout << "All of mass, momentum and energy are being conserved." << std::endl << std::endl;
+			}
+		}
+		else
+		{
+			std::cout << "Conservation is NOT being enforced on the collision routines."
+				<< std::endl << std::endl;
+		}
+	}
+}
+
 void ReadMassConsOnly(GRVY_Input_Class& iparse)												// Function to read the Boolean option to decide if running with single species collisions or mixed
 {
-	// Check if FullandLinear has been set and print its value from the
+	// Check if MassConsOnly has been set and print its value from the
 	// processor with rank 0 (if not, set default value to false):
 	if( iparse.Read_Var("MassConsOnly",&MassConsOnly,false) )
 	{
@@ -326,7 +360,6 @@ void ReadMassConsOnly(GRVY_Input_Class& iparse)												// Function to read t
 		}
 	}
 }
-
 
 void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT, 
 							int& Nx, int& Nv, int& N, double& nu, double& dt, double& A_amp, 
