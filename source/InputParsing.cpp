@@ -203,39 +203,31 @@ void ReadGamma(GRVY_Input_Class& iparse, int& gamma)												// Function to r
 {
 	// Check if the value of gamma has been set and print its value from the
 	// processor with rank 0 (if not, set default value to -3)
-	if( iparse.Read_Var("gamma",&gamma,-3) )
+	iparse.Read_Var("gamma",&gamma,-3);
+	if(myrank_mpi==0)
 	{
 		std::cout << "--> gamma = " << gamma << std::endl << std::endl;
 		if(gamma==-3)
 		{
-			if(myrank_mpi==0)
-			{
-				std::cout << "Running with 'True Landau' collisions." << std::endl << std::endl;
-			}
+			std::cout << "Running with 'True Landau' collisions." << std::endl << std::endl;
 		}
 		else if(gamma==0)
 		{
-			if(myrank_mpi==0)
-			{
-				std::cout << "Running with Maxwell Molecule collisions." << std::endl << std::endl;
-			}
+			std::cout << "Running with Maxwell Molecule collisions." << std::endl << std::endl;
 		}
 		else if(gamma==1)
 		{
-			if(myrank_mpi==0)
-			{
-				std::cout << "Running with Hard Sphere collisions." << std::endl << std::endl;
-			}
+			std::cout << "Running with Hard Sphere collisions." << std::endl << std::endl;
 		}
 		else
 		{
-			if(myrank_mpi==0)
-			{
-				std::cout << "Program cannot run... Please choose a different value for gamma." << std::endl;
-				std::cout << "Currently the code can only use gamma = -3 (True Landau), 0 (Maxwell Molecules) or 1 (Hard Spheres)" << std::endl;
-			}
-			exit(1);
+			std::cout << "Program cannot run... Please choose a different value for gamma." << std::endl;
+			std::cout << "Currently the code can only use gamma = -3 (True Landau), 0 (Maxwell Molecules) or 1 (Hard Spheres)" << std::endl;
 		}
+	}
+	if((gamma!=-3) && (gamma!=0) && (gamma!=1))
+	{
+		exit(1);
 	}
 }
 

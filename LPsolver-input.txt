@@ -11,12 +11,12 @@
 # Global input variable definitions
 #--------------------------------------------
 
-flag     = ConsTest
+flag     = TrueLandauT100
 
-nT       = 10 	                # Number of time-steps
-Nx       = 16  	                # Number of space cells
-Nv       = 16	                # Number of velocity cells in each direction
-N        = 8 	                # Number of Fourier modes
+nT       = 10000                # Number of time-steps
+Nx       = 24  	                # Number of space cells
+Nv       = 24	                # Number of velocity cells in each direction
+N        = 16 	                # Number of Fourier modes
 nu       = 0.05                 # Value of (Knudsen number)^{-1}
 dt       = 0.01                 # Size of each time-step
 
@@ -45,7 +45,7 @@ FullandLinear    = False        # Include electron-ion collisions
 LinearLandau     = False        # Run with Linear Landau operator Q(f,M)
 
 # Choose level of conservation:
-Conservation     = False        # Run conservation routines
+Conservation     = True         # Run conservation routines
 MassConsOnly     = False        # Run with only conservation of mass
 
 #--------------------------------------------

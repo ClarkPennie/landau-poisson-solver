@@ -262,7 +262,7 @@ void SetInit_4H_Homo(double *U)																				// function to calculate the 
 {
     int j1, j2, j3, k, m1,m2,m3,nt=5, p;																// declare j1, j2, j3 (to represent cell (j1,j2,j3) in v-space), k (the index of cell (j1,j2,j3) in U), m1, m2, m3 (counters for the Gaussian quadrature in v-space), nt (the number of points in the quadrature) & p (to loop through the four Maxwellians)
     double tp, tp0, tp5, tmp0, tmp1, tmp2, tmp3, tmp4;													// declare tp, tp0, tmp0, tmp1, tmp2, tmp3, tmp4 (temporary values while calculating the quadrature for the integral w.r.t. v)
-    double C=0.02;		// shift of Maxwellians
+    double C=1;		// shift of Maxwellians
 	double T0 = 0.4;																							// declare T0 (the temperature of the Maxwellian in the initial condition) and set its value
     if(myrank_mpi == 0)
     {
