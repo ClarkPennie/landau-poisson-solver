@@ -51,6 +51,9 @@ AX_PATH_GRVY([0.32],[yes])
 CPPFLAGS="${GRVY_CFLAGS} ${CPPFLAGS}"
 LDFLAGS="${GRVY_LIBS} ${LDFLAGS}"
 
+# LCOV check
+AX_CODE_COVERAGE
+
 # A simple fftw check
 AC_ARG_WITH(fftw, 
   [AS_HELP_STRING([--with-fftw[=DIR]],[root directory of FFTW installation (default = FFTW_DIR)])],
