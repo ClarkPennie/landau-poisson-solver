@@ -1,5 +1,5 @@
 AC_PREREQ([2.69])
-AC_INIT([landau], [0.3.1], [BUG-REPORT-ADDRESS])
+AC_INIT([landau], [0.4.0], [BUG-REPORT-ADDRESS])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([/source/collisionRoutines_1.h])
 AC_CONFIG_HEADERS([config.h])
@@ -111,5 +111,5 @@ AC_CHECK_HEADERS([malloc.h stdlib.h])
 AC_FUNC_MALLOC
 AC_CHECK_FUNCS([floor pow sqrt])
 
-AC_OUTPUT(Makefile source/Makefile)
+AC_OUTPUT(Makefile source/Makefile tests/Makefile)
 AX_SUMMARIZE_CONFIG

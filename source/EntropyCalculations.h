@@ -24,6 +24,10 @@
 
 double computeEntropy(double *U);
 
+double computeEntropy_Inhomo(double *U);
+
+double computeEntropy_Homo(double *U);
+
 double computeEntropy_wAvg(double *AvgVals);
 
 double computeRelEntropy(double *U, double *f_equi);

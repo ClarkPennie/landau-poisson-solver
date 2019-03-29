@@ -1,0 +1,15 @@
+sudo: required
+language: cpp
+
+services:
+  - docker
+
+before_install:
+  - docker pull clarkp/test-env:v1.1
+  - export DOCKER_RUN="docker run -v ${TRAVIS_BUILD_DIR}:/home/test/ clarkp/test-env:v1.1"
+
+script:
+  - ${DOCKER_RUN} /bin/bash -l -c "module load fftw openblas && module list && which bats && autoreconf -f -i && ./configure --with-grvy=/usr/local && make && make check; cat tests/LPsolver_tests.log"
+
+notifications:
+  email: false

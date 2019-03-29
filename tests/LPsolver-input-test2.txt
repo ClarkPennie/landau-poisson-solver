@@ -11,22 +11,21 @@
 # Global input variable definitions
 #--------------------------------------------
 
-flag     = Test4
+flag     = Test2
 
-nT       = 10		            # Number of time-steps
-Nx       = 10		            # Number of space cells
-Nv       = 8		            # Number of velocity cells in each direction
-N        = 8 		            # Number of Fourier modes
-nu       = 0.05                 # Value of (Knudsen number)^{-1}
-dt       = 0.01                 # Size of each time-step
+nT       = 5  		            # Number of time-steps
+Nx       = 16  		            # Number of space cells
+Nv       = 16		            # Number of velocity cells in each direction
+N        = 8		            # Number of Fourier modes
+nu       = 0.05                     # Value of (Knudsen number)^{-1}
+dt       = 0.01                     # Size of each time-step
 
-gamma    = -3                   # Value of gamma in collision kernel
 #--------------------------------------------
 # Boolean options to determine problem
 #--------------------------------------------
 
 # Options for initial conditions (choose one):
-Damping          = True         # Landau Damping ICs
+Damping          = False        # Landau Damping ICs
 TwoStream        = False        # Two Stream ICs
 FourHump         = True         # Four Hump ICs
 TwoHump          = False        # Two Hump ICs
@@ -35,9 +34,6 @@ Doping           = False        # Non-uniform doping ICs
 # Choose if running for the first time or a subsequent run:
 First            = True         # Running for the first time with ICs
 Second           = False        # Picking up from a previous run
-
-# Choose if running the space homogeneous version:
-Homogeneous      = True         # Run for the space homogeneous setting
 
 # Choose how the collisions are being modelled:
 FullandLinear    = False        # Include electron-ion collisions
