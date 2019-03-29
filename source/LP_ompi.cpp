@@ -32,7 +32,7 @@ double A_amp, k_wave;																				// declare A_amp (the amplitude of the 
 double Lx, Lv;																						// declare Lx (for 0 < x < Lx) and set it to & Lv (for -Lv < v < Lv in the advection problem)
 double Lv_L, Lv_H;
 double L_v, R_v, L_eta;																				// declare L_v (for -Lv < v < Lv in the collision problem), R_v (for v in B_(R_v) in the collision problem) & L_eta (for Fourier space, -L_eta < eta < L_eta)
-double L_v_L, L_v_H;
+double L_v_L, L_v_H, L_eta_L, L_eta_H;
 double h_eta, h_v;																					// declare h_eta (the Fourier stepsize) & h_v (also the velocity stepsize but for the collision problem)
 double h_eta_L, h_eta_H, h_v_L, h_v_H;
 double nu, dt; 																						// declare nu (1/knudson#), dt (the timestep) & nthread (the number of OpenMP threads)
@@ -44,6 +44,7 @@ double T_L, T_R;																					// declare T_L & T_R (the temperatures at t
 double eps;																							// declare eps (the dielectric constant in Poisson's equation: div(eps*grad(Phi)) = R(x,t))
 
 double *v, *eta;																					// declare v (the velocity variable) & eta (the Fourier space variable)
+double *v_L, *v_H, *eta_L, *eta_H;
 double *wtN;																						// declare wtN (the trapezoidal rule weights to be used)
 double scale, scale3, scaleL, scalev;																// declare scale (the 1/sqrt(2pi) factor appearing in Gaussians), scale (the 1/(sqrt(2pi))^3 factor appearing in the Maxwellian), scaleL (the volume of the velocity domain) & scalev (the volume of a discretised velocity element)
 
@@ -354,16 +355,33 @@ int main()
 		scale3 = pow(scale, 3.0);																	// set scale3 to scale^3
 
 		//INITIALISE VELOCITY AND FOURIER DOMAINS:
-		L_v = Lv;//sqrt(0.5*(double)N*PI); 															// set L_v to Lv
+	/*
+        L_v = Lv;//sqrt(0.5*(double)N*PI); 															// set L_v to Lv
 		L_eta = 0.5*(double)(N-1)*PI/L_v;					// BUG: N-1?							// set L_eta to (N-1)*Pi/(2*L_v)
 		h_v = 2.0*L_v/(double)(N-1);						// BUG: N-1?// set h_v to 2*L_v/(N-1)
-		h_v_L = 2.0*L_v_L/(double)(N-1);
-        h_v_H = 2.0*L_v_H/(double)(N-1);
         h_eta = 2.0*L_eta/(double)(N);						// BUG: N?								// set h_eta to 2*L_eta/N
-		for(i=0;i<N;i++)																			// store the discretised velocity and Fourier space points
+	*/
+        L_v_L=Lv_L;
+        L_v_H=Lv_H;
+        L_eta_L = 0.5*(double)(N-1)*PI/L_v_L;
+        L_eta_H = 0.5*(double)(N-1)*PI/L_v_H;
+        h_v_L = 2.0*L_v_L/(double)(N-1);
+        h_v_H = 2.0*L_v_H/(double)(N-1);
+        h_eta_L = 2.0*L_eta_L/(double)(N);
+        h_eta_H = 2.0*L_eta_H/(double)(N);
+        for(i=0;i<N;i++)																			// store the discretised velocity and Fourier space points
 		{
+            
+        /*
 			eta[i] = -L_eta + (double)i*h_eta;														// set the ith value of eta to -L_eta + i*h_eta
 			v[i] = -L_v + (double)i*h_v;															// set the ith value of v to -L_v + i*h_v
+        */
+            
+            eta_L[i] = -L_eta_L + (double)i*h_eta_L;                                                        // set the ith value of eta_L to -L_eta_L + i*h_eta_L
+            v_L[i] = -L_v_L + (double)i*h_v_L;                                                             // set the ith value of v_L to -L_v_L + i*h_v_L
+            
+            eta_H[i] = -L_eta_H + (double)i*h_eta_H;                                                        // set the ith value of eta_H to -L_eta_H + i*h_eta_H
+            v_H[i] = -L_v_H + (double)i*h_v_H;                                                              // set the ith value of v_H to -L_v_H + i*h_v_H
 		}
 
 		trapezoidalRule(N, wtN);																	// set wtN to the weights required for a trapezoidal rule with N points

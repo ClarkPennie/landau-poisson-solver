@@ -12,15 +12,15 @@
 double wt[5]={0.5688888888888889, 0.4786286704993665, 0.4786286704993665,0.2369268850561891, 0.2369268850561891};				// weights for Gaussian quadrature
 double vt[5]={0., -0.5384693101056831,0.5384693101056831,-0.9061798459386640,0.9061798459386640};								// node values for Gaussian quadrature over the interval [-1,1]
 
-double Gridv(double m){ //v in [-Lv,Lv]
+double Gridv(double m){     //v in [-Lv,Lv]
 	return (-Lv+(m+0.5)*dv);
 }
 
-double Gridv_L(double m){ //v in [-Lv_L,Lv_L]
+double Gridv_L(double m){  //v in [-Lv_L,Lv_L]
     return (-Lv_L+(m+0.5)*dv_L);
 }
 
-double Gridv_H(double m){ //v in [-Lv_H,Lv_H]
+double Gridv_H(double m){  //v in [-Lv_H,Lv_H]
     return (-Lv_H+(m+0.5)*dv_H);
 }
 

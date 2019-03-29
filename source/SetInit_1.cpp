@@ -275,7 +275,7 @@ void SetInit_4H_Multispecies(double *U)                                         
                         {
                             for(m3=0;m3<nt;m3++)
                             {
-                                tp = wt[m1]*wt[m2]*wt[m3]*Mw(Gridv_L((double)j1)+0.5*dv*vt[m1] + pow(-1,p), Gridv_L((double)j2)+0.5*dv*vt[m2] + pow(-1,p), Gridv_L((double)j3)+0.5*dv*vt[m3] + pow(-1,p), T0);        // calculate w_m1*w_m2*w_m3*Mw(v_m1+(-1)^p,v_m2+(-1)^p,v_m3+(-1)^p), a Maxwellian shifted to center at v_j = (-1)^p, which appears in all quadrature integral approximations
+                                tp = wt[m1]*wt[m2]*wt[m3]*Mw(Gridv_L((double)j1)+0.5*dv   *vt[m1] + pow(-1,p), Gridv_L((double)j2)+0.5*dv*vt[m2] + pow(-1,p), Gridv_L((double)j3)+0.5*dv*vt[m3] + pow(-1,p), T0);        // calculate w_m1*w_m2*w_m3*Mw(v_m1+(-1)^p,v_m2+(-1)^p,v_m3+(-1)^p), a Maxwellian shifted to center at v_j = (-1)^p, which appears in all quadrature integral approximations
                                 
                                 tp = wt[m1]*wt[m2]*wt[m3]*Mw(Gridv_H((double)j1)+0.5*dv*vt[m1] + pow(-1,p), Gridv_H((double)j2)+0.5*dv*vt[m2] + pow(-1,p), Gridv_H((double)j3)+0.5*dv*vt[m3] + pow(-1,p), T0);        // calculate w_m1*w_m2*w_m3*Mw(v_m1+(-1)^p,v_m2+(-1)^p,v_m3+(-1)^p), a Maxwellian shifted to center at v_j = (-1)^p, which appears in all quadrature integral approximations
                                 
