@@ -213,6 +213,7 @@ void FindNegVals_old(double *U, int *NegVals)																							// function 
 }
 */
 
+/* DEBUG FUNCTIONS
 void CheckNegVals(double *U, int *NegVals, double *AvgVals)
 {
 	if(Homogeneous)
@@ -268,5 +269,5 @@ void CheckNegVals_Homo(double *U, int *NegVals, double *AvgVals)																
 		}
 	}
 }
-
+*/
 

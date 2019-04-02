@@ -124,8 +124,8 @@
 #    assert_success
 }
 
-@test "Space homogeneous test" {
-    echo -e "#\n# TESTING SPACE HOMOGENEOUS VERSION" >&3
+@test "Space homogeneous gamma=-3 test" {
+    echo -e "#\n# TESTING SPACE HOMOGENEOUS VERSION WITH COULOMB INTERACTIONS" >&3
     echo "#----------------------------------------------------------" >&3
     # verify executable is there
     run ls ../source/solver

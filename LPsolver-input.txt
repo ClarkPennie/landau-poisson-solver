@@ -11,7 +11,7 @@
 # Global input variable definitions
 #--------------------------------------------
 
-flag     = Test4
+flag     = Test5
 
 nT       = 5 	                # Number of time-steps
 Nx       = 16  	                # Number of space cells
@@ -20,7 +20,7 @@ N        = 8 	                # Number of Fourier modes
 nu       = 0.05                 # Value of (Knudsen number)^{-1}
 dt       = 0.01                 # Size of each time-step
 
-gamma    = -3                   # Value of gamma in collision kernel
+gamma    = 1                    # Value of gamma in collision kernel
 #--------------------------------------------
 # Boolean options to determine problem
 #--------------------------------------------
