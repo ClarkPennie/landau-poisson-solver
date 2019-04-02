@@ -69,13 +69,13 @@ if test "x$enable_coverage" = "xyes"; then
         fi
      done
 
-     if test "x$raw_compiler" != "xgcc" ; then
-   	 AC_MSG_ERROR([code coverage analysis requires gcc, not $raw_compiler])
-     else
- 	 CFLAGS="${CFLAGS_GCOV} ${CFLAGS}"
- 	 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[], 
+#     if test "x$raw_compiler" != "xgcc" ; then
+#   	 AC_MSG_ERROR([code coverage analysis requires gcc, not $raw_compiler])
+#     else
+      CFLAGS="${CFLAGS_GCOV} ${CFLAGS}"
+      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[], 
 	 	[AC_MSG_ERROR([unable to compile with code coverage ($CC)])])
-     fi
+#     fi
 
      AC_LANG_POP([C])
    fi
@@ -97,13 +97,13 @@ if test "x$enable_coverage" = "xyes"; then
          fi
       done
 
-      if test "x$raw_compiler" != "xg++" ; then
-      	 AC_MSG_ERROR([code coverage analysis requires g++, not $raw_compiler])
-      else
-      	 CXXFLAGS="${CFLAGS_GCOV} ${CXXFLAGS}"
-      	 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[], 
+#      if test "x$raw_compiler" != "xg++" ; then
+#      	 AC_MSG_ERROR([code coverage analysis requires g++, not $raw_compiler])
+#      else
+      CXXFLAGS="${CFLAGS_GCOV} ${CXXFLAGS}"
+      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[], 
 	 	[AC_MSG_ERROR([unable to compile with code coverage ($CXX)])])
-      fi
+#      fi
 
       AC_LANG_POP([C++])
    fi
