@@ -109,7 +109,7 @@ void CheckICOptions(std::string& IC_flag)															// Function to verify th
 	{
 		if(myrank_mpi==0)
 		{
-			std::cout << "Program cannot run..." << IC_count << "initial conditions have been chosen." 
+			std::cout << "Program cannot run... " << IC_count << " initial conditions have been chosen." 
 						<< std::endl;
 			std::cout << "Please ONLY set ONE of Damping, TwoStream, FourHump or TwoHump to true "
 							"in LPsolver-input.txt." << std::endl;
@@ -327,10 +327,27 @@ void ReadMassConsOnly(GRVY_Input_Class& iparse)												// Function to read t
 	}
 }
 
+void ReadNoField(GRVY_Input_Class& iparse)												// Function to read the Boolean option to decide if running without a field
+{
+	// Check if NoField has been set and print its value from the
+	// processor with rank 0 (if not, set default value to false):
+	if( iparse.Read_Var("NoField",&NoField,false) )
+	{
+		if(myrank_mpi==0)
+		{
+			std::cout << "--> NoField = " << NoField << std::endl << std::endl;
+			if(NoField)
+			{
+				std::cout << "The advection process is being run without a field."
+					<< std::endl << std::endl;
+			}
+		}
+	}
+}
 
 void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT, 
 							int& Nx, int& Nv, int& N, double& nu, double& dt, double& A_amp, 
-							double& k_wave, double& Lv, double& Lx)								// Function to read all input parameters (IC_flag, nT,  Nx, Nv, N, nu, dt, A_amp, k_wave, L_v & L_x)
+							double& k_wave, double& Lv, double& Lx, double& T_hump, double& shift)					// Function to read all input parameters (IC_flag, nT,  Nx, Nv, N, nu, dt, A_amp, k_wave, L_v & L_x)
 {
 	// Print a header for the input parameters from the processor with rank 0:
 	if(myrank_mpi==0)
@@ -462,6 +479,8 @@ void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 	{
 		iparse.Read_Var("FourHump/A_amp",&A_amp,0.);
 		iparse.Read_Var("FourHump/k_wave",&k_wave,0.5);
+		iparse.Read_Var("FourHump/T_hump",&T_hump,0.4);
+		iparse.Read_Var("FourHump/shift",&shift,1.);
 		if (! iparse.Read_Var("FourHump/Lv",&Lv) )
 		{
 			PrintError("FourHump/Lv");
@@ -504,6 +523,11 @@ void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 	{
 		printf("--> %-11s = %g\n","A_amp",A_amp);
 		printf("--> %-11s = %g\n","k_wave",k_wave);
+		if(FourHump)
+		{
+			printf("--> %-11s = %g\n","T_hump",T_hump);
+			printf("--> %-11s = %g\n\n","4Hump shift",shift);
+		}
 		printf("--> %-11s = %g\n","Lv",Lv);
 		printf("--> %-11s = %g\n\n","Lx",Lx);
 	}

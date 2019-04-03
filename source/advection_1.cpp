@@ -69,7 +69,7 @@ void DirichletBC(vector<double>& Ub_vals, int i, int j1, int j2, int j3)
 }
 //#endif	/* Doping*/
 
-double I1(double *U, int k, int l) // Calculate the first inegtral in H_(i,j), namely \int v1*f*phi_x dxdv
+double I1(double *U, int k, int l) // Calculate the first integral in H_(i,j), namely \int v1*f*phi_x dxdv
 {
   double result;
   int i, j1, j2, j3; // k=i*Nv^3 + (j1*Nv*Nv + j2*Nv + j3)
@@ -416,17 +416,21 @@ void RK3(double *U) // RK3 for f_t = H(f)
  
   MPI_Status status;
   
-  ce = computePhi_x_0(U); 
+  if(! NoField)
+  {
+	  ce = computePhi_x_0(U);
 
-  #pragma omp parallel for private(i) shared(U,cp, intE, intE1)
-  for(i=0;i<Nx;i++){
-    cp[i] = computeC_rho(U,i); intE[i] = Int_E(U,i); intE1[i] = Int_E1st(U,i); 
+	  #pragma omp parallel for private(i) shared(U,cp, intE, intE1)
+	  for(i=0;i<Nx;i++){
+		cp[i] = computeC_rho(U,i); intE[i] = Int_E(U,i); intE1[i] = Int_E1st(U,i);
+	  }
+
+	  #pragma omp parallel for private(i) shared(intE2)
+	  for(i=0;i<Nx;i++){
+		intE2[i] = Int_E2nd(U,i); // BUG: Int_E2nd() require knowldege of cp
+	  }
   }
   
-  #pragma omp parallel for private(i) shared(intE2)
-  for(i=0;i<Nx;i++){
-    intE2[i] = Int_E2nd(U,i); // BUG: Int_E2nd() require knowldege of cp 
-  }
   /*
   for(i=0;i<Nx;i++)
   {
@@ -437,12 +441,24 @@ void RK3(double *U) // RK3 for f_t = H(f)
   for(k=chunksize_dg*myrank_mpi;k<chunksize_dg*(myrank_mpi+1);k++){ 
     k_local = k%chunksize_dg;
     
-    tp0=I1(U,k,0)-I2(U,k,0)-I3(U,k,0)+I5(U,k,0);
-    tp1=I1(U,k,1)-I2(U,k,1)-I3(U,k,1)+I5(U,k,1);
-    tp2=I1(U,k,2)-I2(U,k,2)-I3(U,k,2)+I5(U,k,2);
-    tp3=I1(U,k,3)-I2(U,k,3)-I3(U,k,3)+I5(U,k,3);
-    tp4=I1(U,k,4)-I2(U,k,4)-I3(U,k,4)+I5(U,k,4);
-    tp5=I1(U,k,5)-I2(U,k,5)-I3(U,k,5)+I5(U,k,5);
+	if(NoField)
+	{
+		tp0=I1(U,k,0)-I3(U,k,0);
+		tp1=I1(U,k,1)-I3(U,k,1);
+		tp2=I1(U,k,2)-I3(U,k,2);
+		tp3=I1(U,k,3)-I3(U,k,3);
+		tp4=I1(U,k,4)-I3(U,k,4);
+		tp5=I1(U,k,5)-I3(U,k,5);
+	}
+	else
+	{
+		tp0=I1(U,k,0)-I2(U,k,0)-I3(U,k,0)+I5(U,k,0);
+		tp1=I1(U,k,1)-I2(U,k,1)-I3(U,k,1)+I5(U,k,1);
+		tp2=I1(U,k,2)-I2(U,k,2)-I3(U,k,2)+I5(U,k,2);
+		tp3=I1(U,k,3)-I2(U,k,3)-I3(U,k,3)+I5(U,k,3);
+		tp4=I1(U,k,4)-I2(U,k,4)-I3(U,k,4)+I5(U,k,4);
+		tp5=I1(U,k,5)-I2(U,k,5)-I3(U,k,5)+I5(U,k,5);
+	}
 
     //H[k_local][0] = (19*tp[0]/4. - 15*tp[5])/dx/scalev;
     //H[k_local][5] = (60*tp[5] - 15*tp[0])/dx/scalev;	
@@ -473,29 +489,43 @@ void RK3(double *U) // RK3 for f_t = H(f)
   MPI_Barrier(MPI_COMM_WORLD);
   /////////////////// 1st step of RK3 done//////////////////////////////////////////////////////// 
     
-  ce = computePhi_x_0(U1); 
+  if(! NoField)
+  {
+	  ce = computePhi_x_0(U1);
 
-  #pragma omp parallel for private(i) shared(U1,cp, intE, intE1)
-  for(i=0;i<Nx;i++){
-    cp[i] = computeC_rho(U1,i); intE[i] = Int_E(U1,i); intE1[i] = Int_E1st(U1,i); 
-  }
-  
-  #pragma omp parallel for private(i) shared(U1,intE2)
-  for(i=0;i<Nx;i++){
-    intE2[i] = Int_E2nd(U1,i); // BUG: Int_E2nd() require knowldege of cp 
+	  #pragma omp parallel for private(i) shared(U1,cp, intE, intE1)
+	  for(i=0;i<Nx;i++){
+		cp[i] = computeC_rho(U1,i); intE[i] = Int_E(U1,i); intE1[i] = Int_E1st(U1,i);
+	  }
+
+	  #pragma omp parallel for private(i) shared(U1,intE2)
+	  for(i=0;i<Nx;i++){
+		intE2[i] = Int_E2nd(U1,i); // BUG: Int_E2nd() require knowldege of cp
+	  }
   }
   
   #pragma omp parallel for schedule(dynamic) private(H, k, k_local, l, tp0, tp1, tp2, tp3, tp4, tp5)  shared(U,Utmp)
   for(k=chunksize_dg*myrank_mpi;k<chunksize_dg*(myrank_mpi+1);k++){      
     k_local = k%chunksize_dg;
     
-    tp0=I1(U1,k,0)-I2(U1,k,0)-I3(U1,k,0)+I5(U1,k,0);
-    tp1=I1(U1,k,1)-I2(U1,k,1)-I3(U1,k,1)+I5(U1,k,1);
-    tp2=I1(U1,k,2)-I2(U1,k,2)-I3(U1,k,2)+I5(U1,k,2);
-    tp3=I1(U1,k,3)-I2(U1,k,3)-I3(U1,k,3)+I5(U1,k,3);
-    tp4=I1(U1,k,4)-I2(U1,k,4)-I3(U1,k,4)+I5(U1,k,4);
-    tp5=I1(U1,k,5)-I2(U1,k,5)-I3(U1,k,5)+I5(U1,k,5);
-
+	if(NoField)
+	{
+		tp0=I1(U1,k,0)-I3(U1,k,0);
+		tp1=I1(U1,k,1)-I3(U1,k,1);
+		tp2=I1(U1,k,2)-I3(U1,k,2);
+		tp3=I1(U1,k,3)-I3(U1,k,3);
+		tp4=I1(U1,k,4)-I3(U1,k,4);
+		tp5=I1(U1,k,5)-I3(U1,k,5);
+	}
+	else
+	{
+		tp0=I1(U1,k,0)-I2(U1,k,0)-I3(U1,k,0)+I5(U1,k,0);
+		tp1=I1(U1,k,1)-I2(U1,k,1)-I3(U1,k,1)+I5(U1,k,1);
+		tp2=I1(U1,k,2)-I2(U1,k,2)-I3(U1,k,2)+I5(U1,k,2);
+		tp3=I1(U1,k,3)-I2(U1,k,3)-I3(U1,k,3)+I5(U1,k,3);
+		tp4=I1(U1,k,4)-I2(U1,k,4)-I3(U1,k,4)+I5(U1,k,4);
+		tp5=I1(U1,k,5)-I2(U1,k,5)-I3(U1,k,5)+I5(U1,k,5);
+	}
     //H[k_local][0] = (19*tp[0]/4. - 15*tp[5])/dx/scalev;
     //H[k_local][5] = (60*tp[5] - 15*tp[0])/dx/scalev;	
     H[0] = (19*tp0/4. - 15*tp5)/dx/scalev;
@@ -525,28 +555,43 @@ void RK3(double *U) // RK3 for f_t = H(f)
   MPI_Barrier(MPI_COMM_WORLD);
   /////////////////// 2nd step of RK3 done//////////////////////////////////////////////////////// 
    
-ce = computePhi_x_0(U1); 
+  if(! NoField)
+  {
+	  ce = computePhi_x_0(U1);
 
-  #pragma omp parallel for private(i) shared(U1,cp, intE, intE1)
-  for(i=0;i<Nx;i++){
-    cp[i] = computeC_rho(U1,i); intE[i] = Int_E(U1,i); intE1[i] = Int_E1st(U1,i); 
-  }
-  
-  #pragma omp parallel for private(i) shared(U1,intE2)
-  for(i=0;i<Nx;i++){
-    intE2[i] = Int_E2nd(U1,i); // BUG: Int_E2nd() require knowldege of cp 
+	  #pragma omp parallel for private(i) shared(U1,cp, intE, intE1)
+	  for(i=0;i<Nx;i++){
+		cp[i] = computeC_rho(U1,i); intE[i] = Int_E(U1,i); intE1[i] = Int_E1st(U1,i);
+	  }
+
+	  #pragma omp parallel for private(i) shared(U1,intE2)
+	  for(i=0;i<Nx;i++){
+		intE2[i] = Int_E2nd(U1,i); // BUG: Int_E2nd() require knowldege of cp
+	  }
   }
   
   #pragma omp parallel for schedule(dynamic) private(H, k, k_local, l, tp0, tp1, tp2, tp3, tp4, tp5)  shared(U,Utmp)
   for(k=chunksize_dg*myrank_mpi;k<chunksize_dg*(myrank_mpi+1);k++){      
     k_local = k%chunksize_dg;
   
-    tp0=I1(U1,k,0)-I2(U1,k,0)-I3(U1,k,0)+I5(U1,k,0);
-    tp1=I1(U1,k,1)-I2(U1,k,1)-I3(U1,k,1)+I5(U1,k,1);
-    tp2=I1(U1,k,2)-I2(U1,k,2)-I3(U1,k,2)+I5(U1,k,2);
-    tp3=I1(U1,k,3)-I2(U1,k,3)-I3(U1,k,3)+I5(U1,k,3);
-    tp4=I1(U1,k,4)-I2(U1,k,4)-I3(U1,k,4)+I5(U1,k,4);
-    tp5=I1(U1,k,5)-I2(U1,k,5)-I3(U1,k,5)+I5(U1,k,5);
+	if(NoField)
+	{
+		tp0=I1(U1,k,0)-I3(U1,k,0);
+		tp1=I1(U1,k,1)-I3(U1,k,1);
+		tp2=I1(U1,k,2)-I3(U1,k,2);
+		tp3=I1(U1,k,3)-I3(U1,k,3);
+		tp4=I1(U1,k,4)-I3(U1,k,4);
+		tp5=I1(U1,k,5)-I3(U1,k,5);
+	}
+	else
+	{
+		tp0=I1(U1,k,0)-I2(U1,k,0)-I3(U1,k,0)+I5(U1,k,0);
+		tp1=I1(U1,k,1)-I2(U1,k,1)-I3(U1,k,1)+I5(U1,k,1);
+		tp2=I1(U1,k,2)-I2(U1,k,2)-I3(U1,k,2)+I5(U1,k,2);
+		tp3=I1(U1,k,3)-I2(U1,k,3)-I3(U1,k,3)+I5(U1,k,3);
+		tp4=I1(U1,k,4)-I2(U1,k,4)-I3(U1,k,4)+I5(U1,k,4);
+		tp5=I1(U1,k,5)-I2(U1,k,5)-I3(U1,k,5)+I5(U1,k,5);
+	}
 
     H[0] = (19*tp0/4. - 15*tp5)/dx/scalev;
     H[5] = (60*tp5 - 15*tp0)/dx/scalev;	

@@ -37,9 +37,9 @@ double f_2H(double x);
 
 void SetInit_LD(double *U);
 
-void SetInit_4H(double *U);
+void SetInit_4H(double *U, double T0, double C);
 
-void SetInit_4H_Homo(double *U);
+void SetInit_4H_Homo(double *U, double T0, double C);
 
 void SetInit_2H(double *U);
 

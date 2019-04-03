@@ -26,23 +26,26 @@ gamma    = 1                    # Value of gamma in collision kernel
 #--------------------------------------------
 
 # Options for initial conditions (choose one):
-Damping          = False        # Landau Damping ICs
+Damping          = True         # Landau Damping ICs
 TwoStream        = False        # Two Stream ICs
 FourHump         = True         # Four Hump ICs
 TwoHump          = False        # Two Hump ICs
 Doping           = False        # Non-uniform doping ICs
 
 # Choose if running for the first time or a subsequent run:
-First            = True         # Running for the first time with ICs
-Second           = False        # Picking up from a previous run
+First            = False        # Running for the first time with ICs
+Second           = True         # Picking up from a previous run
 
 # Choose if running the space homogeneous version:
-Homogeneous      = True         # Run for the space homogeneous setting
+Homogeneous      = False        # Run for the space homogeneous setting
 
 # Choose how the collisions are being modelled:
 FullandLinear    = False        # Include electron-ion collisions
 LinearLandau     = False        # Run with Linear Landau operator Q(f,M)
 MassConsOnly     = False        # Run with only conservation of mass
+
+# Choose if running with a self-consistent field or not:
+NoField          = True         # Run without a field
 
 #--------------------------------------------
 # Parameters associated with certain ICs
@@ -50,9 +53,9 @@ MassConsOnly     = False        # Run with only conservation of mass
 
 [Damping]
 
-IC_name  = 'Landau Damping'	# Name of problem associated to ICs
-A_amp    = 0.2                  # Amplitude of the perturbation
-k_wave   = 0.5			# Frequency of the perturbation
+IC_name  = 'Landau Damping'    	# Name of problem associated to ICs
+A_amp    = 0.05                 # Amplitude of the perturbation
+k_wave   = 0.5					# Frequency of the perturbation
 Lv       = 5.25                 # Width of domain in v-space
 
 [TwoStream]
@@ -66,6 +69,8 @@ Lx       = 4.                   # Width of domain in x-space
 
 IC_name  = 'Four Hump'          # Name of problem associated to ICs
 Lv       = 5.25                 # Width of domain in v-space
+T_hump   = 0.4		            # Variance of each of the four humps
+shift    = 1	          	 	# Shift from zero of each of the four humps
 
 [TwoHump]
 
@@ -88,4 +93,4 @@ T_R      = 0.4                  # Temperature at right wall (if using Dirichlet 
 
 [Second]
 
-Name = U_nu0.05A0.2k0.5Nx8Lx12.5664Nv8Lv5.25SpectralN8dt0.01nT2_GRVY_Tests.dc
+Name = U_nuMax0.05A0.05k0.5Nx24Lx12.5664Nv24Lv5.25SpectralN16dt0.01nT20000_InhomEnt_LDIC_SmallA_T200.dc

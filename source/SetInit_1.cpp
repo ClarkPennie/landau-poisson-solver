@@ -70,7 +70,7 @@ void SetInit_LD(double *U)																						// function to calculate the DG 
     int i, j1, j2, j3, k, m1,m2,m3,nt=5;																		// declare i (to represent cell i in x-space), j1, j2, j3 (to represent cell (j1,j2,j3) in v-space), k (the index of cell (i,j1,j2,j3) in U), m1, m2, m3 (counters for the Gaussian quadrature in 3D) & nt (the number of points in the quadrature)
     double a=A_amp, c=k_wave;																					// declare a (the amplitude of cosine wave) and set it to A_amp & c (the frequency of the cosine wave) and set it to k_wave
     double tp, tp0, tp5, tmp0, tmp1, tmp2, tmp3, tmp4;															// declare tp, tp0, tmp0, tmp1, tmp2, tmp3, tmp4 (temporary values while calculating the quadrature for the integral w.r.t. v)
-	double T0 = 0.4;																							// declare T0 (the temperature of the Maxwellian in the initial condition) and set its value
+	double T0 = 1.2;																							// declare T0 (the temperature of the Maxwellian in the initial condition) and set its value
     //#pragma omp parallel for private(k,j1,j2,j3,i,tmp0, tmp1, tmp2, tmp3, tmp4, tp0, tp5, tp) shared(U)
     for(j1=0;j1<Nv;j1++)																						// loop through all the velocity cells
     {
@@ -175,17 +175,11 @@ void SetInit_ND(double *U)																						// function to calculate the DG 
 	}
 }
 
-void SetInit_4H(double *U)																							// function to calculate the DG coefficients for the initial condition with four humps, found by adding four Maxwellians
+void SetInit_4H(double *U, double T0, double C)																							// function to calculate the DG coefficients for the initial condition with four humps, found by adding four Maxwellians
 {
     int i, j1, j2, j3, k, m,m1,m2,m3,nt=5, p;																		// declare i (to represent cell i in x-space), j1, j2, j3 (to represent cell (j1,j2,j3) in v-space), k (the index of cell (i,j1,j2,j3) in U), m (counter for the Gaussian quadrature in x-space), m1, m2, m3 (counters for the Gaussian quadrature in v-space), nt (the number of points in the quadrature) & p (to loop through the four Maxwellians)
     double tp, tpx, tp0, tp5, tmpx0, tmpx1, tmp0, tmp1, tmp2, tmp3, tmp4;											// declare tp, tpx, tp0, tmpx0, tmpx1, tmp0, tmp1, tmp2, tmp3, tmp4 (temporary values while calculating the quadrature for the integral w.r.t. v)
-	double T0 = 0.4;																							// declare T0 (the temperature of the Maxwellian in the initial condition) and set its value
-    double C=1;		// shift of Maxwellians
-    if(myrank_mpi == 0)
-    {
-    	printf("Four Hump initial condition data: T = %g; Shift = %g \n", T0, C);
-    }
-	//#pragma omp parallel for private(k,j1,j2,j3,i,tmp0, tmp1, tmp2, tmp3, tmp4, tp0, tp5, tp) shared(U)
+    //#pragma omp parallel for private(k,j1,j2,j3,i,tmp0, tmp1, tmp2, tmp3, tmp4, tp0, tp5, tp) shared(U)
     for(p=0;p<4;p++)																								// loop through the four Maxwellians
     {
     	for(j1=0;j1<Nv;j1++)																						// loop through all the velocity cells
@@ -258,16 +252,10 @@ void SetInit_4H(double *U)																							// function to calculate the DG
     }
 }
 
-void SetInit_4H_Homo(double *U)																				// function to calculate the DG coefficients for the initial condition with four humps, found by adding four Maxwellians
+void SetInit_4H_Homo(double *U, double T0, double C)																				// function to calculate the DG coefficients for the initial condition with four humps, found by adding four Maxwellians
 {
     int j1, j2, j3, k, m1,m2,m3,nt=5, p;																// declare j1, j2, j3 (to represent cell (j1,j2,j3) in v-space), k (the index of cell (j1,j2,j3) in U), m1, m2, m3 (counters for the Gaussian quadrature in v-space), nt (the number of points in the quadrature) & p (to loop through the four Maxwellians)
     double tp, tp0, tp5, tmp0, tmp1, tmp2, tmp3, tmp4;													// declare tp, tp0, tmp0, tmp1, tmp2, tmp3, tmp4 (temporary values while calculating the quadrature for the integral w.r.t. v)
-    double C=0.02;		// shift of Maxwellians
-	double T0 = 0.4;																							// declare T0 (the temperature of the Maxwellian in the initial condition) and set its value
-    if(myrank_mpi == 0)
-    {
-    	printf("Four Hump initial condition data: T = %g; Shift = %g \n", T0, C);
-    }
     //#pragma omp parallel for private(k,j1,j2,j3,i,tmp0, tmp1, tmp2, tmp3, tmp4, tp0, tp5, tp) shared(U)
     for(p=0;p<4;p++)																					// loop through the four Maxwellians
     {

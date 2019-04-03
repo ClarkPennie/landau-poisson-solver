@@ -72,6 +72,7 @@ bool FullandLinear;																					// declare a Boolean variable to determi
 bool First, Second;																					// declare Boolean variables which will determine if this is the first or a subsequent run
 bool LinearLandau;																					// declare a Boolean variable to determine if running with the full collision operator or linear collisions with a Maxwellian
 bool MassConsOnly;																					// declare a Boolean variable to determine if conserving all moments or all mass
+bool NoField;																						// declare a Boolean variable to turn off the field in the advection step
 
 int main()
 {
@@ -79,6 +80,7 @@ int main()
 	int  tp, t=0; 																					// declare tp (the amount size of the data which stores the DG coefficients of the solution read from a previous run) & t (the current time-step) and set it to 0
 	int k_v, k_eta, k_local, nprocs_vlasov;															// declare k_v (the index of a DG coefficient), k_eta (the index of a DG coefficient in Fourier space), k_local (the index of a DG coefficient, local to the space chunk on the current process) & nprocs_vlasov (the number of processes used for solving the Vlasov equation)
 	double tmp, mass, a[3], KiE, EleE, KiEratio, ent1, l_ent1, ll_ent1;								// declare tmp (the square root of electric energy), mass (the mass/density rho), a (the momentum vector J), KiE (the kinetic energy), EleE (the electric energy), KiEratio (the ratio of kinetic energy between where f is positive and negative),  ent1 (the entropy with negatives discarded), l_ent1 (log of the ent1) & ll_ent1 (log of log of ent1)
+	double T_hump, shift;																			// declare T_hump & shift (the variance and shift of the Maxwellians if the 4Hump IC is used);
 	double *U, **f, *output_buffer;//, **conv_weights_local;										// declare pointers to U (the vector containing the coefficients of the DG basis functions for the solution f(x,v,t) at the given time t), f (the solution which has been transformed from the DG discretisation to the appropriate spectral discretisation) & output_buffer (from where to send MPI messages)
 	double **conv_weights, **conv_weights_linear;													// declare a pointer to conv_weights (a matrix of the weights for the convolution in Fourier space of single species collisions) & conv_weights_linear (a matrix of convolution weights in Fourier space of two species collisions)
 	double **conv_weights1, **conv_weights2;														// declare a pointer to conv_weights1 (the first matrix in the sum of matrices for the weights of the convolution in Fourier space of single species collisions) & conv_weights2 (the second matrix in the sum of matrices for the weights of the convolution in Fourier space of single species collisions)
@@ -151,8 +153,9 @@ int main()
 	ReadFullandLinear(iparse);																		// Read in if running multi-species collisions
 	ReadLinearLandau(iparse);																		// Read in if running full or linear Landau
 	ReadMassConsOnly(iparse);																		// Read in if running conservation of all moments or just mass
+	ReadNoField(iparse);																			// Read in if running without a field
 
-	ReadInputParameters(iparse, flag, nT, Nx, Nv, N, nu, dt, A_amp, k_wave, Lv, Lx);				// Read in all input parameters
+	ReadInputParameters(iparse, flag, nT, Nx, Nv, N, nu, dt, A_amp, k_wave, Lv, Lx, T_hump, shift);	// Read in all input parameters
 
 	if(Doping)
 	{
@@ -231,11 +234,15 @@ int main()
   
 	if(! Homogeneous)
 	{
+		// H[i] = (double*)malloc(6*sizeof(double));}
 		output_buffer_vp = (double *) malloc(chunksize_dg*6*sizeof(double));							// allocate enough space at the pointer output_buffer_vp for 6*chunksize_dg many floating point numbers
-		cp = (double*)malloc(Nx*sizeof(double));														// allocate enough space at the pointer cp for Nx many double numbers
-		intE = (double*)malloc(Nx*sizeof(double));														// allocate enough space at the pointer intE for Nx many double numbers
-		intE1 = (double*)malloc(Nx*sizeof(double));														// allocate enough space at the pointer intE1 for Nx many double numbers
-		intE2 = (double*)malloc(Nx*sizeof(double));														// allocate enough space at the pointer intE2 for Nx many double numbers
+		if(! NoField)
+		{
+			cp = (double*)malloc(Nx*sizeof(double));														// allocate enough space at the pointer cp for Nx many double numbers
+			intE = (double*)malloc(Nx*sizeof(double));														// allocate enough space at the pointer intE for Nx many double numbers
+			intE1 = (double*)malloc(Nx*sizeof(double));														// allocate enough space at the pointer intE1 for Nx many double numbers
+			intE2 = (double*)malloc(Nx*sizeof(double));														// allocate enough space at the pointer intE2 for Nx many double numbers
+		}
 	}
 
 	fNegVals = (int*)malloc(size*sizeof(int));														// allocate enough space at the pointer fNegVals for size many integers
@@ -447,10 +454,10 @@ int main()
 						nu, A_amp, k_wave, Nv, Lv, N, dt, nT, buffer_flags);							// create a .dc file name, located in the directory Data, whose name is U2stream_ followed by the values of nu, A_amp, k_wave, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_ufull
 		sprintf(buffer_marg,"Data/Marginals_nu%gA%gk%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
 						nu, A_amp, k_wave, Nv, Lv, N, dt, nT, buffer_flags);							// create a .dc file name, located in the directory Data, whose name is Marginals_ followed by the values of nu, A_amp, k_wave, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
-		sprintf(buffer_phi,"Data/PhiVals_nu%gA%gk%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
-						nu, A_amp, k_wave, Nv, Lv, N, dt, nT, buffer_flags);							// create a .dc file name, located in the directory Data, whose name is PhiVals_ followed by the values of nu, A_amp, k_wave, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
-		sprintf(buffer_E,"Data/FieldVals_nu%gA%gk%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
-						nu, A_amp, k_wave, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is PhiVals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
+	//	sprintf(buffer_phi,"Data/PhiVals_nu%gA%gk%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
+	//					nu, A_amp, k_wave, Nv, Lv, N, dt, nT, buffer_flags);							// create a .dc file name, located in the directory Data, whose name is PhiVals_ followed by the values of nu, A_amp, k_wave, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
+	//	sprintf(buffer_E,"Data/FieldVals_nu%gA%gk%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
+	//					nu, A_amp, k_wave, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is PhiVals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
 		sprintf(buffer_ent,"Data/EntropyVals_nu%gA%gk%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
 						nu, A_amp, k_wave, Nv, Lv, N, dt, nT, buffer_flags);							// create a .dc file name, located in the directory Data, whose name is EntropyVals_ followed by the values of nu, A_amp, k_wave, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
 	}
@@ -464,21 +471,24 @@ int main()
 						nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is U2stream_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_ufull
 		sprintf(buffer_marg,"Data/Marginals_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
 						nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is Marginals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
-		sprintf(buffer_phi,"Data/PhiVals_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
-						nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is PhiVals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
-		sprintf(buffer_E,"Data/FieldVals_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
-						nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is PhiVals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
+		if(! NoField)
+		{
+			sprintf(buffer_phi,"Data/PhiVals_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
+							nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);				// create a .dc file name, located in the directory Data, whose name is PhiVals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
+			sprintf(buffer_E,"Data/FieldVals_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
+							nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);				// create a .dc file name, located in the directory Data, whose name is PhiVals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
+		}
 		sprintf(buffer_ent,"Data/EntropyVals_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
 						nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is EntropyVals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
 	}
-
+	
 	if(First)																						// only do this if First is True (setting initial conditions)
 	{
 		if(Homogeneous)
 		{
 			if(FourHump)
 			{
-				SetInit_4H_Homo(U);																			// set initial DG solution with the 4Hump IC. For the first time run t=0, use this to give init solution (otherwise, comment out)
+				SetInit_4H_Homo(U, T_hump, shift);																			// set initial DG solution with the 4Hump IC. For the first time run t=0, use this to give init solution (otherwise, comment out)
 			}
 			else
 			{
@@ -503,7 +513,7 @@ int main()
 			}
 			if(FourHump)																				// only do this if FourHump is true
 			{
-				SetInit_4H(U);																			// set initial DG solution with the 4Hump IC. For the first time run t=0, use this to give init solution (otherwise, comment out)
+				SetInit_4H(U, T_hump, shift);																			// set initial DG solution with the 4Hump IC. For the first time run t=0, use this to give init solution (otherwise, comment out)
 			}
 			if(TwoHump)																					// only do this if TwoHump is true
 			{
@@ -575,8 +585,11 @@ int main()
 		fmom=fopen(buffer_moment,"w");																// set fmom to be a file with the name stored in buffer_moment and set the file access mode of fmom to w (which creates an empty file and allows it to be written to)
 		fu=fopen(buffer_u, "w");																	// set fu to be a file with the name stored in buffer_u and set the file access mode of fu to w (which creates an empty file and allows it to be written to)
 		fmarg=fopen(buffer_marg,"w");																// set fmarg to be a file with the name stored in buffer_marg and set the file access mode of fmarg to w (which creates an empty file and allows it to be written to)
-		fphi=fopen(buffer_phi,"w");																	// set fphi to be a file with the name stored in buffer_phi and set the file access mode of fphi to w (which creates an empty file and allows it to be written to)
-		fE=fopen(buffer_E,"w");																		// set fE to be a file with the name stored in buffer_E and set the file access mode of fphi to w (which creates an empty file and allows it to be written to)
+		if(! NoField)
+		{
+			fphi=fopen(buffer_phi,"w");																// set fphi to be a file with the name stored in buffer_phi and set the file access mode of fphi to w (which creates an empty file and allows it to be written to)
+			fE=fopen(buffer_E,"w");																	// set fE to be a file with the name stored in buffer_E and set the file access mode of fphi to w (which creates an empty file and allows it to be written to)
+		}
 		fent=fopen(buffer_ent,"w");																	// set fent to be a file with the name stored in buffer_ent and set the file access mode of fent to w (which creates an empty file and allows it to be written to)
 
 		FindNegVals(U, fNegVals, fAvgVals);															// find out in which cells the approximate solution goes negative and record it in fNegVals
@@ -609,13 +622,16 @@ int main()
 		KiE=computeKiE(U);																			// set KiE to the value calculated through computeKiE, for the solution f(x,v,t) at the current time t, using its DG coefficients stored U
 		if(! Homogeneous)
 		{
-			EleE=computeEleE(U);																		// set EleE to the value calculated through computeEleE, for the solution f(x,v,t) at the current time t, using its DG coefficients stored U
-			tmp = sqrt(EleE);																			// set tmp to the square root of EleE
+			if(! NoField)
+			{
+				EleE=computeEleE(U);																		// set EleE to the value calculated through computeEleE, for the solution f(x,v,t) at the current time t, using its DG coefficients stored U
+				tmp = sqrt(EleE);																			// set tmp to the square root of EleE
+			}
 		}
 		ent1 = computeEntropy(U);																	// set ent1 the value calculated through computeEntropy
 		l_ent1 = log(fabs(ent1));																	// set l_ent1 to the log of ent1
 		ll_ent1 = log(fabs(l_ent1));																// set ll_ent1 to the log of l_ent1
-		if(Homogeneous)
+		if(Homogeneous || NoField)
 		{
 			printf("step 0: %11.8g  %11.8g  %11.8g  %11.8g  %11.8g %11.8g \n",
 					mass, a[0], a[1], a[2], KiE, ent1);									// display in the output file that this is step 0 (so these are the initial conditions), then the mass, 3 components of momentum, kinetic energy, entropy & Strain and Guo weighted L2 norm
@@ -650,8 +666,11 @@ int main()
 
 		if(! Homogeneous)
 		{
-			PrintFieldLoc(fphi, fE);																	// print the values of x that phi & E will be evaluated at in the files tagged as fphi & fE, respectively
-			PrintFieldData(U, fphi, fE);																// print the values of phi & E for the initial condition, using the DG coefficients in U, in the files tagged as fphi & fE, respectively
+			if(! NoField)
+			{
+				PrintFieldLoc(fphi, fE);																	// print the values of x that phi & E will be evaluated at in the files tagged as fphi & fE, respectively
+				PrintFieldData(U, fphi, fE);																// print the values of phi & E for the initial condition, using the DG coefficients in U, in the files tagged as fphi & fE, respectively
+			}
 		}
 	}
   
@@ -823,13 +842,16 @@ int main()
 			KiE=computeKiE(U);																		// set KiE to the value calculated through computeKiE, for the solution f(x,v,t) at the current time t, using its DG coefficients stored U
 			if(! Homogeneous)
 			{
-				EleE=computeEleE(U);																		// set EleE to the value calculated through computeEleE, for the solution f(x,v,t) at the current time t, using its DG coefficients stored U
-				tmp = sqrt(EleE);																			// set tmp to the square root of EleE
+				if(! NoField)
+				{
+					EleE=computeEleE(U);																		// set EleE to the value calculated through computeEleE, for the solution f(x,v,t) at the current time t, using its DG coefficients stored U
+					tmp = sqrt(EleE);																			// set tmp to the square root of EleE
+				}
 			}
 			ent1 = computeEntropy(U);																	// set ent1 the value calculated through computeEntropy
 			l_ent1 = log(fabs(ent1));																	// set l_ent1 to the log of ent1
 			ll_ent1 = log(fabs(l_ent1));																// set ll_ent1 to the log of l_ent1
-			if(Homogeneous)
+			if(Homogeneous || NoField)
 			{
 				printf("step %d: %11.8g  %11.8g  %11.8g  %11.8g  %11.8g %11.8g \n",
 						t+1, mass, a[0], a[1], a[2], KiE, ent1);									// display in the output file that this is step 0 (so these are the initial conditions), then the mass, 3 components of momentum, kinetic energy, entropy & Strain and Guo weighted L2 norm
@@ -870,7 +892,10 @@ int main()
 				PrintMarginal(U, fmarg);															// print the marginal distribution, using the DG coefficients in U, in the file tagged as fmarg
 				if(! Homogeneous)
 				{
-					PrintFieldData(U, fphi, fE);														// print the values of phi & E, using the DG coefficients in U, in the files tagged as fphi & fE, respectively
+					if(! NoField)
+					{
+						PrintFieldData(U, fphi, fE);														// print the values of phi & E, using the DG coefficients in U, in the files tagged as fphi & fE, respectively
+					}
 				}
 			}
 		}
@@ -904,8 +929,14 @@ int main()
 	{
 		fclose(fmom);  																				// remove the tag fmom to close the file
 		fclose(fmarg);  																			// remove the tag fmarg to close the file
-		fclose(fphi);  																				// remove the tag fphi to close the file
-		fclose(fE);  																				// remove the tag fE to close the file
+		if(! Homogeneous)
+		{
+			if(! NoField)
+			{
+				fclose(fphi);  																			// remove the tag fphi to close the file
+				fclose(fE);  																			// remove the tag fE to close the file
+			}
+		}
 		fclose(fent);  																				// remove the tag fent to close the file
 	}
 	if(nu > 0.)
@@ -940,7 +971,10 @@ int main()
 	free(U); free(U1); free(Utmp); // free(H);														// delete the dynamic memory allocated for U, U1 & Utmp
 	if(! Homogeneous)
 	{
-		free(cp); free(intE); free(intE1); free(intE2);													// delete the dynamic memory allocated for cp, intE, intE1 & inteE2
+		if(! NoField)
+		{
+			free(cp); free(intE); free(intE1); free(intE2);													// delete the dynamic memory allocated for cp, intE, intE1 & inteE2
+		}
 	}
 
 	free(fNegVals); free(fAvgVals);	free (fEquiVals);												// delete the dynamic memory allocated for fNegVals, fAvgVals & fEquiVals
