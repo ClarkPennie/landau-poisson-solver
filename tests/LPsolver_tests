@@ -3,7 +3,7 @@
 
 @test "Landau Damping IC test" {
     echo -e "#\n# TESTING LANDAU DAMPING IC" >&3
-    echo "#----------------------------------------------------------" >&3
+    echo "#-------------------------------------------------------------" >&3
     # verify executable is there
     run ls ../source/solver
     [ "$status" -eq 0 ]
@@ -32,7 +32,7 @@
 
 @test "Non-uniform doping IC test" {
     echo -e "#\n# TESTING NON-UNIFORM DOPING IC" >&3
-    echo "#----------------------------------------------------------" >&3
+    echo "#-------------------------------------------------------------" >&3
     # verify executable is there
     run ls ../source/solver
     [ "$status" -eq 0 ]
@@ -68,7 +68,7 @@
 
 @test "4 Hump IC test" {
     echo -e "#\n# TESTING FOUR HUMP IC" >&3
-    echo "#----------------------------------------------------------" >&3
+    echo "#-------------------------------------------------------------" >&3
     # verify executable is there
     run ls ../source/solver
     [ "$status" -eq 0 ]
@@ -97,7 +97,7 @@
 
 @test "FullandLinear test" {
     echo -e "#\n# TESTING FULL AND LINEAR COLLISION OPERATORS" >&3
-    echo "#----------------------------------------------------------" >&3
+    echo "#-------------------------------------------------------------" >&3
     # verify executable is there
     run ls ../source/solver
     [ "$status" -eq 0 ]
@@ -126,7 +126,7 @@
 
 @test "Space homogeneous gamma=-3 test" {
     echo -e "#\n# TESTING SPACE HOMOGENEOUS VERSION WITH COULOMB INTERACTIONS" >&3
-    echo "#----------------------------------------------------------" >&3
+    echo "#-------------------------------------------------------------" >&3
     # verify executable is there
     run ls ../source/solver
     [ "$status" -eq 0 ]
@@ -141,6 +141,64 @@
     # run executable
     echo "# Running code for 5 timesteps..." >&3
     run cp LPsolver-input-test4.txt LPsolver-input.txt
+    [ "$status" -eq 0 ]
+    run ../source/solver
+    [ "$status" -eq 0 ]
+    run rm LPsolver-input.txt
+
+    echo "# Checking values of moments are as expected..." >&3
+    run ./moment_differ.sh $moment_filename_expected $moment_filename_test
+    [ "$status" -eq 0 ]
+    
+#    assert_success
+}
+
+@test "Space homogeneous gamma=1 test" {
+    echo -e "#\n# TESTING SPACE HOMOGENEOUS VERSION WITH HARD SPHERES" >&3
+    echo "#-------------------------------------------------------------" >&3
+    # verify executable is there
+    run ls ../source/solver
+    [ "$status" -eq 0 ]
+
+    # Set the name of the files with the moment values to be compared
+    moment_filename_expected=Moments_Test5.dc
+    moment_filename_test=Data/Moments_nu0.05A0k0.5Nv16Lv0.1SpectralN8dt0.001nT5_Test5.dc
+
+    # Remove the file containing the moments to be produced if it already exists
+    run rm $moment_filename_test
+
+    # run executable
+    echo "# Running code for 5 timesteps..." >&3
+    run cp LPsolver-input-test5.txt LPsolver-input.txt
+    [ "$status" -eq 0 ]
+    run ../source/solver
+    [ "$status" -eq 0 ]
+    run rm LPsolver-input.txt
+
+    echo "# Checking values of moments are as expected..." >&3
+    run ./moment_differ.sh $moment_filename_expected $moment_filename_test
+    [ "$status" -eq 0 ]
+    
+#    assert_success
+}
+
+@test "Space homogeneous gamma=0 test" {
+    echo -e "#\n# TESTING SPACE HOMOGENEOUS VERSION WITH MAXWELL MOLECULES" >&3
+    echo "#-------------------------------------------------------------" >&3
+    # verify executable is there
+    run ls ../source/solver
+    [ "$status" -eq 0 ]
+
+    # Set the name of the files with the moment values to be compared
+    moment_filename_expected=Moments_Test6.dc
+    moment_filename_test=Data/Moments_nu0.05A0k0.5Nv16Lv0.09SpectralN8dt0.001nT5_Test6.dc
+
+    # Remove the file containing the moments to be produced if it already exists
+    run rm $moment_filename_test
+
+    # run executable
+    echo "# Running code for 5 timesteps..." >&3
+    run cp LPsolver-input-test6.txt LPsolver-input.txt
     [ "$status" -eq 0 ]
     run ../source/solver
     [ "$status" -eq 0 ]
