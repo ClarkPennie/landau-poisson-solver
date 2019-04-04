@@ -161,17 +161,16 @@ double gHat3(double eta1, double eta2, double eta3, double ki1, double ki2, doub
 	}
 	return result;
 }
-*/
 
 double gHat_LH(double eta1_L, double eta2_L, double eta3_L, double ki1_L, double ki2_L, double ki3_L, double eps)
 {
     double result = 0.;
     double ki_L[3]={ki1_L,ki2_L,ki3_L}, zeta_L[3]={eta1_L,eta2_L,eta3_L}; // ki=w, zeta=xi in the notes
     double Shat[3][3];
-    double r=sqrt(ki1*ki1+ki2*ki2+ki3*ki3);
-    double ki1_tp=eps*(zeta1_L-ki1_L);
-    double ki2_tp=eps*(zeta2_L-ki2_L);
-    double ki3_tp=eps*(zeta3_L-ki3_L);
+    double r=sqrt(ki1_L*ki1_L+ki2_L*ki2_L+ki3_L*ki3_L);
+    double ki1_tp=eps*(eta1_L-ki1_L);
+    double ki2_tp=eps*(eta2_L-ki2_L);
+    double ki3_tp=eps*(eta3_L-ki3_L);
     
     int i,j;
     
@@ -189,6 +188,7 @@ double gHat_LH(double eta1_L, double eta2_L, double eta3_L, double ki1_L, double
            result += Shat[i][j]*(zeta_L[i]*ki_L[j]-eps*eps*zeta_L[i]*(zeta_L[j]-ki_L[j]));  //convolution weight G in Q_LH
         }
     }
+	return result;
 }
 
 
@@ -197,10 +197,10 @@ double gHat_HL(double eta1_H, double eta2_H, double eta3_H, double ki1_H, double
     double result = 0.;
     double ki_H[3]={ki1_H,ki2_H,ki3_H}, zeta_H[3]={eta1_H,eta2_H,eta3_H}; // ki=w, zeta=xi in the notes
     double Shat[3][3];
-    double r=sqrt(ki1*ki1+ki2*ki2+ki3*ki3);
-    double ki1_tp=ki1_H-zeta1_H;
-    double ki2_tp=ki2_H-zeta2_H;
-    double ki3_tp=ki3_H-zeta3_H;
+    double r=sqrt(ki1_H*ki1_H+ki2_H*ki2_H+ki3_H*ki3_H);
+    double ki1_tp=ki1_H-eta1_H;
+    double ki2_tp=ki2_H-eta2_H;
+    double ki3_tp=ki3_H-eta3_H;
     
     int i,j;
     
@@ -850,7 +850,7 @@ void ComputeQ_LH(double *f_L, double *f_H, fftw_complex *qHat, double **conv_wei
     
     for(i=0;i<size_ft;i++)                                                        // initialise the input of the FFT
     {
-        fftIn_L[i][0] = f_L[i];                                                        // set the real part to the sampling of the solution stored in f
+        fftIn_L[i][0] = f_L[i];                                                     // set the real part to the sampling of the solution stored in f
         fftIn_L[i][1] = 0.;                                                        // set the imaginary part to zero
         fftIn_H[i][0] = f_H[i];
         fftIn_H[i][1] = 0.;
@@ -859,7 +859,7 @@ void ComputeQ_LH(double *f_L, double *f_H, fftw_complex *qHat, double **conv_wei
        fft3D(fftIn_L, fftOut_L);                                                        // perform the FFT of fftIn and store the result in fftOut
        fft3D(fftIn_H, fftOut_H);
     
-#pragma omp parallel for schedule(dynamic) private(i,j,k,l,m,n,x,y,z,start_i,start_j,start_k,end_i,end_j,end_k,tempD) shared(qHat, fftOut, conv_weights) reduction(+:tmp0, tmp1)
+#pragma omp parallel for schedule(dynamic) private(i,j,k,l,m,n,x,y,z,start_i,start_j,start_k,end_i,end_j,end_k,tempD_LH) shared(qHat, fftOut_H, fftOut_L, conv_weights_LH) reduction(+:tmp0, tmp1)
     for(i=0;i<N;i++)                                                             // loop through all points in the ki_1
     {
         for(j=0;j<N;j++)                                                        // loop through all points in the ki_2
@@ -912,6 +912,7 @@ void ComputeQ_LH(double *f_L, double *f_H, fftw_complex *qHat, double **conv_wei
                             z = k + N/2 - n;                                    // set the index z to k + N/2 - n to represent the subtraction eta[z] = ki[k] - eta[n]
                             
                             tempD_LH = conv_weights_LH[k + N*(j+ N*i)][n + N*(m + N*l)];        // set tempD to the value of the convolution weight corresponding to current value of ki(i,j,k) & eta(l,m,n)
+                            // MULTI-SPECIES NOTE: Will need to update fftOut terms here to _H/_L
                             tmp0 += prefactor*wtN[l]*wtN[m]*wtN[n]*tempD_LH*(fftOut[n + N*(m + N*l)][0]*fftOut[z + N*(y + N*x)][0] - fftOut[n + N*(m + N*l)][1]*fftOut[z + N*(y + N*x)][1]);        // increment the value of the real part of qHat(ki(i,j,k)) by fHat_L(eta(l,m,n))*fHat_H(eps*(ki(i,j,k)-eta(l,m,n)))*conv_weight(ki(i,j,k),eta(l,m,n)) for the current values of l, m & n in the quadrature sum
                             
                             tmp1 += prefactor*wtN[l]*wtN[m]*wtN[n]*tempD_LH*(fftOut[n + N*(m + N*l)][0]*fftOut[z + N*(y + N*x)][1] + fftOut[n + N*(m + N*l)][1]*fftOut[z + N*(y + N*x)][0]);        // increment the value of the imaginary part of qHat(ki(i,j,k)) by fHat_L(eta(l,m,n))*fHat_H(eps*(ki(i,j,k)-eta(l,m,n)))*conv_weight(ki(i,j,k),eta(l,m,n)) for the current values of l, m & n in the quadrature sum
@@ -948,7 +949,7 @@ void ComputeQ_HL(double *f_L, double *f_H, fftw_complex *qHat, double **conv_wei
     fft3D(fftIn_L, fftOut_L);                                                    // perform the FFT of fftIn and store the result in fftOut
     fft3D(fftIn_H, fftOut_H);                                                   // perform the FFT of fftIn and store the result in fftOut
     
-#pragma omp parallel for schedule(dynamic) private(i,j,k,l,m,n,x,y,z,start_i,start_j,start_k,end_i,end_j,end_k,tempD) shared(qHat, fftOut, conv_weights) reduction(+:tmp0, tmp1)
+#pragma omp parallel for schedule(dynamic) private(i,j,k,l,m,n,x,y,z,start_i,start_j,start_k,end_i,end_j,end_k,tempD_HL) shared(qHat, fftOut_L, fftOut_H, conv_weights_HL) reduction(+:tmp0, tmp1)
     for(i=0;i<N;i++)                                                             // loop through all points in the ki_1
     {
         for(j=0;j<N;j++)                                                        // loop through all points in the ki_2
@@ -1001,6 +1002,7 @@ void ComputeQ_HL(double *f_L, double *f_H, fftw_complex *qHat, double **conv_wei
                             z = k + N/2 - n;                                    // set the index z to k + N/2 - n to represent the subtraction eta[z] = ki[k] - eta[n]
                             
                             tempD_HL = conv_weights_HL[k + N*(j+ N*i)][n + N*(m + N*l)];        // set tempD to the value of the convolution weight corresponding to current value of ki(i,j,k) & eta(l,m,n)
+                            // MULTI-SPECIES NOTE: Will need to update fftOut terms here to _H/_L
                             tmp0 += prefactor*wtN[l]*wtN[m]*wtN[n]*tempD_HL*(fftOut[n + N*(m + N*l)][0]*fftOut[z + N*(y + N*x)][0] - fftOut[n + N*(m + N*l)][1]*fftOut[z + N*(y + N*x)][1]);        // increment the value of the real part of qHat(ki(i,j,k)) by fHat(eta(l,m,n))*f(ki(i,j,k)-eta(l,m,n))*conv_weight(ki(i,j,k),eta(l,m,n)) for the current values of l, m & n in the quadrature sum
                             
                             tmp1 += prefactor*wtN[l]*wtN[m]*wtN[n]*tempD_HL*(fftOut[n + N*(m + N*l)][0]*fftOut[z + N*(y + N*x)][1] + fftOut[n + N*(m + N*l)][1]*fftOut[z + N*(y + N*x)][0]);        // increment the value of the imaginary part of qHat(ki(i,j,k)) by fHat(eta(l,m,n))*f(ki(i,j,k)-eta(l,m,n))*conv_weight(ki(i,j,k),eta(l,m,n)) for the current values of l, m & n in the quadrature sum
@@ -1414,7 +1416,6 @@ void RK4_Homo(double *f, fftw_complex *qHat, double **conv_weights, double *U, d
 
 
 void RK4_Homo_L(double *f_L, double *f_H, fftw_complex *qHat_LL, fftw_complex *qHat_LH, double **conv_weights, double **conv_weights_LH, double *U, double *dU)
-
 {
     int i,j,k, j1, j2, j3, k_v, k_eta, kk, k_loc;
     double Q_re, Q_im, tp0, tp2, tp3,tp4,tp5, tmp0=0., tmp2=0., tmp3=0., tmp4=0.,tmp5=0., tem;
@@ -1422,7 +1423,7 @@ void RK4_Homo_L(double *f_L, double *f_H, fftw_complex *qHat_LL, fftw_complex *q
     FS(qHat_LL, fftOut_LL);                                                                     // set fftOut to the Fourier series representation of qHat (i.e. the IFFT of qHat)
     FS(qHat_LH, fftOut_LH);
     
-#pragma omp parallel for private(i) shared(Q,fftOut,f1,f)
+	#pragma omp parallel for private(i) shared(Q,fftOut,f1_L,f_L)
     for(i=0;i<size_ft;i++)
     {
         Q[i] = fftOut_LL[i][0] + fftOut_LH[i][0];                                                          // this is Q(Fn, Fn) so that Kn^1 = dt*Q(Fn, Fn) = dt*Q[i]
@@ -1435,7 +1436,7 @@ void RK4_Homo_L(double *f_L, double *f_H, fftw_complex *qHat_LL, fftw_complex *q
     FS(Q1_fft_LL, fftOut_LL);
     FS(Q1_fft_LH, fftOut_LH);
     
-#pragma omp parallel for private(i) shared(Q,Q1,fftOut,f1,f)
+	#pragma omp parallel for private(i) shared(Q,Q1,fftOut,f1_L,f_L)
     for(i=0;i<size_ft;i++)                                                                // calculate the second step of RK4
     {
         Q1[i] = fftOut_LL[i][0] + fftOut_LH[i][0];
@@ -1448,7 +1449,7 @@ void RK4_Homo_L(double *f_L, double *f_H, fftw_complex *qHat_LL, fftw_complex *q
     FS(Q2_fft_LL, fftOut_LL);
     FS(Q2_fft_LH, fftOut_LH);
    
-#pragma omp parallel for private(i) shared(Q,Q1,fftOut,f1,f)
+	#pragma omp parallel for private(i) shared(Q,Q1,fftOut,f1_L,f_L)
     for(i=0;i<size_ft;i++)                                                                // calculate the third step of RK4
     {
         Q1[i] = fftOut_LL[i][0] + fftOut_LH[i][0];
@@ -1458,8 +1459,8 @@ void RK4_Homo_L(double *f_L, double *f_H, fftw_complex *qHat_LL, fftw_complex *q
     ComputeQ(f1_L, Q3_fft_LL, conv_weights);
     ComputeQ_LH(f1_L, f1_H, Q3_fft_LH, conv_weights_LH);
 
-
-#pragma omp parallel for schedule(dynamic) private(k_loc,j1,j2,j3,i,j,k,k_v,k_eta,kk,Q_re, Q_im, tp0, tp2,tp3,tp4, tp5) shared(qHat,U, dU)   // calculate the fourth step of RK4 (still in Fourier space though?!) - reduction(+: tmp0, tmp2, tmp3, tmp4, tmp5)
+    // MULTI-SPECIES NOTE: Will probably need to change which U coefficients are being used here (most likely U_L?)
+	#pragma omp parallel for schedule(dynamic) private(k_loc,j1,j2,j3,i,j,k,k_v,k_eta,kk,Q_re, Q_im, tp0, tp2,tp3,tp4, tp5) shared(qHat_LL, qHat_LH,U, dU)   // calculate the fourth step of RK4 (still in Fourier space though?!) - reduction(+: tmp0, tmp2, tmp3, tmp4, tmp5)
     for(k_v = myrank_mpi*chunksize_dg; k_v < (myrank_mpi+1)*chunksize_dg; k_v++){
         j3 = k_v % Nv; j2 = ((k_v-j3)/Nv) % Nv; j1 = (k_v - j3 - Nv*j2)/(Nv*Nv);
         k_loc = k_v%chunksize_dg;
@@ -1508,7 +1509,7 @@ void RK4_Homo_H(double *f_L, double *f_H, fftw_complex *qHat_HH, fftw_complex *q
     FS(qHat_HH, fftOut_HH);                                                                     // set fftOut to the Fourier series representation of qHat (i.e. the IFFT of qHat)
     FS(qHat_HL, fftOut_HL);
     
-#pragma omp parallel for private(i) shared(Q,fftOut,f1,f)
+	#pragma omp parallel for private(i) shared(Q,fftOut,f1_H,f_H)
     for(i=0;i<size_ft;i++)
     {
         Q[i] = fftOut_HH[i][0] + fftOut_HL[i][0];                                                          // this is Q(Fn, Fn) so that Kn^1 = dt*Q(Fn, Fn) = dt*Q[i]
@@ -1521,7 +1522,7 @@ void RK4_Homo_H(double *f_L, double *f_H, fftw_complex *qHat_HH, fftw_complex *q
     FS(Q1_fft_HH, fftOut_HH);
     FS(Q1_fft_HL, fftOut_HL);
     
-#pragma omp parallel for private(i) shared(Q,Q1,fftOut,f1,f)
+	#pragma omp parallel for private(i) shared(Q,Q1,fftOut,f1_H,f_H)
     for(i=0;i<size_ft;i++)                                                                // calculate the second step of RK4
     {
         Q1[i] = fftOut_HH[i][0] + fftOut_HL[i][0];
@@ -1534,7 +1535,7 @@ void RK4_Homo_H(double *f_L, double *f_H, fftw_complex *qHat_HH, fftw_complex *q
     FS(Q2_fft_HH, fftOut_HH);
     FS(Q2_fft_HL, fftOut_HL);
     
-#pragma omp parallel for private(i) shared(Q,Q1,fftOut,f1,f)
+	#pragma omp parallel for private(i) shared(Q,Q1,fftOut,f1_H,f_H)
     for(i=0;i<size_ft;i++)                                                                // calculate the third step of RK4
     {
         Q1[i] = fftOut_HH[i][0] + fftOut_HL[i][0];
@@ -1545,7 +1546,7 @@ void RK4_Homo_H(double *f_L, double *f_H, fftw_complex *qHat_HH, fftw_complex *q
     ComputeQ_HL(f1_L, f1_H, Q3_fft_HL, conv_weights_HL);
     
     
-#pragma omp parallel for schedule(dynamic) private(k_loc,j1,j2,j3,i,j,k,k_v,k_eta,kk,Q_re, Q_im, tp0, tp2,tp3,tp4, tp5) shared(qHat,U, dU)   // calculate the fourth step of RK4 (still in Fourier space though?!) - reduction(+: tmp0, tmp2, tmp3, tmp4, tmp5)
+	#pragma omp parallel for schedule(dynamic) private(k_loc,j1,j2,j3,i,j,k,k_v,k_eta,kk,Q_re, Q_im, tp0, tp2,tp3,tp4, tp5) shared(qHat_HH,qHat_HL,U, dU)   // calculate the fourth step of RK4 (still in Fourier space though?!) - reduction(+: tmp0, tmp2, tmp3, tmp4, tmp5)
     for(k_v = myrank_mpi*chunksize_dg; k_v < (myrank_mpi+1)*chunksize_dg; k_v++){
         j3 = k_v % Nv; j2 = ((k_v-j3)/Nv) % Nv; j1 = (k_v - j3 - Nv*j2)/(Nv*Nv);
         k_loc = k_v%chunksize_dg;

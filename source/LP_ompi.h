@@ -74,12 +74,28 @@ extern double *U1, *Utmp, *output_buffer_vp;//, **H;												// declare point
 extern double *Q, *f1, *Q1, *Utmp_coll;//*f2, *f3;													// declare pointers to Q (the discretised collision operator), f1 (used to help store the solution during the collisional problem), Q1 (used in calculation of the collision operator) & Utmp_coll (used to store calculations from the RK4 method used in the collisional problem)
 extern fftw_complex *Q1_fft, *Q2_fft, *Q3_fft;														// declare pointers to the complex numbers Q1_fft, Q2_fft & Q3_fft (involved in storing the FFT of Q)
 
-// FullandLinear variables:
 extern fftw_complex *Q1_fft_linear, *Q2_fft_linear, *Q3_fft_linear;									// declare pointers to the complex numbers Q1_fft_linear, Q2_fft_linear & Q3_fft_linear (involved in storing the FFT of the two species collison operator Q)
 
 extern fftw_complex *fftIn, *fftOut;																// declare pointers to the FFT variables fftIn (a vector to be to have the FFT applied to it) & fftOut (the output of an FFT)
 
 extern double ce, *cp, *intE, *intE1, *intE2;														// declare ce and pointers to cp, intE, intE1 & intE2 (precomputed quantities for advections)
+
+extern int *fNegVals;																				// declare fNegVals (to store where DG solution goes negative - a 1 if negative and a 0 if positive)
+extern double *fAvgVals;																			// declare fAvgVals (to store the average values of f on each cell)
+extern double *fEquiVals;																			// declare f_equivals (to store the equilibrium solution)
+
+extern double dv_L, dv_H;
+extern double Lv_L, Lv_H;
+extern double L_v_L, L_v_H, R_v_L, R_v_H, L_eta_L, L_eta_H;
+extern double h_eta_L, h_eta_H, h_v_L, h_v_H;
+extern double *v_L, *v_H, *eta_L, *eta_H;
+extern double *f1_L, *f1_H;
+extern fftw_complex *Q1_fft_LL, *Q1_fft_HH, *Q1_fft_LH, *Q1_fft_HL;
+extern fftw_complex *Q2_fft_LL, *Q2_fft_HH, *Q2_fft_LH, *Q2_fft_HL;
+extern fftw_complex *Q3_fft_LL, *Q3_fft_HH, *Q3_fft_LH, *Q3_fft_HL;
+extern fftw_complex *fftIn_L, *fftIn_H, *fftOut_L, *fftOut_H;
+extern fftw_complex *fftIn_LL, *fftIn_HH, *fftOut_LL, *fftOut_HH;
+extern fftw_complex *fftIn_LH, *fftIn_HL, *fftOut_LH, *fftOut_HL;
 
 extern fftw_plan p_forward; 																		// declare the fftw_plan p_forward (an object which contains all the data which allows fftw3 to compute the FFT)
 extern fftw_plan p_backward; 																		// declare the fftw_plan p_backward (an object which contains all the data which allows fftw3 to compute the inverse FFT)
@@ -87,10 +103,6 @@ extern fftw_complex *temp;																			// declare a pointer to complex num
 
 extern int myrank_mpi, nprocs_mpi, nprocs_Nx;														// declare myrank_mpi (the rank of the current MPI process running), nprocs_mpi (the total number of MPI processes) & nprocs_Nx (the amount of MPI processes used for the collisionless VP problem)
 extern int chunksize_dg, chunksize_ft, chunk_Nx;													// declare chunksize_dg (the amount of data each processes works on during the DG method in the VP problem), chunksize_ft (the amount of data each process works on during the collisional problem) & chunk_Nx (the number of space-steps sent to each process in the collisional problem)
-
-extern int *fNegVals;																				// declare fNegVals (to store where DG solution goes negative - a 1 if negative and a 0 if positive)
-extern double *fAvgVals;																			// declare fAvgVals (to store the average values of f on each cell)
-extern double *fEquiVals;																			// declare f_equivals (to store the equilibrium solution)
 
 extern bool Damping, TwoStream, FourHump, TwoHump, Doping;											// declare Boolean variables which will determin the ICs for the problem
 extern bool First, Second;																			// declare Boolean variables which will determine if this is the first or a subsequent run

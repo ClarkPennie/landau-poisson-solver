@@ -33,6 +33,10 @@ extern double vt[5];																					// node values for Gaussian quadrature 
 
 double Gridv(double m);
 
+double Gridv_L(double m);
+
+double Gridv_H(double m);
+
 double Gridx(double m);
 
 void DirichletBC(vector<double>& Ub_vals, int i, int j1, int j2, int j3);
