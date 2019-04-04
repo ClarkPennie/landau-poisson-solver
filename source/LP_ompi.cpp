@@ -52,11 +52,11 @@ double scale, scale3, scaleL, scalev;																// declare scale (the 1/sqr
 double *U1, *Utmp, *output_buffer_vp;//, **H;														// declare pointers to U1, Utmp (both used to help store the values in U, declared later) & output_buffer_vp (a buffer used when sending the data between MPI processes during the VP method)
 double *Q, *f1, *Q1, *Utmp_coll;//*f2, *f3;															// declare pointers to Q (the discretised collision operator), f1 (used to help store the solution during the collisional problem), Q1 (used in calculation of the collision operator) & Utmp_coll (used to store calculations from the RK4 method used in the collisional problem)
 fftw_complex *Q1_fft, *Q2_fft, *Q3_fft;																// declare pointers to the complex numbers Q1_fft, Q2_fft & Q3_fft (involved in storing the FFT of Q)
-
+fftw_complex *Q1_fft_LL, *Q1_fft_HH, *Q1_fft_LH, *Q1_fft_HL, *Q2_fft_LL, *Q2_fft_HH, *Q2_fft_LH, *Q2_fft_HL, *Q3_fft_LL, *Q3_fft_HH, *Q3_fft_LH, *Q3_fft_HL;
 fftw_complex *Q1_fft_linear, *Q2_fft_linear, *Q3_fft_linear;										// declare pointers to the complex numbers Q1_fft_linear, Q2_fft_linear & Q3_fft_linear (involved in storing the FFT of the two species collison operator Q)
 
 fftw_complex *fftIn, *fftOut;																		// declare pointers to the FFT variables fftIn (a vector to be to have the FFT applied to it) & fftOut (the output of an FFT)
-
+fftw_complex *fftIn_L, *fftIn_H, *fftOut_L, *fftOut_H;
 double ce, *cp, *intE, *intE1, *intE2;																// declare ce and pointers to cp, intE, intE1 & intE2 (precomputed quantities for advections)
 
 // SET UP FFT PLANS (WHICH ARE USED MULTIPLE TIMES):
@@ -86,7 +86,8 @@ int main()
 	int k_v, k_eta, k_local, nprocs_vlasov;															// declare k_v (the index of a DG coefficient), k_eta (the index of a DG coefficient in Fourier space), k_local (the index of a DG coefficient, local to the space chunk on the current process) & nprocs_vlasov (the number of processes used for solving the Vlasov equation)
 	double tmp, mass, a[3], KiE, EleE, KiEratio, ent1, l_ent1, ll_ent1;								// declare tmp (the square root of electric energy), mass (the mass/density rho), a (the momentum vector J), KiE (the kinetic energy), EleE (the electric energy), KiEratio (the ratio of kinetic energy between where f is positive and negative),  ent1 (the entropy with negatives discarded), l_ent1 (log of the ent1) & ll_ent1 (log of log of ent1)
 	double *U, **f, *output_buffer;//, **conv_weights_local;										// declare pointers to U (the vector containing the coefficients of the DG basis functions for the solution f(x,v,t) at the given time t), f (the solution which has been transformed from the DG discretisation to the appropriate spectral discretisation) & output_buffer (from where to send MPI messages)
-	double **conv_weights, **conv_weights_linear; 												// declare a pointer to conv_weights (a matrix of the weights for the convolution in Fourier space of single species collisions) & conv_weights_linear (a matrix of convolution weights in Fourier space of two species collisions)
+    double **f_L, **f_H; 
+    double **conv_weights, **conv_weights_linear; 												// declare a pointer to conv_weights (a matrix of the weights for the convolution in Fourier space of single species collisions) & conv_weights_linear (a matrix of convolution weights in Fourier space of two species collisions)
     double **conv_weights_LH, **conv_weights_HL;
     double **conv_weights1, **conv_weights2;														// declare a pointer to conv_weights1 (the first matrix in the sum of matrices for the weights of the convolution in Fourier space of single species collisions) & conv_weights2 (the second matrix in the sum of matrices for the weights of the convolution in Fourier space of single species collisions)
 	std::string flag;																				// declare a string flag (used to identify files generated associated to the current run)
@@ -98,6 +99,7 @@ int main()
 
 	fftw_complex *qHat, *qHat_linear;																// declare pointers to the complex numbers qHat (the DFT of Q) & qHat_linear (the DFT of the two species colission operator Q);
 	fftw_complex **DFTMaxwell;																		// declare pointer to the FFT variable DFTMaxwell (to store the FFT of the initial Maxwellian)
+    fftw_complex *qHat_LH, *qHat_HL;
   
 	//************************
 	//MPI-related variables!
@@ -192,6 +194,8 @@ int main()
 	R_v=Lv; // set R_v to Lv
     L_v_L=Lv_L;
     L_v_H=Lv_H;
+    R_v_L=Lv_L;
+    R_v_H=Lv_H;
 	scaleL=8*Lv*Lv*Lv;																				// set scaleL to 8Lv^3
 
 	if(MassConsOnly)																				// only do this if MassConsOnly is true and only conserving mass
@@ -279,13 +283,11 @@ int main()
 		{
 			conv_weights[i] = (double *)malloc(size_ft*sizeof(double));								// allocate enough space at the ith entry of conv_weights for size_ft many float numbers
 		}
-        
         conv_weights_LH = (double **)malloc(size_ft*sizeof(double *));                                    // allocate enough space at the pointer conv_weights for size_ft many pointers to float numbers
         for (i=0;i<size_ft;i++)
         {
             conv_weights_LH[i] = (double *)malloc(size_ft*sizeof(double));                                // allocate enough space at the ith entry of conv_weights for size_ft many float numbers
         }
-        
         conv_weights_HL = (double **)malloc(size_ft*sizeof(double *));                                    // allocate enough space at the pointer conv_weights for size_ft many pointers to float numbers
         for (i=0;i<size_ft;i++)
         {
@@ -342,7 +344,10 @@ int main()
 		temp = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer temp for size_ft many complex numbers
 		//qHat_local = (fftw_complex *)fftw_malloc(chunksize_ft*sizeof(fftw_complex));
 		qHat = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer qHat for size_ft many complex numbers
-  
+        qHat_LL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));
+        qHat_HH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));
+        qHat_LH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));
+        qHat_HL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));
 		// INITIALISE FFTW FOR USE WITH THREADING (MUST BE DONE BEFORE ANY PLAN IS CREATED):
 		fftw_init_threads();																		// initialise the environment for using the fftw3 routines with multiple threads
 		fftw_plan_with_nthreads(nthread);															// set the number of threads used by fftw3 routines to nthread
@@ -358,9 +363,32 @@ int main()
 		Q1_fft = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer Q1_fft for size_ft many complex numbers
 		Q2_fft = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer Q2_fft for size_ft many complex numbers
 		Q3_fft = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer Q3_fft for size_ft many complex numbers
-  
+        Q1_fft_LL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q1_fft for size_ft many complex numbers
+        Q2_fft_LL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q2_fft for size_ft many complex numbers
+        Q3_fft_LL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q3_fft for size_ft many complex numbers
+        Q1_fft_HH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q1_fft for size_ft many complex numbers
+        Q2_fft_HH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q2_fft for size_ft many complex numbers
+        Q3_fft_HH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q3_fft for size_ft many complex numbers
+        Q1_fft_LH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q1_fft for size_ft many complex numbers
+        Q2_fft_LH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q2_fft for size_ft many complex numbers
+        Q3_fft_LH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q3_fft for size_ft many complex numbers
+        Q1_fft_HL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q1_fft for size_ft many complex numbers
+        Q2_fft_HL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q2_fft for size_ft many complex numbers
+        Q3_fft_HL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q3_fft for size_ft many complex numbers
 		fftOut = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer fftOut for size_ft many complex numbers
-		fftIn = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer fftIn for size_ft many complex numbers
+		fftIn = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex)); // allocate enough space at the pointer fftIn for size_ft many complex numbers
+        fftIn_L = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));
+        fftIn_H = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));
+        fftOut_L = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));
+        fftOut_H = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));
+        fftOut_LL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftOut for size_ft many complex numbers
+        fftIn_LL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftIn for size_ft many complex numbers
+        fftOut_HH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftOut for size_ft many complex numbers
+        fftIn_HH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftIn for size_ft many complex numbers
+        fftOut_LH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftOut for size_ft many complex numbers
+        fftIn_LH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftIn for size_ft many complex numbers
+        fftOut_HL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftOut for size_ft many complex numbers
+        fftIn_HL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftIn for size_ft many complex numbers
  
 		if(LinearLandau)																			// only do this is LinearLandau is true, for using Q(f,M)
 		{
@@ -733,11 +761,11 @@ int main()
 					ComputeQ_FandL(f[l%chunk_Nx], qHat, conv_weights, qHat_linear, conv_weights_linear);	// using the coefficients of the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), calculate the Fourier tranform of Q(f,f) using conv_weights for the weights in the convolution in the full part of Q & conv_weights_linear in the convolution in the linear part of Q, then store the results of each Fourier transform in qHat & qHat_linear, respectively
 					conserveMoments(qHat, qHat_linear);											// perform the explicit conservation calculation
 					RK4_FandL(f[l%chunk_Nx], l, qHat, conv_weights, qHat_linear, conv_weights_linear,
-							U, Utmp_coll);															// advance to the next time step in the collisional problem using RK4 at the given space-step l, taking the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), as well as qHat, conv_weights, qHat_linear & conv_weights_linear (to allow more Fourier transforms of Q to be made), storing the output partially in U and partially in Utmp_coll
+							U, Utmp_coll);		`													// advance to the next time step in the collisional problem using RK4 at the given space-step l, taking the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), as well as qHat, conv_weights, qHat_linear & conv_weights_linear (to allow more Fourier transforms of Q to be made), storing the output partially in U and partially in Utmp_coll
 				}
 				else																				// otherwise, if FullandLinear is false...
 				{
-					if(LinearLandau)																// only do this is LinearLandau is true, for using Q(f,M)
+					if(LinearLandau)																// only do this if LinearLandau is true, for using Q(f,M)
 					{
 						ComputeQLinear(f[l%chunk_Nx], DFTMaxwell[l%chunk_Nx], qHat, conv_weights);	// using the coefficients of the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), calculate the Fourier tranform of Q(f,M) using conv_weights1 & conv_weights2 for the weights in the convolution, then store the results of the Fourier transform in qHat
 						conserveMoments(qHat);														// perform the explicit conservation calculation
