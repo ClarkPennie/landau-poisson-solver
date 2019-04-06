@@ -73,6 +73,10 @@ void ComputeQ_FandL(double *f, fftw_complex *qHat, double **conv_weights, fftw_c
 
 void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights);
 
+void ComputeQ_LH(double *f_L, double *f_H, fftw_complex *qHat, double **conv_weights_LH);
+
+void ComputeQ_HL(double *f_L, double *f_H, fftw_complex *qHat, double **conv_weights_HL);
+
 void RK4_FandL(double *f, int l, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear, double *U, double *dU);
 
 void RK4(double *f, int l, fftw_complex *qHat, double **conv_weights, double *U, double *dU);
@@ -84,6 +88,10 @@ void RK4_Inhomo(double *f, int l, fftw_complex *qHat, double **conv_weights, dou
 void RK4_FandL_Homo(double *f, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear, double *U, double *dU);
 
 void RK4_Homo(double *f, fftw_complex *qHat, double **conv_weights, double *U, double *dU);
+
+void RK4_Homo_L(double *f_L, double *f_H, fftw_complex *qHat_LL, fftw_complex *qHat_LH, double **conv_weights, double **conv_weights_LH, double *U, double *dU, double epsilon);
+
+void RK4_Homo_H(double *f_L, double *f_H, fftw_complex *qHat_HH, fftw_complex *qHat_HL, double **conv_weights, double **conv_weights_HL, double *U, double *dU, double epsilon);
 
 /*
 void ComputeQ_MPI_FandL(double *f, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear);

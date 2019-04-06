@@ -41,6 +41,10 @@ void SetInit_4H(double *U);
 
 void SetInit_4H_Homo(double *U);
 
+void SetInit_4H_Multispecies(double *U_L, double *U_H, double epsilon);
+
+void SetInit_4H_Homo_Multispecies(double *U_L, double *U_H, double epsilon);
+
 void SetInit_2H(double *U);
 
 void SetInit_ND(double *U);
@@ -50,5 +54,7 @@ void setInit_spectral(double *U, double **f);
 void setInit_spectral_Homo(double *U, double **f);
 
 void setInit_spectral_Inhomo(double *U, double **f);
+
+void setInit_spectral_Homo_Multispecies(double *U_L, double *U_H, double **f_L, double **f_H);
 
 #endif /* SETINIT_1_H_ */

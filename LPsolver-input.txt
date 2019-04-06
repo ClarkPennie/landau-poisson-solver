@@ -11,7 +11,7 @@
 # Global input variable definitions
 #--------------------------------------------
 
-flag     = Test4
+flag     = TestQ_LH
 
 nT       = 1		            # Number of time-steps
 Nx       = 16		            # Number of space cells

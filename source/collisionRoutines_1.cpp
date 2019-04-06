@@ -162,15 +162,15 @@ double gHat3(double eta1, double eta2, double eta3, double ki1, double ki2, doub
 	return result;
 }
 
-double gHat_LH(double eta1_L, double eta2_L, double eta3_L, double ki1_L, double ki2_L, double ki3_L, double eps)
+double gHat_LH(double eta1_L, double eta2_L, double eta3_L, double ki1_L, double ki2_L, double ki3_L, double epsilon)
 {
     double result = 0.;
     double ki_L[3]={ki1_L,ki2_L,ki3_L}, zeta_L[3]={eta1_L,eta2_L,eta3_L}; // ki=w, zeta=xi in the notes
     double Shat[3][3];
     double r=sqrt(ki1_L*ki1_L+ki2_L*ki2_L+ki3_L*ki3_L);
-    double ki1_tp=eps*(eta1_L-ki1_L);
-    double ki2_tp=eps*(eta2_L-ki2_L);
-    double ki3_tp=eps*(eta3_L-ki3_L);
+    double ki1_tp=epsilon*(eta1_L-ki1_L);
+    double ki2_tp=epsilon*(eta2_L-ki2_L);
+    double ki3_tp=epsilon*(eta3_L-ki3_L);
     
     int i,j;
     
@@ -185,14 +185,14 @@ double gHat_LH(double eta1_L, double eta2_L, double eta3_L, double ki1_L, double
     
     for(i=0;i<3;i++){
         for(j=0;j<3;j++){
-           result += Shat[i][j]*(zeta_L[i]*ki_L[j]-eps*eps*zeta_L[i]*(zeta_L[j]-ki_L[j]));  //convolution weight G in Q_LH
+           result += Shat[i][j]*(zeta_L[i]*ki_L[j]-epsilon*epsilon*zeta_L[i]*(zeta_L[j]-ki_L[j]));  //convolution weight G in Q_LH
         }
     }
 	return result;
 }
 
 
-double gHat_HL(double eta1_H, double eta2_H, double eta3_H, double ki1_H, double ki2_H, double ki3_H, double eps)
+double gHat_HL(double eta1_H, double eta2_H, double eta3_H, double ki1_H, double ki2_H, double ki3_H, double epsilon)
 {
     double result = 0.;
     double ki_H[3]={ki1_H,ki2_H,ki3_H}, zeta_H[3]={eta1_H,eta2_H,eta3_H}; // ki=w, zeta=xi in the notes
@@ -216,7 +216,7 @@ double gHat_HL(double eta1_H, double eta2_H, double eta3_H, double ki1_H, double
     for(i=0;i<3;i++){
         for(j=0;j<3;j++){
             
-            result += Shat[i][j]*(zeta_H[i]*(zeta_H[j]-ki_H[j])-eps*eps*zeta_H[i]*ki_H[j]);  //convolutiong weight R in Q_HL
+            result += Shat[i][j]*(zeta_H[i]*(zeta_H[j]-ki_H[j])-epsilon*epsilon*zeta_H[i]*ki_H[j]);  //convolutiong weight R in Q_HL
         }
     }
     return result;
@@ -281,7 +281,7 @@ double gHat3_linear(double eta1, double eta2, double eta3, double ki1, double ki
 }
 
 
-void generate_conv_weights(double **conv_weights, double **conv_weights_HL, double **conv_weights_LH, int gamma)
+void generate_conv_weights(double **conv_weights, double **conv_weights_LH, double **conv_weights_HL, int gamma)
 {
   int i, j, k, l, m, n;
    #pragma omp parallel for private(i,j,k,l,m,n) shared(conv_weights)
@@ -292,8 +292,8 @@ void generate_conv_weights(double **conv_weights, double **conv_weights_HL, doub
 	  for(m=0;m<N;m++){
 	    for(n=0;n<N;n++) {
 	     conv_weights[k + N*(j + N*i)][n + N*(m + N*l)] = gHat3(eta[i], eta[j], eta[k], eta[l], eta[m], eta[n], gamma); // in the notes, correspondingly, (i,j,k)-kxi, (l,m,n)-w
-         conv_weights_HL[k + N*(j + N*i)][n + N*(m + N*l)] = gHat_HL(eta[i], eta[j], eta[k], eta[l], eta[m], eta[n], gamma);
-         conv_weights_LH[k + N*(j + N*i)][n + N*(m + N*l)] = gHat_LH(eta[i], eta[j], eta[k], eta[l], eta[m], eta[n], gamma);
+         conv_weights_LH[k + N*(j + N*i)][n + N*(m + N*l)] = gHat_LH(eta_L[i], eta_L[j], eta_L[k], eta_L[l], eta_L[m], eta_L[n], gamma);
+         conv_weights_HL[k + N*(j + N*i)][n + N*(m + N*l)] = gHat_HL(eta_H[i], eta_H[j], eta_H[k], eta_H[l], eta_H[m], eta_H[n], gamma);
 	    }
 	  }
 	}
@@ -913,9 +913,9 @@ void ComputeQ_LH(double *f_L, double *f_H, fftw_complex *qHat, double **conv_wei
                             
                             tempD_LH = conv_weights_LH[k + N*(j+ N*i)][n + N*(m + N*l)];        // set tempD to the value of the convolution weight corresponding to current value of ki(i,j,k) & eta(l,m,n)
                             // MULTI-SPECIES NOTE: Will need to update fftOut terms here to _H/_L
-                            tmp0 += prefactor*wtN[l]*wtN[m]*wtN[n]*tempD_LH*(fftOut[n + N*(m + N*l)][0]*fftOut[z + N*(y + N*x)][0] - fftOut[n + N*(m + N*l)][1]*fftOut[z + N*(y + N*x)][1]);        // increment the value of the real part of qHat(ki(i,j,k)) by fHat_L(eta(l,m,n))*fHat_H(eps*(ki(i,j,k)-eta(l,m,n)))*conv_weight(ki(i,j,k),eta(l,m,n)) for the current values of l, m & n in the quadrature sum
+                            tmp0 += prefactor*wtN[l]*wtN[m]*wtN[n]*tempD_LH*(fftOut_L[n + N*(m + N*l)][0]*fftOut_H[z + N*(y + N*x)][0] - fftOut_L[n + N*(m + N*l)][1]*fftOut_H[z + N*(y + N*x)][1]);        // increment the value of the real part of qHat(ki(i,j,k)) by fHat_L(eta(l,m,n))*fHat_H(eps*(ki(i,j,k)-eta(l,m,n)))*conv_weight(ki(i,j,k),eta(l,m,n)) for the current values of l, m & n in the quadrature sum
                             
-                            tmp1 += prefactor*wtN[l]*wtN[m]*wtN[n]*tempD_LH*(fftOut[n + N*(m + N*l)][0]*fftOut[z + N*(y + N*x)][1] + fftOut[n + N*(m + N*l)][1]*fftOut[z + N*(y + N*x)][0]);        // increment the value of the imaginary part of qHat(ki(i,j,k)) by fHat_L(eta(l,m,n))*fHat_H(eps*(ki(i,j,k)-eta(l,m,n)))*conv_weight(ki(i,j,k),eta(l,m,n)) for the current values of l, m & n in the quadrature sum
+                            tmp1 += prefactor*wtN[l]*wtN[m]*wtN[n]*tempD_LH*(fftOut_L[n + N*(m + N*l)][0]*fftOut_H[z + N*(y + N*x)][1] + fftOut_L[n + N*(m + N*l)][1]*fftOut_H[z + N*(y + N*x)][0]);        // increment the value of the imaginary part of qHat(ki(i,j,k)) by fHat_L(eta(l,m,n))*fHat_H(eps*(ki(i,j,k)-eta(l,m,n)))*conv_weight(ki(i,j,k),eta(l,m,n)) for the current values of l, m & n in the quadrature sum
                             
                             // printf(" tempD=%g, prefactor=%g, fftOut=[%g,%g] at %d, %d, %d; %d, %d, %d; %d, %d, %d\n",tempD, prefactor, fftOut[z + N*(y + N*x)][0], fftOut[z + N*(y + N*x)][1],i,j,k,l,m,n, x,y,z);
                         }
@@ -1415,7 +1415,7 @@ void RK4_Homo(double *f, fftw_complex *qHat, double **conv_weights, double *U, d
 }
 
 
-void RK4_Homo_L(double *f_L, double *f_H, fftw_complex *qHat_LL, fftw_complex *qHat_LH, double **conv_weights, double **conv_weights_LH, double *U, double *dU)
+void RK4_Homo_L(double *f_L, double *f_H, fftw_complex *qHat_LL, fftw_complex *qHat_LH, double **conv_weights, double **conv_weights_LH, double *U, double *dU, double epsilon)
 {
     int i,j,k, j1, j2, j3, k_v, k_eta, kk, k_loc;
     double Q_re, Q_im, tp0, tp2, tp3,tp4,tp5, tmp0=0., tmp2=0., tmp3=0., tmp4=0.,tmp5=0., tem;
@@ -1427,7 +1427,7 @@ void RK4_Homo_L(double *f_L, double *f_H, fftw_complex *qHat_LL, fftw_complex *q
     for(i=0;i<size_ft;i++)
     {
         Q[i] = fftOut_LL[i][0] + fftOut_LH[i][0];                                                          // this is Q(Fn, Fn) so that Kn^1 = dt*Q(Fn, Fn) = dt*Q[i]
-        f1_L[i] = f_L[i] + dt*Q[i]/(eps*eps);
+        f1_L[i] = f_L[i] + dt*Q[i]/(epsilon*epsilon);
     }
     
     ComputeQ(f1_L, Q1_fft_LL, conv_weights);
@@ -1440,7 +1440,7 @@ void RK4_Homo_L(double *f_L, double *f_H, fftw_complex *qHat_LL, fftw_complex *q
     for(i=0;i<size_ft;i++)                                                                // calculate the second step of RK4
     {
         Q1[i] = fftOut_LL[i][0] + fftOut_LH[i][0];
-        f1_L[i] = f_L[i] + 0.5*dt*Q[i]/(eps*eps) + 0.5*dt*Q1[i]/(eps*eps);
+        f1_L[i] = f_L[i] + 0.5*dt*Q[i]/(epsilon*epsilon) + 0.5*dt*Q1[i]/(epsilon*epsilon);
     }
     
     ComputeQ(f1_L, Q2_fft_LL, conv_weights);
@@ -1453,7 +1453,7 @@ void RK4_Homo_L(double *f_L, double *f_H, fftw_complex *qHat_LL, fftw_complex *q
     for(i=0;i<size_ft;i++)                                                                // calculate the third step of RK4
     {
         Q1[i] = fftOut_LL[i][0] + fftOut_LH[i][0];
-        f1_L[i] = f_L[i] + 0.5*Q[i]/(eps*eps) + 0.5*Q1[i]/(eps*eps);
+        f1_L[i] = f_L[i] + 0.5*Q[i]/(epsilon*epsilon) + 0.5*Q1[i]/(epsilon*epsilon);
     }
     
     ComputeQ(f1_L, Q3_fft_LL, conv_weights);
@@ -1472,8 +1472,8 @@ void RK4_Homo_L(double *f_L, double *f_H, fftw_complex *qHat_LL, fftw_complex *q
                     
                     IntModes(i,j,k,j1,j2,j3,IntM); //the global IntM must be declared as threadprivate; BUG: forgot to uncomment this and thus IntM=0 !!
                     
-                    Q_re = (0.5*qHat_LL[k_eta][0] + (Q1_fft_LL[k_eta][0]+Q2_fft_LL[k_eta][0]+Q3_fft_LL[k_eta][0])/6.)/(eps*eps) + (0.5*qHat_LH[k_eta][0] + (Q1_fft_LH[k_eta][0]+Q2_fft_LH[k_eta][0]+Q3_fft_LH[k_eta][0])/6.)/(eps*eps);
-                     Q_re = (0.5*qHat_LL[k_eta][1] + (Q1_fft_LL[k_eta][1]+Q2_fft_LL[k_eta][1]+Q3_fft_LL[k_eta][1])/6.)/(eps*eps) + (0.5*qHat_LH[k_eta][1] + (Q1_fft_LH[k_eta][1]+Q2_fft_LH[k_eta][1]+Q3_fft_LH[k_eta][1])/6.)/(eps*eps);
+                    Q_re = (0.5*qHat_LL[k_eta][0] + (Q1_fft_LL[k_eta][0]+Q2_fft_LL[k_eta][0]+Q3_fft_LL[k_eta][0])/6.)/(epsilon*epsilon) + (0.5*qHat_LH[k_eta][0] + (Q1_fft_LH[k_eta][0]+Q2_fft_LH[k_eta][0]+Q3_fft_LH[k_eta][0])/6.)/(epsilon*epsilon);
+                     Q_re = (0.5*qHat_LL[k_eta][1] + (Q1_fft_LL[k_eta][1]+Q2_fft_LL[k_eta][1]+Q3_fft_LL[k_eta][1])/6.)/(epsilon*epsilon) + (0.5*qHat_LH[k_eta][1] + (Q1_fft_LH[k_eta][1]+Q2_fft_LH[k_eta][1]+Q3_fft_LH[k_eta][1])/6.)/(epsilon*epsilon);
                     
                     //tem = scale3*wtN[i]*wtN[j]*wtN[k]*h_eta*h_eta*h_eta;
                     tp0 += IntM[0]*Q_re - IntM[1]*Q_im;
@@ -1500,8 +1500,7 @@ void RK4_Homo_L(double *f_L, double *f_H, fftw_complex *qHat_LL, fftw_complex *q
 }
 
 
-void RK4_Homo_H(double *f_L, double *f_H, fftw_complex *qHat_HH, fftw_complex *qHat_HL, double **conv_weights, double **conv_weights_HL, double *U, double *dU)
-
+void RK4_Homo_H(double *f_L, double *f_H, fftw_complex *qHat_HH, fftw_complex *qHat_HL, double **conv_weights, double **conv_weights_HL, double *U, double *dU, double epsilon)
 {
     int i,j,k, j1, j2, j3, k_v, k_eta, kk, k_loc;
     double Q_re, Q_im, tp0, tp2, tp3,tp4,tp5, tmp0=0., tmp2=0., tmp3=0., tmp4=0.,tmp5=0., tem;
@@ -1513,7 +1512,7 @@ void RK4_Homo_H(double *f_L, double *f_H, fftw_complex *qHat_HH, fftw_complex *q
     for(i=0;i<size_ft;i++)
     {
         Q[i] = fftOut_HH[i][0] + fftOut_HL[i][0];                                                          // this is Q(Fn, Fn) so that Kn^1 = dt*Q(Fn, Fn) = dt*Q[i]
-        f1_H[i] = f_H[i] + dt*Q[i]/eps;
+        f1_H[i] = f_H[i] + dt*Q[i]/epsilon;
     }
     
     ComputeQ(f1_H, Q1_fft_HH, conv_weights);
@@ -1526,7 +1525,7 @@ void RK4_Homo_H(double *f_L, double *f_H, fftw_complex *qHat_HH, fftw_complex *q
     for(i=0;i<size_ft;i++)                                                                // calculate the second step of RK4
     {
         Q1[i] = fftOut_HH[i][0] + fftOut_HL[i][0];
-        f1_H[i] = f_H[i] + 0.5*dt*Q[i]/eps + 0.5*dt*Q1[i]/eps;
+        f1_H[i] = f_H[i] + 0.5*dt*Q[i]/epsilon + 0.5*dt*Q1[i]/epsilon;
     }
     
     ComputeQ(f1_H, Q2_fft_HH, conv_weights);
@@ -1539,7 +1538,7 @@ void RK4_Homo_H(double *f_L, double *f_H, fftw_complex *qHat_HH, fftw_complex *q
     for(i=0;i<size_ft;i++)                                                                // calculate the third step of RK4
     {
         Q1[i] = fftOut_HH[i][0] + fftOut_HL[i][0];
-        f1_H[i] = f_H[i] + 0.5*Q[i]/eps + 0.5*Q1[i]/eps;
+        f1_H[i] = f_H[i] + 0.5*Q[i]/epsilon + 0.5*Q1[i]/epsilon;
     }
     
     ComputeQ(f1_H, Q3_fft_HH, conv_weights);
@@ -1558,8 +1557,8 @@ void RK4_Homo_H(double *f_L, double *f_H, fftw_complex *qHat_HH, fftw_complex *q
                     
                     IntModes(i,j,k,j1,j2,j3,IntM); //the global IntM must be declared as threadprivate; BUG: forgot to uncomment this and thus IntM=0 !!
                     
-                    Q_re = (0.5*qHat_HH[k_eta][0] + (Q1_fft_HH[k_eta][0]+Q2_fft_HH[k_eta][0]+Q3_fft_HH[k_eta][0])/6.)/eps + (0.5*qHat_HL[k_eta][0] + (Q1_fft_HL[k_eta][0]+Q2_fft_HL[k_eta][0]+Q3_fft_HL[k_eta][0])/6.)/eps;
-                    Q_im = (0.5*qHat_HH[k_eta][1] + (Q1_fft_HH[k_eta][1]+Q2_fft_HH[k_eta][1]+Q3_fft_HH[k_eta][1])/6.)/eps + (0.5*qHat_HL[k_eta][1] + (Q1_fft_HL[k_eta][1]+Q2_fft_HL[k_eta][1]+Q3_fft_HL[k_eta][1])/6.)/eps;
+                    Q_re = (0.5*qHat_HH[k_eta][0] + (Q1_fft_HH[k_eta][0]+Q2_fft_HH[k_eta][0]+Q3_fft_HH[k_eta][0])/6.)/epsilon + (0.5*qHat_HL[k_eta][0] + (Q1_fft_HL[k_eta][0]+Q2_fft_HL[k_eta][0]+Q3_fft_HL[k_eta][0])/6.)/epsilon;
+                    Q_im = (0.5*qHat_HH[k_eta][1] + (Q1_fft_HH[k_eta][1]+Q2_fft_HH[k_eta][1]+Q3_fft_HH[k_eta][1])/6.)/epsilon + (0.5*qHat_HL[k_eta][1] + (Q1_fft_HL[k_eta][1]+Q2_fft_HL[k_eta][1]+Q3_fft_HL[k_eta][1])/6.)/epsilon;
                     
                     //tem = scale3*wtN[i]*wtN[j]*wtN[k]*h_eta*h_eta*h_eta;
                     tp0 += IntM[0]*Q_re - IntM[1]*Q_im;

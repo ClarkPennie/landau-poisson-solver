@@ -64,6 +64,8 @@ double L_v_L, L_v_H, R_v_L, R_v_H, L_eta_L, L_eta_H;
 double h_eta_L, h_eta_H, h_v_L, h_v_H;
 double *v_L, *v_H, *eta_L, *eta_H;
 double *f1_L, *f1_H;
+double scaleL_L, scalev_L;
+double scaleL_H, scalev_H;
 fftw_complex *Q1_fft_LL, *Q1_fft_HH, *Q1_fft_LH, *Q1_fft_HL;
 fftw_complex *Q2_fft_LL, *Q2_fft_HH, *Q2_fft_LH, *Q2_fft_HL;
 fftw_complex *Q3_fft_LL, *Q3_fft_HH, *Q3_fft_LH, *Q3_fft_HL;
@@ -90,7 +92,7 @@ bool MassConsOnly;																					// declare a Boolean variable to determin
 
 int main()
 {
-    double eps;                                                                                     // declare epsilon
+    double mass_ratio;                                                                              // declare mass_ratio (of light to heavy particles, epsilon)
 	int i, j, k, j1, j2, j3, l; 																	// declare i, j, k (counters), j1, j2, j3 (velocity space counters) & l (the index of the current DG basis function being integrated against)
 	int  tp, t=0; 																					// declare tp (the amount size of the data which stores the DG coefficients of the solution read from a previous run) & t (the current time-step) and set it to 0
 	int k_v, k_eta, k_local, nprocs_vlasov;															// declare k_v (the index of a DG coefficient), k_eta (the index of a DG coefficient in Fourier space), k_local (the index of a DG coefficient, local to the space chunk on the current process) & nprocs_vlasov (the number of processes used for solving the Vlasov equation)
@@ -103,6 +105,9 @@ int main()
 	fftw_complex *qHat, *qHat_linear;																// declare pointers to the complex numbers qHat (the DFT of Q) & qHat_linear (the DFT of the two species colission operator Q);
 	fftw_complex **DFTMaxwell;																		// declare pointer to the FFT variable DFTMaxwell (to store the FFT of the initial Maxwellian)
 
+	// MULTI-SPECIES GLOBAL VARIABLES:
+	// (Note: these parallel the corresponding single-species variables above)
+	double *U_L, *U_H;
 	double **f_L, **f_H;
     double **conv_weights_LH, **conv_weights_HL;
     fftw_complex *qHat_LL, *qHat_HH, *qHat_LH, *qHat_HL;
@@ -199,17 +204,26 @@ int main()
 	}
 	size_ft=N*N*N; 																					// set size_ft to N^3
 	dv=2.*Lv/Nv;  // set dv to 2Lv/Nv
-    dv_L=2.*Lv_L/Nv;
-    dv_H=2.*Lv_H/Nv;
 	dx=Lx/Nx; 																						// set dx to Lx/Nx
 	scalev=dv*dv*dv;																				// set scalev to dv^3
 	L_v=Lv;																							// set L_v to Lv
 	R_v=Lv; // set R_v to Lv
+	scaleL=8*Lv*Lv*Lv;																				// set scaleL to 8Lv^3
+
+	// MULTI-SPECIES:
+	mass_ratio = 0.01;
+	Lv_H = Lv;
+	Lv_L = mass_ratio*Lv_H;
+    dv_L=2.*Lv_L/Nv;
+    dv_H=2.*Lv_H/Nv;
+	scalev_L=dv_L*dv_L*dv_L;																				// set scalev to dv^3
+	scalev_H=dv_H*dv_H*dv_H;																				// set scalev to dv^3
     L_v_L=Lv_L;
     L_v_H=Lv_H;
     R_v_L=Lv_L;
     R_v_H=Lv_H;
-	scaleL=8*Lv*Lv*Lv;																				// set scaleL to 8Lv^3
+    scaleL_L=8*Lv_L*Lv_L*Lv_L;
+    scaleL_H=8*Lv_H*Lv_H*Lv_H;
 
 	if(MassConsOnly)																				// only do this if MassConsOnly is true and only conserving mass
 	{
@@ -254,7 +268,9 @@ int main()
 	
 	U = (double*)malloc(size*6*sizeof(double));														// allocate enough space at the pointer U for 6*size many double numbers
 	U1 = (double*)malloc(size*6*sizeof(double));													// allocate enough space at the pointer U1 for 6*size many floating point numbers
- 
+	U_L = (double*)malloc(size*6*sizeof(double));
+	U_H = (double*)malloc(size*6*sizeof(double));
+
 	Utmp = (double*)malloc(chunksize_dg*6*sizeof(double));											// allocate enough space at the pointer Utmp for 6*chunksize_dg many floating point numbers
   
 	if(! Homogeneous)
@@ -443,18 +459,19 @@ int main()
 		scale3 = pow(scale, 3.0);																	// set scale3 to scale^3
 
 		//INITIALISE VELOCITY AND FOURIER DOMAINS:
-        L_v = Lv;//sqrt(0.5*(double)N*PI); 															// set L_v to Lv
+//        L_v = Lv;//sqrt(0.5*(double)N*PI); 															// set L_v to Lv
 		L_eta = 0.5*(double)(N-1)*PI/L_v;					// BUG: N-1?							// set L_eta to (N-1)*Pi/(2*L_v)
 		h_v = 2.0*L_v/(double)(N-1);						// BUG: N-1?// set h_v to 2*L_v/(N-1)
         h_eta = 2.0*L_eta/(double)(N);						// BUG: N?								// set h_eta to 2*L_eta/N
-        L_v_L=Lv_L;
-        L_v_H=Lv_H;
+
+        // MULTI-SPECIES:
         L_eta_L = 0.5*(double)(N-1)*PI/L_v_L;
         L_eta_H = 0.5*(double)(N-1)*PI/L_v_H;
         h_v_L = 2.0*L_v_L/(double)(N-1);
         h_v_H = 2.0*L_v_H/(double)(N-1);
         h_eta_L = 2.0*L_eta_L/(double)(N);
         h_eta_H = 2.0*L_eta_H/(double)(N);
+
         for(i=0;i<N;i++)																			// store the discretised velocity and Fourier space points
 		{
 			eta[i] = -L_eta + (double)i*h_eta;														// set the ith value of eta to -L_eta + i*h_eta
@@ -581,6 +598,7 @@ int main()
 			if(FourHump)
 			{
 				SetInit_4H_Homo(U);																			// set initial DG solution with the 4Hump IC. For the first time run t=0, use this to give init solution (otherwise, comment out)
+				SetInit_4H_Homo_Multispecies(U_L, U_H, mass_ratio);
 			}
 			else
 			{
@@ -759,7 +777,34 @@ int main()
   
 	MPI_Bcast(U, size*6, MPI_DOUBLE, 0, MPI_COMM_WORLD);   											// send the contents of U, which will be 6*size entries of datatype MPI_DOUBLE, from the process with rank 0 to all processes, using the communicator MPI_COMM_WORLD
 	MPI_Barrier(MPI_COMM_WORLD);																	// set an MPI barrier to ensure that all processes have reached this point before continuing
-  
+
+	// MULTI-SPECIES TEST:
+	setInit_spectral(U, f);
+	setInit_spectral_Homo_Multispecies(U_L, U_H, f_L, f_H);
+	FILE *fqhat, *ffvals;
+	fqhat=fopen("Data/qHat_TestVals.dc","w");
+	ffvals=fopen("Data/f_TestVals.dc","w");
+
+	ComputeQ(f[0], qHat, conv_weights);
+	// NOTE: Maybe not how qHat_LL & qHat_HH should be used, but this is a test...
+	ComputeQ(f_L[0], qHat_LL, conv_weights);
+	ComputeQ(f_H[0], qHat_HH, conv_weights);
+	ComputeQ_LH(f_L[0], f_H[0], qHat_LH, conv_weights_LH);
+	fprintf(fqhat, " l  m  n    qHat(f)     qHat(f_L)    qHat(f_H)     qHat_LH  \n");
+	fprintf(ffvals, " l  m  n       f           f_L          f_H   \n");
+	for(int l=0;l<N;l++){
+	  for(int m=0;m<N;m++){
+		for(int n=0;n<N;n++){
+			k = l*N*N+m*N+n;
+			fprintf(fqhat, "%2d %2d %2d %11g %11g %11g %11g \n",
+								l, m, n, qHat[k][0], qHat_LL[k][0], qHat_HH[k][0], qHat_LH[k][0]);
+			fprintf(ffvals, "%2d %2d %2d %11g %11g %11g \n",
+								l, m, n, f[0][k], f_L[0][k], f_H[0][k]);
+		}
+	  }
+	}
+	fclose(fqhat);
+
 	MPIt1 = MPI_Wtime();																			// set MPIt1 to the current time in the MPI process
 	while(t < nT) 																					// if t < nT (i.e. not yet reached the final timestep), perform time-splitting to first advect the particle through the collisionless step and then perform one space homogeneous collisional step)
 	{

@@ -258,11 +258,13 @@ void SetInit_4H(double *U)																							// function to calculate the DG
     }
 }
 
-void SetInit_4H_Multispecies(double *U)                                                                                            // function to calculate the DG coefficients for the initial condition with four humps, found by adding four Maxwellians
+void SetInit_4H_Multispecies(double *U_L, double *U_H, double epsilon)                                                                                            // function to calculate the DG coefficients for the initial condition with four humps, found by adding four Maxwellians
 {
     int i, j1, j2, j3, k, m,m1,m2,m3,nt=5, p;                                                                        // declare i (to represent cell i in x-space), j1, j2, j3 (to represent cell (j1,j2,j3) in v-space), k (the index of cell (i,j1,j2,j3) in U), m (counter for the Gaussian quadrature in x-space), m1, m2, m3 (counters for the Gaussian quadrature in v-space), nt (the number of points in the quadrature) & p (to loop through the four Maxwellians)
-    double tp, tpx, tp0, tp5, tmpx0, tmpx1, tmp0, tmp1, tmp2, tmp3, tmp4;                                            // declare tp, tpx, tp0, tmpx0, tmpx1, tmp0, tmp1, tmp2, tmp3, tmp4 (temporary values while calculating the quadrature for the integral w.r.t. v)
-    double T0 = 0.4;                                                                                            // declare T0 (the temperature of the Maxwellian in the initial condition) and set its value
+    double tp_L, tpx_L, tp0_L, tp5_L, tmpx0_L, tmpx1_L, tmp0_L, tmp1_L, tmp2_L, tmp3_L, tmp4_L;                                            // declare tp, tpx, tp0, tmpx0, tmpx1, tmp0, tmp1, tmp2, tmp3, tmp4 (temporary values while calculating the quadrature for the integral w.r.t. v)
+    double tp_H, tpx_H, tp0_H, tp5_H, tmpx0_H, tmpx1_H, tmp0_H, tmp1_H, tmp2_H, tmp3_H, tmp4_H;                                            // declare tp, tpx, tp0, tmpx0, tmpx1, tmp0, tmp1, tmp2, tmp3, tmp4 (temporary values while calculating the quadrature for the integral w.r.t. v)
+    double T0_H = 0.4;                                                                                            // declare T0 (the temperature of the Maxwellian in the initial condition) and set its value
+    double T0_L = T0_H*epsilon*epsilon;
     //#pragma omp parallel for private(k,j1,j2,j3,i,tmp0, tmp1, tmp2, tmp3, tmp4, tp0, tp5, tp) shared(U)
     for(p=0;p<4;p++)                                                                                                // loop through the four Maxwellians
     {
@@ -272,61 +274,89 @@ void SetInit_4H_Multispecies(double *U)                                         
             {
                 for(j3=0;j3<Nv;j3++)
                 {
-                    tmp0=0.; tmp1=0.; tmp2=0.; tmp3=0.; tmp4=0.;                                                    // initialise tmp0, tmp1, tmp2, tmp3 & tmp4 at 0 for a new quadrature integral to calculate int_Kj Mw(v)*phi_(6k+l)(v) dv, for l = 0, 2, 4, 5, 6
+                    tmp0_L=0.; tmp1_L=0.; tmp2_L=0.; tmp3_L=0.; tmp4_L=0.;                                                    // initialise tmp0, tmp1, tmp2, tmp3 & tmp4 at 0 for a new quadrature integral to calculate int_Kj Mw(v)*phi_(6k+l)(v) dv, for l = 0, 2, 4, 5, 6
+                    tmp0_H=0.; tmp1_H=0.; tmp2_H=0.; tmp3_H=0.; tmp4_H=0.;                                                    // initialise tmp0, tmp1, tmp2, tmp3 & tmp4 at 0 for a new quadrature integral to calculate int_Kj Mw(v)*phi_(6k+l)(v) dv, for l = 0, 2, 4, 5, 6
                     for(m1=0;m1<nt;m1++)                                                                            // loop through the quadrature sum
                     {
                         for(m2=0;m2<nt;m2++)
                         {
                             for(m3=0;m3<nt;m3++)
                             {
-                                tp = wt[m1]*wt[m2]*wt[m3]*Mw(Gridv_L((double)j1)+0.5*dv   *vt[m1] + pow(-1,p), Gridv_L((double)j2)+0.5*dv*vt[m2] + pow(-1,p), Gridv_L((double)j3)+0.5*dv*vt[m3] + pow(-1,p), T0);        // calculate w_m1*w_m2*w_m3*Mw(v_m1+(-1)^p,v_m2+(-1)^p,v_m3+(-1)^p), a Maxwellian shifted to center at v_j = (-1)^p, which appears in all quadrature integral approximations
+                                tp_L = wt[m1]*wt[m2]*wt[m3]*Mw(Gridv_L((double)j1)+0.5*dv_L*vt[m1] + pow(-1,p), Gridv_L((double)j2)+0.5*dv_L*vt[m2] + pow(-1,p), Gridv_L((double)j3)+0.5*dv_L*vt[m3] + pow(-1,p), T0_L);        // calculate w_m1*w_m2*w_m3*Mw(v_m1+(-1)^p,v_m2+(-1)^p,v_m3+(-1)^p), a Maxwellian shifted to center at v_j = (-1)^p, which appears in all quadrature integral approximations
+                                tp_H = wt[m1]*wt[m2]*wt[m3]*Mw(Gridv_H((double)j1)+0.5*dv_H*vt[m1] + pow(-1,p), Gridv_H((double)j2)+0.5*dv_H*vt[m2] + pow(-1,p), Gridv_H((double)j3)+0.5*dv_H*vt[m3] + pow(-1,p), T0_H);        // calculate w_m1*w_m2*w_m3*Mw(v_m1+(-1)^p,v_m2+(-1)^p,v_m3+(-1)^p), a Maxwellian shifted to center at v_j = (-1)^p, which appears in all quadrature integral approximations
                                 
-                                tp = wt[m1]*wt[m2]*wt[m3]*Mw(Gridv_H((double)j1)+0.5*dv*vt[m1] + pow(-1,p), Gridv_H((double)j2)+0.5*dv*vt[m2] + pow(-1,p), Gridv_H((double)j3)+0.5*dv*vt[m3] + pow(-1,p), T0);        // calculate w_m1*w_m2*w_m3*Mw(v_m1+(-1)^p,v_m2+(-1)^p,v_m3+(-1)^p), a Maxwellian shifted to center at v_j = (-1)^p, which appears in all quadrature integral approximations
-                                
-                                
-                                tmp0 += tp;                                                                            // add tp to tmp0 (for the integral int_Kj Mw(v) dv)
-                                tmp1 += tp*0.5*vt[m1];                                                                // add tp*v_m1/2 to tmp1 (for the integral int_Kj Mw(v)*phi_(6k+2)(v) dv)
-                                tmp2 += tp*0.5*vt[m2];                                                                // add tp*v_m2/2 to tmp2 (for the integral int_Kj Mw(v)*phi_(6k+3)(v) dv)
-                                tmp3 += tp*0.5*vt[m3];                                                                // add tp*v_m3/2 to tmp3 (for the integral int_Kj Mw(v)*phi_(6k+4)(v) dv)
-                                tmp4 += tp*0.25*(vt[m1]*vt[m1] + vt[m2]*vt[m2]+ vt[m3]*vt[m3]);                        // add tp*((v_m1/2)^2 + (v_m2/2)^2 + (v_m3/2)^2) to tmp4 (for the integral int_Kj Mw(v)*phi_(6k+5)(v) dv)
+                                tmp0_L += tp_L;                                                                            // add tp to tmp0 (for the integral int_Kj Mw(v) dv)
+                                tmp1_L += tp_L*0.5*vt[m1];                                                                // add tp*v_m1/2 to tmp1 (for the integral int_Kj Mw(v)*phi_(6k+2)(v) dv)
+                                tmp2_L += tp_L*0.5*vt[m2];                                                                // add tp*v_m2/2 to tmp2 (for the integral int_Kj Mw(v)*phi_(6k+3)(v) dv)
+                                tmp3_L += tp_L*0.5*vt[m3];                                                                // add tp*v_m3/2 to tmp3 (for the integral int_Kj Mw(v)*phi_(6k+4)(v) dv)
+                                tmp4_L += tp_L*0.25*(vt[m1]*vt[m1] + vt[m2]*vt[m2]+ vt[m3]*vt[m3]);                        // add tp*((v_m1/2)^2 + (v_m2/2)^2 + (v_m3/2)^2) to tmp4 (for the integral int_Kj Mw(v)*phi_(6k+5)(v) dv)
+
+                                tmp0_H += tp_H;                                                                            // add tp to tmp0 (for the integral int_Kj Mw(v) dv)
+                                tmp1_H += tp_H*0.5*vt[m1];                                                                // add tp*v_m1/2 to tmp1 (for the integral int_Kj Mw(v)*phi_(6k+2)(v) dv)
+                                tmp2_H += tp_H*0.5*vt[m2];                                                                // add tp*v_m2/2 to tmp2 (for the integral int_Kj Mw(v)*phi_(6k+3)(v) dv)
+                                tmp3_H += tp_H*0.5*vt[m3];                                                                // add tp*v_m3/2 to tmp3 (for the integral int_Kj Mw(v)*phi_(6k+4)(v) dv)
+                                tmp4_H += tp_H*0.25*(vt[m1]*vt[m1] + vt[m2]*vt[m2]+ vt[m3]*vt[m3]);                        // add tp*((v_m1/2)^2 + (v_m2/2)^2 + (v_m3/2)^2) to tmp4 (for the integral int_Kj Mw(v)*phi_(6k+5)(v) dv)
                             }
                         }
                     }
-                    tmp0 = tmp0*0.5*0.5*0.5; tmp1 = tmp1*0.5*0.5*0.5; tmp2 = tmp2*0.5*0.5*0.5; tmp3 = tmp3*0.5*0.5*0.5; tmp4 = tmp4*0.5*0.5*0.5;                        // multiply tmp0, tmp1, tmp2, tmp3 & tmp4 by (1/2)^3 to represent the fact that quadrature isn't done over [-1, 1] (should also multiply by dv^3 but this cancels with 1/dv^3 later)
+                    tmp0_L = tmp0_L*0.5*0.5*0.5; tmp1_L = tmp1_L*0.5*0.5*0.5; tmp2_L = tmp2_L*0.5*0.5*0.5; tmp3_L = tmp3_L*0.5*0.5*0.5; tmp4_L = tmp4_L*0.5*0.5*0.5;                        // multiply tmp0, tmp1, tmp2, tmp3 & tmp4 by (1/2)^3 to represent the fact that quadrature isn't done over [-1, 1] (should also multiply by dv^3 but this cancels with 1/dv^3 later)
+                    tmp0_H = tmp0_H*0.5*0.5*0.5; tmp1_H = tmp1_H*0.5*0.5*0.5; tmp2_H = tmp2_H*0.5*0.5*0.5; tmp3_H = tmp3_H*0.5*0.5*0.5; tmp4_H = tmp4_H*0.5*0.5*0.5;                        // multiply tmp0, tmp1, tmp2, tmp3 & tmp4 by (1/2)^3 to represent the fact that quadrature isn't done over [-1, 1] (should also multiply by dv^3 but this cancels with 1/dv^3 later)
                     for(i=0;i<Nx;i++)                                                                                // loop through the space cells
                     {
-                        tmpx0 = 0.; tmpx1 = 0.;                                                                        // initialise tmpx0 & tmpx1 at 0 for a new quadrature integral to calculate int_Ii f_DH(x)*phi_(6k+l)(x) dx, for l = 0, 1
+                        tmpx0_L = 0.; tmpx1_L = 0.; tmpx0_H = 0.; tmpx1_H = 0.;                                       // initialise tmpx0 & tmpx1 at 0 for a new quadrature integral to calculate int_Ii f_DH(x)*phi_(6k+l)(x) dx, for l = 0, 1
                         for(m = 0; m < nt; m++)                                                                        // loop through the quadrature sum
                         {
-                            tpx = wt[m]*Mw_x(Gridx((double) i)+0.5*dx*vt[m] - Lx/2 + pow(-1,((int)(p/2))));    // calculate w_m*Mw_x(x-Lx/2+(-1)^floor(p/2)), a Maxwellian shifted to center at x = Lx/2 - (-1)^floor(p/2), which appears in both quadrature integral approximations
-                            tmpx0 += tpx;                                                                            // add tpx to tmpx0 (for the integral int_Ii f_DH(x) dx)
-                            tmpx1 += tpx*0.5*vt[m];                                                                    // add tpx*x_m/2 to tmpx1 (for the integral int_Ii f_DH(x)*phi_(6k+1)(x) dx)
-                        }
-                        tmpx0 = tmpx0*0.5; tmpx1 = tmpx1*0.5;                                                        // multiply tmpx0 & tmpx1 by 1/2 to represent the fact that quadrature isn't done over [-1, 1] (should also multiply by dx but this cancels with 1/dx later)
+                            tpx_L = wt[m]*Mw_x(Gridx((double) i)+0.5*dx*vt[m] - Lx/2 + pow(-1,((int)(p/2))));    // calculate w_m*Mw_x(x-Lx/2+(-1)^floor(p/2)), a Maxwellian shifted to center at x = Lx/2 - (-1)^floor(p/2), which appears in both quadrature integral approximations
+                            tmpx0_L += tpx_L;                                                                            // add tpx to tmpx0 (for the integral int_Ii f_DH(x) dx)
+                            tmpx1_L += tpx_L*0.5*vt[m];                                                                    // add tpx*x_m/2 to tmpx1 (for the integral int_Ii f_DH(x)*phi_(6k+1)(x) dx)
+                            tpx_H = wt[m]*Mw_x(Gridx((double) i)+0.5*dx*vt[m] - Lx/2 + pow(-1,((int)(p/2))));    // calculate w_m*Mw_x(x-Lx/2+(-1)^floor(p/2)), a Maxwellian shifted to center at x = Lx/2 - (-1)^floor(p/2), which appears in both quadrature integral approximations
+                            tmpx0_H += tpx_H;                                                                            // add tpx to tmpx0 (for the integral int_Ii f_DH(x) dx)
+                            tmpx1_H += tpx_H*0.5*vt[m];                                                                    // add tpx*x_m/2 to tmpx1 (for the integral int_Ii f_DH(x)*phi_(6k+1)(x) dx)
+                      }
+                        tmpx0_L = tmpx0_L*0.5; tmpx1_L = tmpx1_L*0.5;                                                        // multiply tmpx0 & tmpx1 by 1/2 to represent the fact that quadrature isn't done over [-1, 1] (should also multiply by dx but this cancels with 1/dx later)
+                        tmpx0_H = tmpx0_H*0.5; tmpx1_H = tmpx1_H*0.5;                                                        // multiply tmpx0 & tmpx1 by 1/2 to represent the fact that quadrature isn't done over [-1, 1] (should also multiply by dx but this cancels with 1/dx later)
                         k=i*size_v + (j1*Nv*Nv + j2*Nv + j3);                                                        // calculate the index of cell (i,j1,j2,j3) in U
                         
-                        tp0 = tmpx0*tmp0;                                                                            // calculate b_6k = (int_Ii f_DH(x) dx)*(int_Kj Mw(v) dv)
-                        tp5 = tmpx0*tmp4;                                                                            // calculate b_(6k+5) = (int_Ii f_DH(x) dx)*(int_Kj Mw(v)*phi_(6k+5)(v) dv)
+                        tp0_L = tmpx0_L*tmp0_L;                                                                            // calculate b_6k = (int_Ii f_DH(x) dx)*(int_Kj Mw(v) dv)
+                        tp5_L = tmpx0_L*tmp4_L;                                                                            // calculate b_(6k+5) = (int_Ii f_DH(x) dx)*(int_Kj Mw(v)*phi_(6k+5)(v) dv)
+                        tp0_H = tmpx0_H*tmp0_H;                                                                            // calculate b_6k = (int_Ii f_DH(x) dx)*(int_Kj Mw(v) dv)
+                        tp5_H = tmpx0_H*tmp4_H;                                                                            // calculate b_(6k+5) = (int_Ii f_DH(x) dx)*(int_Kj Mw(v)*phi_(6k+5)(v) dv)
                         
                         if(p==0)
                         {
-                            U[k*6+0] = 19*tp0/4. - 15*tp5;                                                            // calculate the coefficient U[6k]
-                            U[k*6+5] = 60*tp5 - 15*tp0;                                                                // calculate the coefficient U[6k+5]
+                            U_L[k*6+0] = 19*tp0_L/4. - 15*tp5_L;                                                            // calculate the coefficient U[6k]
+                            U_L[k*6+5] = 60*tp5_L - 15*tp0_L;                                                                // calculate the coefficient U[6k+5]
+
+                            U_L[k*6+1] = tmpx1_L*tmp0_L*12;                                                                 // calculate the coefficient U[6k+1] = 12*b_(6k+1) = 12*(int_Ii f_DH(x)*phi_(6k+1)(x) dx)*(int_Kj Mw(v) dv)
+                            U_L[k*6+2] = tmpx0_L*tmp1_L*12;                                                                // calculate the coefficient U[6k+2] = 12*b_(6k+2) = 12*(int_Ii f_DH(x) dx)*(int_Kj Mw(v)*phi_(6k+2)(v) dv)
+                            U_L[k*6+3] = tmpx0_L*tmp2_L*12;                                                                // calculate the coefficient U[6k+3] = 12*b_(6k+3) = 12*(int_Ii f_DH(x) dx)*(int_Kj Mw(v)*phi_(6k+3)(v) dv)
+                            U_L[k*6+4] = tmpx0_L*tmp3_L*12;                                                                // calculate the coefficient U[6k+4] = 12*b_(6k+4) = 12*(int_Ii f_DH(x) dx)*(int_Kj Mw(v)*phi_(6k+4)(v) dv)
+
+                            U_H[k*6+0] = 19*tp0_H/4. - 15*tp5_H;                                                            // calculate the coefficient U[6k]
+                            U_H[k*6+5] = 60*tp5_H - 15*tp0_H;                                                                // calculate the coefficient U[6k+5]
                             
-                            U[k*6+1] = tmpx1*tmp0*12;                                                                 // calculate the coefficient U[6k+1] = 12*b_(6k+1) = 12*(int_Ii f_DH(x)*phi_(6k+1)(x) dx)*(int_Kj Mw(v) dv)
-                            U[k*6+2] = tmpx0*tmp1*12;                                                                // calculate the coefficient U[6k+2] = 12*b_(6k+2) = 12*(int_Ii f_DH(x) dx)*(int_Kj Mw(v)*phi_(6k+2)(v) dv)
-                            U[k*6+3] = tmpx0*tmp2*12;                                                                // calculate the coefficient U[6k+3] = 12*b_(6k+3) = 12*(int_Ii f_DH(x) dx)*(int_Kj Mw(v)*phi_(6k+3)(v) dv)
-                            U[k*6+4] = tmpx0*tmp3*12;                                                                // calculate the coefficient U[6k+4] = 12*b_(6k+4) = 12*(int_Ii f_DH(x) dx)*(int_Kj Mw(v)*phi_(6k+4)(v) dv)
+                            U_H[k*6+1] = tmpx1_H*tmp0_H*12;                                                                 // calculate the coefficient U[6k+1] = 12*b_(6k+1) = 12*(int_Ii f_DH(x)*phi_(6k+1)(x) dx)*(int_Kj Mw(v) dv)
+                            U_H[k*6+2] = tmpx0_H*tmp1_H*12;                                                                // calculate the coefficient U[6k+2] = 12*b_(6k+2) = 12*(int_Ii f_DH(x) dx)*(int_Kj Mw(v)*phi_(6k+2)(v) dv)
+                            U_H[k*6+3] = tmpx0_H*tmp2_H*12;                                                                // calculate the coefficient U[6k+3] = 12*b_(6k+3) = 12*(int_Ii f_DH(x) dx)*(int_Kj Mw(v)*phi_(6k+3)(v) dv)
+                            U_H[k*6+4] = tmpx0_H*tmp3_H*12;                                                                // calculate the coefficient U[6k+4] = 12*b_(6k+4) = 12*(int_Ii f_DH(x) dx)*(int_Kj Mw(v)*phi_(6k+4)(v) dv)
                         }
                         else
                         {
-                            U[k*6+0] += 19*tp0/4. - 15*tp5;                                                            // calculate the coefficient U[6k]
-                            U[k*6+5] += 60*tp5 - 15*tp0;                                                            // calculate the coefficient U[6k+5]
+                            U_L[k*6+0] += 19*tp0_L/4. - 15*tp5_L;                                                            // calculate the coefficient U[6k]
+                            U_L[k*6+5] += 60*tp5_L - 15*tp0_L;                                                                // calculate the coefficient U[6k+5]
+
+                            U_L[k*6+1] += tmpx1_L*tmp0_L*12;                                                                 // calculate the coefficient U[6k+1] = 12*b_(6k+1) = 12*(int_Ii f_DH(x)*phi_(6k+1)(x) dx)*(int_Kj Mw(v) dv)
+                            U_L[k*6+2] += tmpx0_L*tmp1_L*12;                                                                // calculate the coefficient U[6k+2] = 12*b_(6k+2) = 12*(int_Ii f_DH(x) dx)*(int_Kj Mw(v)*phi_(6k+2)(v) dv)
+                            U_L[k*6+3] += tmpx0_L*tmp2_L*12;                                                                // calculate the coefficient U[6k+3] = 12*b_(6k+3) = 12*(int_Ii f_DH(x) dx)*(int_Kj Mw(v)*phi_(6k+3)(v) dv)
+                            U_L[k*6+4] += tmpx0_L*tmp3_L*12;                                                                // calculate the coefficient U[6k+4] = 12*b_(6k+4) = 12*(int_Ii f_DH(x) dx)*(int_Kj Mw(v)*phi_(6k+4)(v) dv)
+
+                            U_H[k*6+0] += 19*tp0_H/4. - 15*tp5_H;                                                            // calculate the coefficient U[6k]
+                            U_H[k*6+5] += 60*tp5_H - 15*tp0_H;                                                                // calculate the coefficient U[6k+5]
                             
-                            U[k*6+1] += tmpx1*tmp0*12;                                                                 // calculate the coefficient U[6k+1] = 12*b_(6k+1) = 12*(int_Ii f_DH(x)*phi_(6k+1)(x) dx)*(int_Kj Mw(v) dv)
-                            U[k*6+2] += tmpx0*tmp1*12;                                                                // calculate the coefficient U[6k+2] = 12*b_(6k+2) = 12*(int_Ii f_DH(x) dx)*(int_Kj Mw(v)*phi_(6k+2)(v) dv)
-                            U[k*6+3] += tmpx0*tmp2*12;                                                                // calculate the coefficient U[6k+3] = 12*b_(6k+3) = 12*(int_Ii f_DH(x) dx)*(int_Kj Mw(v)*phi_(6k+3)(v) dv)
-                            U[k*6+4] += tmpx0*tmp3*12;                                                                // calculate the coefficient U[6k+4] = 12*b_(6k+4) = 12*(int_Ii f_DH(x) dx)*(int_Kj Mw(v)*phi_(6k+4)(v) dv)
+                            U_H[k*6+1] += tmpx1_H*tmp0_H*12;                                                                 // calculate the coefficient U[6k+1] = 12*b_(6k+1) = 12*(int_Ii f_DH(x)*phi_(6k+1)(x) dx)*(int_Kj Mw(v) dv)
+                            U_H[k*6+2] += tmpx0_H*tmp1_H*12;                                                                // calculate the coefficient U[6k+2] = 12*b_(6k+2) = 12*(int_Ii f_DH(x) dx)*(int_Kj Mw(v)*phi_(6k+2)(v) dv)
+                            U_H[k*6+3] += tmpx0_H*tmp2_H*12;                                                                // calculate the coefficient U[6k+3] = 12*b_(6k+3) = 12*(int_Ii f_DH(x) dx)*(int_Kj Mw(v)*phi_(6k+3)(v) dv)
+                            U_H[k*6+4] += tmpx0_H*tmp3_H*12;                                                                // calculate the coefficient U[6k+4] = 12*b_(6k+4) = 12*(int_Ii f_DH(x) dx)*(int_Kj Mw(v)*phi_(6k+4)(v) dv)
                         }
                     }
                 }
@@ -335,7 +365,8 @@ void SetInit_4H_Multispecies(double *U)                                         
     }
     for(k=0;k<6*size;k++)                                                                                            // loop through all entries of U
     {
-        U[k] = U[k]/4;                                                                                                // divide the kth entry of U by 4 since 4 Maxwellians were added together
+        U_L[k] = U_L[k]/4;                                                                                                // divide the kth entry of U by 4 since 4 Maxwellians were added together
+        U_H[k] = U_H[k]/4;                                                                                                // divide the kth entry of U by 4 since 4 Maxwellians were added together
     }
 }
 
@@ -404,6 +435,101 @@ void SetInit_4H_Homo(double *U)																				// function to calculate the 
 	   U[k] = U[k]/4;																						// divide the kth entry of U by 4 since 4 Maxwellians were added together
    }
 }
+
+void SetInit_4H_Homo_Multispecies(double *U_L, double *U_H, double epsilon)																				// function to calculate the DG coefficients for the initial condition with four humps, found by adding four Maxwellians
+{
+    int j1, j2, j3, k, m1,m2,m3,nt=5, p;																// declare j1, j2, j3 (to represent cell (j1,j2,j3) in v-space), k (the index of cell (j1,j2,j3) in U), m1, m2, m3 (counters for the Gaussian quadrature in v-space), nt (the number of points in the quadrature) & p (to loop through the four Maxwellians)
+    double tp_L, tp0_L, tp5_L, tmp0_L, tmp1_L, tmp2_L, tmp3_L, tmp4_L;													// declare tp, tp0, tmp0, tmp1, tmp2, tmp3, tmp4 (temporary values while calculating the quadrature for the integral w.r.t. v)
+    double tp_H, tp0_H, tp5_H, tmp0_H, tmp1_H, tmp2_H, tmp3_H, tmp4_H;													// declare tp, tp0, tmp0, tmp1, tmp2, tmp3, tmp4 (temporary values while calculating the quadrature for the integral w.r.t. v)
+    double C_L = 0.02;		// shift of Maxwellians
+	double T0_L = 0.4;																							// declare T0 (the temperature of the Maxwellian in the initial condition) and set its value
+    double C_H = C_L*epsilon;		// shift of Maxwellians
+	double T0_H = T0_L*epsilon*epsilon;																							// declare T0 (the temperature of the Maxwellian in the initial condition) and set its value
+    if(myrank_mpi == 0)
+    {
+    	printf("Four Hump initial condition data, for U_L: T_L = %g; Shift_L = %g \n", T0_L, C_L);
+    	printf("Four Hump initial condition data, for U_H: T_H = %g; Shift_H = %g \n", T0_H, C_H);
+    }
+    //#pragma omp parallel for private(k,j1,j2,j3,i,tmp0, tmp1, tmp2, tmp3, tmp4, tp0, tp5, tp) shared(U)
+    for(p=0;p<4;p++)																					// loop through the four Maxwellians
+    {
+    	for(j1=0;j1<Nv;j1++)																			// loop through all the velocity cells
+    	{
+    		for(j2=0;j2<Nv;j2++)
+    		{
+    			for(j3=0;j3<Nv;j3++)
+    			{
+    				tmp0_L=0.; tmp1_L=0.; tmp2_L=0.; tmp3_L=0.; tmp4_L=0.;										// initialise tmp0, tmp1, tmp2, tmp3 & tmp4 at 0 for a new quadrature integral to calculate int_Kj Mw(v)*phi_(6k+l)(v) dv, for l = 0, 2, 4, 5, 6
+    				tmp0_H=0.; tmp1_H=0.; tmp2_H=0.; tmp3_H=0.; tmp4_H=0.;										// initialise tmp0, tmp1, tmp2, tmp3 & tmp4 at 0 for a new quadrature integral to calculate int_Kj Mw(v)*phi_(6k+l)(v) dv, for l = 0, 2, 4, 5, 6
+    				for(m1=0;m1<nt;m1++)																// loop through the quadrature sum
+    				{
+    					for(m2=0;m2<nt;m2++)
+    					{
+    						for(m3=0;m3<nt;m3++)
+    						{
+    							tp_L = wt[m1]*wt[m2]*wt[m3]*Mw(Gridv_L((double)j1)+0.5*dv_L*vt[m1] + C_L*pow(-1,((int)(p/2))), Gridv_L((double)j2)+0.5*dv_L*vt[m2] + C_L*pow(-1,p), Gridv_L((double)j3)+0.5*dv_L*vt[m3] + C_L*pow(-1,p), T0_L);		// calculate w_m1*w_m2*w_m3*Mw(v_m1+(-1)^floor(p/2),v_m2+(-1)^p,v_m3+(-1)^p), a Maxwellian shifted to center at v_j = (-1)^p, which appears in all quadrature integral approximations
+    							tp_H = wt[m1]*wt[m2]*wt[m3]*Mw(Gridv_H((double)j1)+0.5*dv_H*vt[m1] + C_H*pow(-1,((int)(p/2))), Gridv_H((double)j2)+0.5*dv_H*vt[m2] + C_H*pow(-1,p), Gridv_H((double)j3)+0.5*dv_H*vt[m3] + C_H*pow(-1,p), T0_H);		// calculate w_m1*w_m2*w_m3*Mw(v_m1+(-1)^floor(p/2),v_m2+(-1)^p,v_m3+(-1)^p), a Maxwellian shifted to center at v_j = (-1)^p, which appears in all quadrature integral approximations
+
+    							tmp0_L += tp_L;																// add tp to tmp0 (for the integral int_Kj Mw(v) dv)
+    							tmp1_L += tp_L*0.5*vt[m1];													// add tp*v_m1/2 to tmp1 (for the integral int_Kj Mw(v)*phi_(6k+2)(v) dv)
+    							tmp2_L += tp_L*0.5*vt[m2];													// add tp*v_m2/2 to tmp2 (for the integral int_Kj Mw(v)*phi_(6k+3)(v) dv)
+    							tmp3_L += tp_L*0.5*vt[m3];													// add tp*v_m3/2 to tmp3 (for the integral int_Kj Mw(v)*phi_(6k+4)(v) dv)
+    							tmp4_L += tp_L*0.25*(vt[m1]*vt[m1] + vt[m2]*vt[m2]+ vt[m3]*vt[m3]);			// add tp*((v_m1/2)^2 + (v_m2/2)^2 + (v_m3/2)^2) to tmp4 (for the integral int_Kj Mw(v)*phi_(6k+5)(v) dv)
+
+    							tmp0_H += tp_H;																// add tp to tmp0 (for the integral int_Kj Mw(v) dv)
+    							tmp1_H += tp_H*0.5*vt[m1];													// add tp*v_m1/2 to tmp1 (for the integral int_Kj Mw(v)*phi_(6k+2)(v) dv)
+    							tmp2_H += tp_H*0.5*vt[m2];													// add tp*v_m2/2 to tmp2 (for the integral int_Kj Mw(v)*phi_(6k+3)(v) dv)
+    							tmp3_H += tp_H*0.5*vt[m3];													// add tp*v_m3/2 to tmp3 (for the integral int_Kj Mw(v)*phi_(6k+4)(v) dv)
+    							tmp4_H += tp_H*0.25*(vt[m1]*vt[m1] + vt[m2]*vt[m2]+ vt[m3]*vt[m3]);			// add tp*((v_m1/2)^2 + (v_m2/2)^2 + (v_m3/2)^2) to tmp4 (for the integral int_Kj Mw(v)*phi_(6k+5)(v) dv)
+    						}
+    					}
+    				}
+    				tmp0_L = tmp0_L*0.5*0.5*0.5; tmp1_L = tmp1_L*0.5*0.5*0.5; tmp2_L = tmp2_L*0.5*0.5*0.5; tmp3_L = tmp3_L*0.5*0.5*0.5; tmp4_L = tmp4_L*0.5*0.5*0.5;						// multiply tmp0, tmp1, tmp2, tmp3 & tmp4 by (1/2)^3 to represent the fact that quadrature isn't done over [-1, 1] (should also multiply by dv^3 but this cancels with 1/dv^3 later)
+    				tmp0_H = tmp0_H*0.5*0.5*0.5; tmp1_H = tmp1_H*0.5*0.5*0.5; tmp2_H = tmp2_H*0.5*0.5*0.5; tmp3_H = tmp3_H*0.5*0.5*0.5; tmp4_H = tmp4_H*0.5*0.5*0.5;						// multiply tmp0, tmp1, tmp2, tmp3 & tmp4 by (1/2)^3 to represent the fact that quadrature isn't done over [-1, 1] (should also multiply by dv^3 but this cancels with 1/dv^3 later)
+					k= j1*Nv*Nv + j2*Nv + j3;											// calculate the index of cell (i,j1,j2,j3) in U
+					if(p==0)
+    				{
+    					U_L[k*6+0] = 19*tmp0_L/4. - 15*tmp4_L;													// calculate the coefficient U[6k]
+    					U_L[k*6+5] = 60*tmp4_L - 15*tmp0_L;														// calculate the coefficient U[6k+5]
+
+   						U_L[k*6+2] = tmp1_L*12;																// calculate the coefficient U[6k+2] = 12*b_(6k+2) = 12*(int_Ii f_DH(x) dx)*(int_Kj Mw(v)*phi_(6k+2)(v) dv)
+   						U_L[k*6+3] = tmp2_L*12;																// calculate the coefficient U[6k+3] = 12*b_(6k+3) = 12*(int_Ii f_DH(x) dx)*(int_Kj Mw(v)*phi_(6k+3)(v) dv)
+   						U_L[k*6+4] = tmp3_L*12;																// calculate the coefficient U[6k+4] = 12*b_(6k+4) = 12*(int_Ii f_DH(x) dx)*(int_Kj Mw(v)*phi_(6k+4)(v) dv)
+
+    					U_H[k*6+0] = 19*tmp0_H/4. - 15*tmp4_H;													// calculate the coefficient U[6k]
+    					U_H[k*6+5] = 60*tmp4_H - 15*tmp0_H;														// calculate the coefficient U[6k+5]
+
+   						U_H[k*6+2] = tmp1_H*12;																// calculate the coefficient U[6k+2] = 12*b_(6k+2) = 12*(int_Ii f_DH(x) dx)*(int_Kj Mw(v)*phi_(6k+2)(v) dv)
+   						U_H[k*6+3] = tmp2_H*12;																// calculate the coefficient U[6k+3] = 12*b_(6k+3) = 12*(int_Ii f_DH(x) dx)*(int_Kj Mw(v)*phi_(6k+3)(v) dv)
+   						U_H[k*6+4] = tmp3_H*12;																// calculate the coefficient U[6k+4] = 12*b_(6k+4) = 12*(int_Ii f_DH(x) dx)*(int_Kj Mw(v)*phi_(6k+4)(v) dv)
+    				}
+   					else
+   					{
+    					U_L[k*6+0] += 19*tmp0_L/4. - 15*tmp4_L;													// calculate the coefficient U[6k]
+    					U_L[k*6+5] += 60*tmp4_L - 15*tmp0_L;														// calculate the coefficient U[6k+5]
+
+   						U_L[k*6+2] += tmp1_L*12;																// calculate the coefficient U[6k+2] = 12*b_(6k+2) = 12*(int_Ii f_DH(x) dx)*(int_Kj Mw(v)*phi_(6k+2)(v) dv)
+   						U_L[k*6+3] += tmp2_L*12;																// calculate the coefficient U[6k+3] = 12*b_(6k+3) = 12*(int_Ii f_DH(x) dx)*(int_Kj Mw(v)*phi_(6k+3)(v) dv)
+   						U_L[k*6+4] += tmp3_L*12;																// calculate the coefficient U[6k+4] = 12*b_(6k+4) = 12*(int_Ii f_DH(x) dx)*(int_Kj Mw(v)*phi_(6k+4)(v) dv)
+
+    					U_H[k*6+0] += 19*tmp0_H/4. - 15*tmp4_H;													// calculate the coefficient U[6k]
+    					U_H[k*6+5] += 60*tmp4_H - 15*tmp0_H;														// calculate the coefficient U[6k+5]
+
+   						U_H[k*6+2] += tmp1_H*12;																// calculate the coefficient U[6k+2] = 12*b_(6k+2) = 12*(int_Ii f_DH(x) dx)*(int_Kj Mw(v)*phi_(6k+2)(v) dv)
+   						U_H[k*6+3] += tmp2_H*12;																// calculate the coefficient U[6k+3] = 12*b_(6k+3) = 12*(int_Ii f_DH(x) dx)*(int_Kj Mw(v)*phi_(6k+3)(v) dv)
+   						U_H[k*6+4] += tmp3_H*12;																// calculate the coefficient U[6k+4] = 12*b_(6k+4) = 12*(int_Ii f_DH(x) dx)*(int_Kj Mw(v)*phi_(6k+4)(v) dv)
+   					}
+   				}
+   			}
+   		}
+   }
+   for(k=0;k<6*size_v;k++)																					// loop through all entries of U
+   {
+	   U_L[k] = U_L[k]/4;																						// divide the kth entry of U by 4 since 4 Maxwellians were added together
+	   U_H[k] = U_H[k]/4;																						// divide the kth entry of U by 4 since 4 Maxwellians were added together
+   }
+}
+
 
 void SetInit_2H(double *U)																							// function to calculate the DG coefficients for the initial condition with two humps
 {
@@ -510,6 +636,36 @@ void setInit_spectral_Homo(double *U, double **f)
 			if(j3==Nv)j3=Nv-1;
 			k=(j1*Nv*Nv + j2*Nv + j3); // determine in which element the Fourier nodes lie
 			f[0][l*N*N+m*N+n] = U[k*6+0] + U[k*6+2]*(v[l]-Gridv((double)j1))/dv + U[k*6+3]*(v[m]-Gridv((double)j2))/dv + U[k*6+4]*(v[n]-Gridv((double)j3))/dv + U[k*6+5]*( ((v[l]-Gridv((double)j1))/dv)*((v[l]-Gridv((double)j1))/dv) + ((v[m]-Gridv((double)j2))/dv)*((v[m]-Gridv((double)j2))/dv) + ((v[n]-Gridv((double)j3))/dv)*((v[n]-Gridv((double)j3))/dv) );
+		  //BUG: index was "l*N*N+m*N+n*N" !!!!!!
+		}
+      }
+    }
+}
+
+void setInit_spectral_Homo_Multispecies(double *U_L, double *U_H, double **f_L, double **f_H)
+{
+  int l, m ,n;
+  int j1_L, j2_L, j3_L, k_L;
+  int j1_H, j2_H, j3_H, k_H;
+  for(l=0;l<N;l++){
+      j1_L = (l*h_v_L)/dv_L; // integer part = floor() for non-negative integers.
+      if(j1_L==Nv)j1_L=Nv-1; // let the right end point lie in the last element
+      j1_H = (l*h_v_H)/dv_H; // integer part = floor() for non-negative integers.
+      if(j1_H==Nv)j1_H=Nv-1; // let the right end point lie in the last element
+      for(m=0;m<N;m++){
+  		j2_L = (m*h_v_L)/dv_L;
+  		if(j2_L==Nv)j2_L=Nv-1;
+		j2_H = (m*h_v_H)/dv_H;
+		if(j2_H==Nv)j2_H=Nv-1;
+		for(n=0;n<N;n++){
+			j3_L = (n*h_v_L)/dv_L;
+			if(j3_L==Nv)j3_L=Nv-1;
+			j3_H = (n*h_v_H)/dv_H;
+			if(j3_H==Nv)j3_H=Nv-1;
+			k_L=(j1_L*Nv*Nv + j2_L*Nv + j3_L); // determine in which element the Fourier nodes lie
+			k_H=(j1_H*Nv*Nv + j2_H*Nv + j3_H); // determine in which element the Fourier nodes lie
+			f_L[0][l*N*N+m*N+n] = U_L[k_L*6+0] + U_L[k_L*6+2]*(v_L[l]-Gridv_L((double)j1_L))/dv_L + U_L[k_L*6+3]*(v_L[m]-Gridv_L((double)j2_L))/dv_L + U_L[k_L*6+4]*(v_L[n]-Gridv_L((double)j3_L))/dv_L + U_L[k_L*6+5]*( ((v_L[l]-Gridv_L((double)j1_L))/dv_L)*((v_L[l]-Gridv_L((double)j1_L))/dv_L) + ((v_L[m]-Gridv_L((double)j2_L))/dv_L)*((v_L[m]-Gridv_L((double)j2_L))/dv_L) + ((v_L[n]-Gridv_L((double)j3_L))/dv_L)*((v_L[n]-Gridv_L((double)j3_L))/dv_L) );
+			f_H[0][l*N*N+m*N+n] = U_H[k_H*6+0] + U_H[k_H*6+2]*(v_H[l]-Gridv_H((double)j1_H))/dv_H + U_H[k_H*6+3]*(v_H[m]-Gridv_H((double)j2_H))/dv_H + U_H[k_H*6+4]*(v_H[n]-Gridv_H((double)j3_H))/dv_H + U_H[k_H*6+5]*( ((v_H[l]-Gridv_H((double)j1_H))/dv_H)*((v_H[l]-Gridv_H((double)j1_H))/dv_H) + ((v_H[m]-Gridv_H((double)j2_H))/dv_H)*((v_H[m]-Gridv_H((double)j2_H))/dv_H) + ((v_H[n]-Gridv_H((double)j3_H))/dv_H)*((v_H[n]-Gridv_H((double)j3_H))/dv_H) );
 		  //BUG: index was "l*N*N+m*N+n*N" !!!!!!
 		}
       }
