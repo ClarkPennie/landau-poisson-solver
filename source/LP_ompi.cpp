@@ -1071,6 +1071,18 @@ int main()
 		free(conv_weights1); free(conv_weights2); 													// delete the dynamic memory allocated for conv_weights1 & conv_weights2
 		fftw_free(Q1_fft); fftw_free(Q2_fft); fftw_free(Q3_fft); fftw_free(fftOut); fftw_free(fftIn); // delete the dynamic memory allocated for Q1_fft, Q2_fft, Q3_fft, fftOut & fftIn
 		free(Q);free(f1);free(Q1); free(Utmp_coll);// free(f2); free(f3);//free(Q3);				// delete the dynamic memory allocated for Q, f1, Q1 & Utmp_coll
+		// MULTI-SPECIES:
+		free(v_L); free(v_H); free(eta_L); free(eta_H);
+		free(f1_L); free(f1_H);
+		fftw_free(Q1_fft_LL); fftw_free(Q1_fft_HH); fftw_free(Q1_fft_LH); fftw_free(Q1_fft_HL);
+		fftw_free(Q2_fft_LL); fftw_free(Q2_fft_HH); fftw_free(Q2_fft_LH); fftw_free(Q2_fft_HL);
+		fftw_free(Q3_fft_LL); fftw_free(Q3_fft_HH); fftw_free(Q3_fft_LH); fftw_free(Q3_fft_HL);
+		fftw_free(fftIn_L); fftw_free(fftIn_H); fftw_free(fftOut_L); fftw_free(fftOut_H);
+		fftw_free(fftIn_LL); fftw_free(fftIn_HH); fftw_free(fftOut_LL); fftw_free(fftOut_HH);
+		fftw_free(fftIn_LH); fftw_free(fftIn_HL); fftw_free(fftOut_LH); fftw_free(fftOut_HL);
+		free(f_L); free(f_H);
+	    free(conv_weights_LH); free(conv_weights_HL);
+	    fftw_free(qHat_LL); fftw_free(qHat_HH); fftw_free(qHat_LH); fftw_free(qHat_HL);
 		if(FullandLinear)																			// only do this if FullandLinear is true
 		{
 			fftw_free(qHat_linear); fftw_free(Q1_fft_linear); 										// delete the dynamic memory allocated for qHat_linear & Q1_fft_linear
@@ -1085,6 +1097,8 @@ int main()
 	}
 	free(output_buffer_vp);																			// delete the dynamic memory allocated for output_buffer_vp
 	free(U); free(U1); free(Utmp); // free(H);														// delete the dynamic memory allocated for U, U1 & Utmp
+	// MULTI-SPECIES
+	free(U_L); free(U_H);
 	if(! Homogeneous)
 	{
 		free(cp); free(intE); free(intE1); free(intE2);													// delete the dynamic memory allocated for cp, intE, intE1 & inteE2
