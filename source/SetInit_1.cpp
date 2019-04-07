@@ -441,10 +441,10 @@ void SetInit_4H_Homo_Multispecies(double *U_L, double *U_H, double epsilon)					
     int j1, j2, j3, k, m1,m2,m3,nt=5, p;																// declare j1, j2, j3 (to represent cell (j1,j2,j3) in v-space), k (the index of cell (j1,j2,j3) in U), m1, m2, m3 (counters for the Gaussian quadrature in v-space), nt (the number of points in the quadrature) & p (to loop through the four Maxwellians)
     double tp_L, tp0_L, tp5_L, tmp0_L, tmp1_L, tmp2_L, tmp3_L, tmp4_L;													// declare tp, tp0, tmp0, tmp1, tmp2, tmp3, tmp4 (temporary values while calculating the quadrature for the integral w.r.t. v)
     double tp_H, tp0_H, tp5_H, tmp0_H, tmp1_H, tmp2_H, tmp3_H, tmp4_H;													// declare tp, tp0, tmp0, tmp1, tmp2, tmp3, tmp4 (temporary values while calculating the quadrature for the integral w.r.t. v)
-    double C_L = 0.02;		// shift of Maxwellians
-	double T0_L = 0.4;																							// declare T0 (the temperature of the Maxwellian in the initial condition) and set its value
-    double C_H = C_L*epsilon;		// shift of Maxwellians
-	double T0_H = T0_L*epsilon*epsilon;																							// declare T0 (the temperature of the Maxwellian in the initial condition) and set its value
+    double C_H = 0.02;		// shift of Maxwellians
+	double T0_H = 0.4;																							// declare T0 (the temperature of the Maxwellian in the initial condition) and set its value
+    double C_L = C_H*epsilon;		// shift of Maxwellians
+	double T0_L = T0_H*epsilon*epsilon;																							// declare T0 (the temperature of the Maxwellian in the initial condition) and set its value
     if(myrank_mpi == 0)
     {
     	printf("Four Hump initial condition data, for U_L: T_L = %g; Shift_L = %g \n", T0_L, C_L);

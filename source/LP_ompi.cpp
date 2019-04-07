@@ -211,13 +211,13 @@ int main()
 	scaleL=8*Lv*Lv*Lv;																				// set scaleL to 8Lv^3
 
 	// MULTI-SPECIES:
-	mass_ratio = 0.01;
+	mass_ratio = 0.1;
 	Lv_H = Lv;
 	Lv_L = mass_ratio*Lv_H;
     dv_L=2.*Lv_L/Nv;
     dv_H=2.*Lv_H/Nv;
-	scalev_L=dv_L*dv_L*dv_L;																				// set scalev to dv^3
-	scalev_H=dv_H*dv_H*dv_H;																				// set scalev to dv^3
+	scalev_L=dv_L*dv_L*dv_L;
+	scalev_H=dv_H*dv_H*dv_H;
     L_v_L=Lv_L;
     L_v_H=Lv_H;
     R_v_L=Lv_L;
