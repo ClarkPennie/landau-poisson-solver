@@ -980,7 +980,9 @@ void ComputeQ0_LH(double *f_L, double *f_H, fftw_complex *qHat, double **conv_we
     fft3D(fftIn_L, fftOut_L);                                                        // perform the FFT of fftIn and store the result in fftOut
     fft3D(fftIn_H, fftOut_H);
     
-#pragma omp parallel for schedule(dynamic) private(i,j,k,l,m,n,x,y,z,start_i,start_j,start_k,end_i,end_j,end_k,tempD_LH) shared(qHat, fftOut_H, fftOut_L, conv_weights0_LH) reduction(+:tmp0, tmp1)
+    computeMass_H = computeMass(f_H);
+    
+#pragma omp parallel for schedule(dynamic) private(i,j,k,l,m,n,x,y,z,start_i,start_j,start_k,end_i,end_j,end_k,tempD_LH) shared(qHat, fftOut_H, fftOut_L, computeMass_H, conv_weights0_LH) reduction(+:tmp0, tmp1)
     for(i=0;i<N;i++)                                                             // loop through all points in the ki_1
     {
         for(j=0;j<N;j++)                                                        // loop through all points in the ki_2
@@ -1044,9 +1046,9 @@ void ComputeQ0_LH(double *f_L, double *f_H, fftw_complex *qHat, double **conv_we
                     }
                 }
                 // printf("%d, %d, %d done\n", i,j,k);
-                //Questions! Not sure! Compute Mass_H?
-                qHat[k + N*(j + N*i)][0] = -tmp0*Mass_H[0];                                // set the real part of qHat(ki(i,j,k)) to the value tmp0 calculated in the quadrature
-                qHat[k + N*(j + N*i)][1] = -tmp1*Mass_H[1];                                // set the imaginary part of qHat(ki(i,j,k)) to the value tmp1 calculated in the quadrature
+                //Questions! Not sure!
+                qHat[k + N*(j + N*i)][0] = -tmp0*computeMass_H[0];                                // set the real part of qHat(ki(i,j,k)) to the value tmp0 calculated in the quadrature
+                qHat[k + N*(j + N*i)][1] = -tmp1*computeMass_H[1];                                // set the imaginary part of qHat(ki(i,j,k)) to the value tmp1 calculated in the quadrature
                 // printf("%d, %d, %d write-in done\n", i,j,k);
             }
         }
