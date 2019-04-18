@@ -64,7 +64,6 @@ int chunksize_dg, chunksize_ft, chunk_Nx;															// declare chunksize_dg 
 
 int *fNegVals;																						// declare fNegVals (to store where DG solution goes negative - a 1 if negative and a 0 if positive)
 double *fAvgVals;																					// declare fAvgVals (to store the average values of f on each cell)
-double *fEquiVals;																					// declare f_equivals (to store the equilibrium solution)
 
 bool Damping, TwoStream, FourHump, TwoHump, Doping;													// declare Boolean variables which will determine the ICs for the problem
 bool Homogeneous;																					// declare a Boolean variable to determine if running the space homogeneous code or not
@@ -254,14 +253,20 @@ int main(int argc, char** argv)
 	// Print an error if memory allocation failed:
 	if(!U)
 	{
-		std::cout << "Memory allocation of U failed! Program exiting..." << std::endl;
+		if (myrank_mpi==0)
+		{
+			std::cout << "Memory allocation of U failed! Program exiting..." << std::endl;
+		}
 		exit(1);
 	}
 	U1 = (double*)malloc(size*6*sizeof(double));													// allocate enough space at the pointer U1 for 6*size many floating point numbers
 	// Print an error if memory allocation failed:
 	if(!U1)
 	{
-		std::cout << "Memory allocation of U1 failed! Program exiting..." << std::endl;
+		if (myrank_mpi==0)
+		{
+			std::cout << "Memory allocation of U1 failed! Program exiting..." << std::endl;
+		}
 		exit(1);
 	}
 
@@ -269,7 +274,10 @@ int main(int argc, char** argv)
 	// Print an error if memory allocation failed:
 	if(!Utmp)
 	{
-		std::cout << "Memory allocation of Utmp failed! Program exiting..." << std::endl;
+		if (myrank_mpi==0)
+		{
+			std::cout << "Memory allocation of Utmp failed! Program exiting..." << std::endl;
+		}
 		exit(1);
 	}
   
@@ -280,7 +288,10 @@ int main(int argc, char** argv)
 		// Print an error if memory allocation failed:
 		if(!output_buffer_vp)
 		{
-			std::cout << "Memory allocation of output_buffer_vp failed! Program exiting..." << std::endl;
+			if (myrank_mpi==0)
+			{
+				std::cout << "Memory allocation of output_buffer_vp failed! Program exiting..." << std::endl;
+			}
 			exit(1);
 		}
 		if(! NoField)
@@ -289,28 +300,40 @@ int main(int argc, char** argv)
 			// Print an error if memory allocation failed:
 			if(!cp)
 			{
-				std::cout << "Memory allocation of cp failed! Program exiting..." << std::endl;
+				if (myrank_mpi==0)
+				{
+						std::cout << "Memory allocation of cp failed! Program exiting..." << std::endl;
+				}
 				exit(1);
 			}
 			intE = (double*)malloc(Nx*sizeof(double));														// allocate enough space at the pointer intE for Nx many double numbers
 			// Print an error if memory allocation failed:
 			if(!intE)
 			{
-				std::cout << "Memory allocation of intE failed! Program exiting..." << std::endl;
+				if (myrank_mpi==0)
+				{
+					std::cout << "Memory allocation of intE failed! Program exiting..." << std::endl;
+				}
 				exit(1);
 			}
 			intE1 = (double*)malloc(Nx*sizeof(double));														// allocate enough space at the pointer intE1 for Nx many double numbers
 			// Print an error if memory allocation failed:
 			if(!intE1)
 			{
-				std::cout << "Memory allocation of intE1 failed! Program exiting..." << std::endl;
+				if (myrank_mpi==0)
+				{
+					std::cout << "Memory allocation of intE1 failed! Program exiting..." << std::endl;
+				}
 				exit(1);
 			}
 			intE2 = (double*)malloc(Nx*sizeof(double));														// allocate enough space at the pointer intE2 for Nx many double numbers
 			// Print an error if memory allocation failed:
 			if(!intE2)
 			{
-				std::cout << "Memory allocation of intE2 failed! Program exiting..." << std::endl;
+				if (myrank_mpi==0)
+				{
+					std::cout << "Memory allocation of intE2 failed! Program exiting..." << std::endl;
+				}
 				exit(1);
 			}
 		}
@@ -320,21 +343,20 @@ int main(int argc, char** argv)
 	// Print an error if memory allocation failed:
 	if(!fNegVals)
 	{
-		std::cout << "Memory allocation of fNegVals failed! Program exiting..." << std::endl;
+		if (myrank_mpi==0)
+		{
+			std::cout << "Memory allocation of fNegVals failed! Program exiting..." << std::endl;
+		}
 		exit(1);
 	}
 	fAvgVals = (double*)malloc(size*sizeof(double));												// allocate enough space at the pointer fAvgVals for size many doubles
 	// Print an error if memory allocation failed:
 	if(!fAvgVals)
 	{
-		std::cout << "Memory allocation of fAvgVals failed! Program exiting..." << std::endl;
-		exit(1);
-	}
-	fEquiVals = (double*)malloc(5*5*5*5*size*sizeof(double));										// allocate enough space at the pointer fEquiVals for 5*Nx*(5*Nv)^3 many doubles
-	// Print an error if memory allocation failed:
-	if(!fEquiVals)
-	{
-		std::cout << "Memory allocation of fEquiVals failed! Program exiting..." << std::endl;
+		if (myrank_mpi==0)
+		{
+			std::cout << "Memory allocation of fAvgVals failed! Program exiting..." << std::endl;
+		}
 		exit(1);
 	}
 
@@ -346,7 +368,10 @@ int main(int argc, char** argv)
 			// Print an error if memory allocation failed:
 			if(!C1_1)
 			{
-				std::cout << "Memory allocation of C1_1 failed! Program exiting..." << std::endl;
+				if (myrank_mpi==0)
+				{
+					std::cout << "Memory allocation of C1_1 failed! Program exiting..." << std::endl;
+				}
 				exit(1);
 			}
 		}
@@ -356,14 +381,20 @@ int main(int argc, char** argv)
 			// Print an error if memory allocation failed:
 			if(!C1_5)
 			{
-				std::cout << "Memory allocation of C1_5 failed! Program exiting..." << std::endl;
+				if (myrank_mpi==0)
+				{
+					std::cout << "Memory allocation of C1_5 failed! Program exiting..." << std::endl;
+				}
 				exit(1);
 			}
 			C2 = (double**)malloc(M*sizeof(double *));												// allocate enough space at the pointer C2 for M many pointers to double numbers
 			// Print an error if memory allocation failed:
 			if(!C2)
 			{
-				std::cout << "Memory allocation of C2 failed! Program exiting..." << std::endl;
+				if (myrank_mpi==0)
+				{
+					std::cout << "Memory allocation of C2 failed! Program exiting..." << std::endl;
+				}
 				exit(1);
 			}
 			for(i=0;i<M;i++)
@@ -372,23 +403,32 @@ int main(int argc, char** argv)
 				// Print an error if memory allocation failed:
 				if(!C1_5[i])
 				{
-					std::cout << "Memory allocation of C1_5[" << i << "] failed! Program exiting..." << std::endl;
+					if (myrank_mpi==0)
+					{
+						std::cout << "Memory allocation of C1_5[" << i << "] failed! Program exiting..." << std::endl;
+					}
 					exit(1);
 				}
 				C2[i] = (double *)malloc(size_ft*sizeof(double));									// allocate enough space at the ith entry of C2 for size_ft many double numbers
 				// Print an error if memory allocation failed:
 				if(!C2[i])
 				{
-					std::cout << "Memory allocation of C2[" << i << "] failed! Program exiting..." << std::endl;
+					if (myrank_mpi==0)
+					{
+						std::cout << "Memory allocation of C2[" << i << "] failed! Program exiting..." << std::endl;
+					}
 					exit(1);
 				}
-		}
+			}
 		}
 		f = (double **)malloc(chunk_Nx*sizeof(double *));											// allocate enough space at the pointer f for chunk_Nx many pointers to double numbers
 		// Print an error if memory allocation failed:
 		if(!f)
 		{
-			std::cout << "Memory allocation of f failed! Program exiting..." << std::endl;
+			if (myrank_mpi==0)
+			{
+				std::cout << "Memory allocation of f failed! Program exiting..." << std::endl;
+			}
 			exit(1);
 		}
 		for (i=0;i<chunk_Nx;i++)
@@ -397,7 +437,10 @@ int main(int argc, char** argv)
 			// Print an error if memory allocation failed:
 			if(!f[i])
 			{
-				std::cout << "Memory allocation of f[" << i << "] failed! Program exiting..." << std::endl;
+				if (myrank_mpi==0)
+				{
+					std::cout << "Memory allocation of f[" << i << "] failed! Program exiting..." << std::endl;
+				}
 				exit(1);
 			}
 		}
@@ -405,7 +448,10 @@ int main(int argc, char** argv)
 		// Print an error if memory allocation failed:
 		if(!conv_weights)
 		{
-			std::cout << "Memory allocation of conv_weights failed! Program exiting..." << std::endl;
+			if (myrank_mpi==0)
+			{
+				std::cout << "Memory allocation of conv_weights failed! Program exiting..." << std::endl;
+			}
 			exit(1);
 		}
 		for (i=0;i<size_ft;i++)
@@ -414,7 +460,10 @@ int main(int argc, char** argv)
 			// Print an error if memory allocation failed:
 			if(!conv_weights[i])
 			{
-				std::cout << "Memory allocation of conv_weights[" << i << "] failed! Program exiting..." << std::endl;
+				if (myrank_mpi==0)
+				{
+					std::cout << "Memory allocation of conv_weights[" << i << "] failed! Program exiting..." << std::endl;
+				}
 				exit(1);
 			}
 		}
@@ -423,7 +472,10 @@ int main(int argc, char** argv)
 		// Print an error if memory allocation failed:
 		if(!conv_weights1)
 		{
-			std::cout << "Memory allocation of conv_weights1 failed! Program exiting..." << std::endl;
+			if (myrank_mpi==0)
+			{
+				std::cout << "Memory allocation of conv_weights1 failed! Program exiting..." << std::endl;
+			}
 			exit(1);
 		}
 		for (i=0;i<size_ft;i++)
@@ -432,7 +484,10 @@ int main(int argc, char** argv)
 			// Print an error if memory allocation failed:
 			if(!conv_weights1[i])
 			{
-				std::cout << "Memory allocation of conv_weights1[" << i << "] failed! Program exiting..." << std::endl;
+				if (myrank_mpi==0)
+				{
+					std::cout << "Memory allocation of conv_weights1[" << i << "] failed! Program exiting..." << std::endl;
+				}
 				exit(1);
 			}
 		}
@@ -441,7 +496,10 @@ int main(int argc, char** argv)
 		// Print an error if memory allocation failed:
 		if(!conv_weights2)
 		{
-			std::cout << "Memory allocation of conv_weights2 failed! Program exiting..." << std::endl;
+			if (myrank_mpi==0)
+			{
+				std::cout << "Memory allocation of conv_weights2 failed! Program exiting..." << std::endl;
+			}
 			exit(1);
 		}
 		for (i=0;i<size_ft;i++)
@@ -450,7 +508,10 @@ int main(int argc, char** argv)
 			// Print an error if memory allocation failed:
 			if(!conv_weights2[i])
 			{
-				std::cout << "Memory allocation of conv_weights2[" << i << "] failed! Program exiting..." << std::endl;
+				if (myrank_mpi==0)
+				{
+					std::cout << "Memory allocation of conv_weights2[" << i << "] failed! Program exiting..." << std::endl;
+				}
 				exit(1);
 			}
 		}
@@ -461,7 +522,10 @@ int main(int argc, char** argv)
 			// Print an error if memory allocation failed:
 			if(!conv_weights_linear)
 			{
-				std::cout << "Memory allocation of conv_weights_linear failed! Program exiting..." << std::endl;
+				if (myrank_mpi==0)
+				{
+					std::cout << "Memory allocation of conv_weights_linear failed! Program exiting..." << std::endl;
+				}
 				exit(1);
 			}
 			for (i=0;i<size_ft;i++)
@@ -470,7 +534,10 @@ int main(int argc, char** argv)
 				// Print an error if memory allocation failed:
 				if(!conv_weights_linear[i])
 				{
-					std::cout << "Memory allocation of conv_weights_linear[" << i << "] failed! Program exiting..." << std::endl;
+					if (myrank_mpi==0)
+					{
+						std::cout << "Memory allocation of conv_weights_linear[" << i << "] failed! Program exiting..." << std::endl;
+					}
 					exit(1);
 				}
 			}
@@ -479,21 +546,30 @@ int main(int argc, char** argv)
 			// Print an error if memory allocation failed:
 			if(!Q1_fft_linear)
 			{
-				std::cout << "Memory allocation of Q1_fft_linear failed! Program exiting..." << std::endl;
+				if (myrank_mpi==0)
+				{
+					std::cout << "Memory allocation of Q1_fft_linear failed! Program exiting..." << std::endl;
+				}
 				exit(1);
 			}
 			Q2_fft_linear = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));				// allocate enough space at the pointer Q2_fft_linear for size_ft many complex numbers
 			// Print an error if memory allocation failed:
 			if(!Q2_fft_linear)
 			{
-				std::cout << "Memory allocation of Q2_fft_linear failed! Program exiting..." << std::endl;
+				if (myrank_mpi==0)
+				{
+					std::cout << "Memory allocation of Q2_fft_linear failed! Program exiting..." << std::endl;
+				}
 				exit(1);
 			}
 			Q3_fft_linear = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));				// allocate enough space at the pointer Q3_fft_linear for size_ft many complex numbers
 			// Print an error if memory allocation failed:
 			if(!Q3_fft_linear)
 			{
-				std::cout << "Memory allocation of Q3_fft_linear failed! Program exiting..." << std::endl;
+				if (myrank_mpi==0)
+				{
+					std::cout << "Memory allocation of Q3_fft_linear failed! Program exiting..." << std::endl;
+				}
 				exit(1);
 			}
 
@@ -501,7 +577,10 @@ int main(int argc, char** argv)
 			// Print an error if memory allocation failed:
 			if(!qHat_linear)
 			{
-				std::cout << "Memory allocation of qHat_linear failed! Program exiting..." << std::endl;
+				if (myrank_mpi==0)
+				{
+					std::cout << "Memory allocation of qHat_linear failed! Program exiting..." << std::endl;
+				}
 				exit(1);
 			}
 		}
@@ -510,21 +589,30 @@ int main(int argc, char** argv)
 		// Print an error if memory allocation failed:
 		if(!Q)
 		{
-			std::cout << "Memory allocation of Q failed! Program exiting..." << std::endl;
+			if (myrank_mpi==0)
+			{
+				std::cout << "Memory allocation of Q failed! Program exiting..." << std::endl;
+			}
 			exit(1);
 		}
 		f1 = (double*)malloc(size_ft*sizeof(double)); 												// allocate enough space at the pointer f1 for size_ft many double numbers
 		// Print an error if memory allocation failed:
 		if(!f1)
 		{
-			std::cout << "Memory allocation of f1 failed! Program exiting..." << std::endl;
+			if (myrank_mpi==0)
+			{
+				std::cout << "Memory allocation of f1 failed! Program exiting..." << std::endl;
+			}
 			exit(1);
 		}
 		Q1 = (double*)malloc(size_ft*sizeof(double));												// allocate enough space at the pointer Q1 for size_ft many double numbers
 		// Print an error if memory allocation failed:
 		if(!Q1)
 		{
-			std::cout << "Memory allocation of Q1 failed! Program exiting..." << std::endl;
+			if (myrank_mpi==0)
+			{
+				std::cout << "Memory allocation of Q1 failed! Program exiting..." << std::endl;
+			}
 			exit(1);
 		}
 		if(Homogeneous)
@@ -533,14 +621,20 @@ int main(int argc, char** argv)
 			// Print an error if memory allocation failed:
 			if(!Utmp_coll)
 			{
-				std::cout << "Memory allocation of Utmp_coll failed! Program exiting..." << std::endl;
+				if (myrank_mpi==0)
+				{
+					std::cout << "Memory allocation of Utmp_coll failed! Program exiting..." << std::endl;
+				}
 				exit(1);
 			}
 			output_buffer = (double*)malloc(chunksize_dg*5*sizeof(double));							// allocate enough space at the pointer output_buffer for 5*chunk_Nx*size_v many double numbers
 			// Print an error if memory allocation failed:
 			if(!output_buffer)
 			{
-				std::cout << "Memory allocation of output_buffer failed! Program exiting..." << std::endl;
+				if (myrank_mpi==0)
+				{
+					std::cout << "Memory allocation of output_buffer failed! Program exiting..." << std::endl;
+				}
 				exit(1);
 			}
 		}
@@ -549,13 +643,19 @@ int main(int argc, char** argv)
 			Utmp_coll = (double*)malloc(chunk_Nx*size_v*5*sizeof(double));								// allocate enough space at the pointer Utmp_coll for 5*chunk_Nx*size_v many double numbers
 			if(!Utmp_coll)
 			{
-				std::cout << "Memory allocation of Utmp_coll failed! Program exiting..." << std::endl;
+				if (myrank_mpi==0)
+				{
+					std::cout << "Memory allocation of Utmp_coll failed! Program exiting..." << std::endl;
+				}
 				exit(1);
 			}
 			output_buffer = (double*)malloc(chunk_Nx*size_v*5*sizeof(double));							// allocate enough space at the pointer output_buffer for 5*chunk_Nx*size_v many double numbers
 			if(!output_buffer)
 			{
-				std::cout << "Memory allocation of output_buffer failed! Program exiting..." << std::endl;
+				if (myrank_mpi==0)
+				{
+					std::cout << "Memory allocation of output_buffer failed! Program exiting..." << std::endl;
+				}
 				exit(1);
 			}
 		}
@@ -568,14 +668,20 @@ int main(int argc, char** argv)
 		temp = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer temp for size_ft many complex numbers
 		if(!temp)
 		{
-			std::cout << "Memory allocation of temp failed! Program exiting..." << std::endl;
+			if (myrank_mpi==0)
+			{
+				std::cout << "Memory allocation of temp failed! Program exiting..." << std::endl;
+			}
 			exit(1);
 		}
 		//qHat_local = (fftw_complex *)fftw_malloc(chunksize_ft*sizeof(fftw_complex));
 		qHat = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer qHat for size_ft many complex numbers
 		if(!qHat)
 		{
-			std::cout << "Memory allocation of qHat failed! Program exiting..." << std::endl;
+			if (myrank_mpi==0)
+			{
+				std::cout << "Memory allocation of qHat failed! Program exiting..." << std::endl;
+			}
 			exit(1);
 		}
 
@@ -590,19 +696,28 @@ int main(int argc, char** argv)
 		wtN = (double *)malloc(N*sizeof(double));													// allocate enough space at the pointer wtN to store N many double numbers
 		if(!wtN)
 		{
-			std::cout << "Memory allocation of wtN failed! Program exiting..." << std::endl;
+			if (myrank_mpi==0)
+			{
+				std::cout << "Memory allocation of wtN failed! Program exiting..." << std::endl;
+			}
 			exit(1);
 		}
 		v = (double *)malloc(N*sizeof(double));														// allocate enough space at the pointer v to store N many double numbers
 		if(!v)
 		{
-			std::cout << "Memory allocation of v failed! Program exiting..." << std::endl;
+			if (myrank_mpi==0)
+			{
+				std::cout << "Memory allocation of v failed! Program exiting..." << std::endl;
+			}
 			exit(1);
 		}
 		eta = (double *)malloc(N*sizeof(double));													// allocate enough space at the pointer eta to store N many double numbers
 		if(!eta)
 		{
-			std::cout << "Memory allocation of eta failed! Program exiting..." << std::endl;
+			if (myrank_mpi==0)
+			{
+				std::cout << "Memory allocation of eta failed! Program exiting..." << std::endl;
+			}
 			exit(1);
 		}
 
@@ -610,34 +725,49 @@ int main(int argc, char** argv)
 		// Print an error if memory allocation failed:
 		if(!Q1_fft)
 		{
-			std::cout << "Memory allocation of Q1_fft failed! Program exiting..." << std::endl;
+			if (myrank_mpi==0)
+			{
+				std::cout << "Memory allocation of Q1_fft failed! Program exiting..." << std::endl;
+			}
 			exit(1);
 		}
 		Q2_fft = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer Q2_fft for size_ft many complex numbers
 		// Print an error if memory allocation failed:
 		if(!Q2_fft)
 		{
-			std::cout << "Memory allocation of Q2_fft failed! Program exiting..." << std::endl;
+			if (myrank_mpi==0)
+			{
+				std::cout << "Memory allocation of Q2_fft failed! Program exiting..." << std::endl;
+			}
 			exit(1);
 		}
 		Q3_fft = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer Q3_fft for size_ft many complex numbers
 		// Print an error if memory allocation failed:
 		if(!Q3_fft)
 		{
-			std::cout << "Memory allocation of Q3_fft failed! Program exiting..." << std::endl;
+			if (myrank_mpi==0)
+			{
+				std::cout << "Memory allocation of Q3_fft failed! Program exiting..." << std::endl;
+			}
 			exit(1);
 		}
 
 		fftOut = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer fftOut for size_ft many complex numbers
 		if(!fftOut)
 		{
-			std::cout << "Memory allocation of fftOut failed! Program exiting..." << std::endl;
+			if (myrank_mpi==0)
+			{
+				std::cout << "Memory allocation of fftOut failed! Program exiting..." << std::endl;
+			}
 			exit(1);
 		}
 		fftIn = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer fftIn for size_ft many complex numbers
 		if(!fftIn)
 		{
-			std::cout << "Memory allocation of fftIn failed! Program exiting..." << std::endl;
+			if (myrank_mpi==0)
+			{
+				std::cout << "Memory allocation of fftIn failed! Program exiting..." << std::endl;
+			}
 			exit(1);
 		}
 
@@ -646,7 +776,10 @@ int main(int argc, char** argv)
 			DFTMaxwell = (fftw_complex**)fftw_malloc(chunk_Nx*sizeof(fftw_complex*));
 			if(!DFTMaxwell)
 			{
-				std::cout << "Memory allocation of DFTMaxwell failed! Program exiting..." << std::endl;
+				if (myrank_mpi==0)
+				{
+					std::cout << "Memory allocation of DFTMaxwell failed! Program exiting..." << std::endl;
+				}
 				exit(1);
 			}
 			for(i=0;i<chunk_Nx;i++)
@@ -655,7 +788,10 @@ int main(int argc, char** argv)
 				// Print an error if memory allocation failed:
 				if(!DFTMaxwell[i])
 				{
-					std::cout << "Memory allocation of DFTMaxwell[" << i << "] failed! Program exiting..." << std::endl;
+					if (myrank_mpi==0)
+					{
+						std::cout << "Memory allocation of DFTMaxwell[" << i << "] failed! Program exiting..." << std::endl;
+					}
 					exit(1);
 				}
 		}
@@ -1284,7 +1420,7 @@ int main(int argc, char** argv)
 		}
 	}
 
-	free(fNegVals); free(fAvgVals);	free (fEquiVals);												// delete the dynamic memory allocated for fNegVals, fAvgVals & fEquiVals
+	free(fNegVals); free(fAvgVals);																// delete the dynamic memory allocated for fNegVals, fAvgVals & fEquiVals
   
 	iparse.Close();																					// close the input file
 
