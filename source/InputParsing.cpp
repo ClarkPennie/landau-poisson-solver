@@ -205,7 +205,10 @@ void ReadGamma(GRVY_Input_Class& iparse, int& gamma)												// Function to r
 	// processor with rank 0 (if not, set default value to -3)
 	if( iparse.Read_Var("gamma",&gamma,-3) )
 	{
-		std::cout << "--> gamma = " << gamma << std::endl << std::endl;
+		if(myrank_mpi==0)
+		{
+			std::cout << "--> gamma = " << gamma << std::endl << std::endl;
+		}
 		if(gamma==-3)
 		{
 			if(myrank_mpi==0)

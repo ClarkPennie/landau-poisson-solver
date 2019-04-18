@@ -74,7 +74,7 @@ bool LinearLandau;																					// declare a Boolean variable to determin
 bool MassConsOnly;																					// declare a Boolean variable to determine if conserving all moments or all mass
 bool NoField;																						// declare a Boolean variable to turn off the field in the advection step
 
-int main()
+int main(int argc, char** argv)
 {
 	int i, j, k, j1, j2, j3, l; 																	// declare i, j, k (counters), j1, j2, j3 (velocity space counters) & l (the index of the current DG basis function being integrated against)
 	int  tp, t=0; 																					// declare tp (the amount size of the data which stores the DG coefficients of the solution read from a previous run) & t (the current time-step) and set it to 0
@@ -131,15 +131,38 @@ int main()
 	//************************
 
 	GRVY_Input_Class iparse;																		// define a GRVY input parsing object
-	input_filename.assign("./LPsolver-input.txt");													// set a name for the input file to be ready by GRVY
+	if(argc > 1)
+	{
+		input_filename.assign(std::string("./")+ argv[1]);
+	}
+	else
+	{
+		input_filename.assign("./LPsolver-input.txt");												// set a name for the input file to be ready by GRVY
+	}
 
 	if(! iparse.Open(input_filename.c_str()))														// Initialise and read in the GRVY file with the input paramters
 	{
-		std::cout << "Program cannot run... The file " << input_filename << " cannot be found."
-			<< std::endl << "Please create an appropriate input file before running again."
-			<< std::endl;																			// Print an error message if the file does not exist
+		if(myrank_mpi==0)																				// only the process with rank 0 will do this
+		{
+			std::cout << "Program cannot run... The file " << input_filename << " cannot be found."
+				<< std::endl << "Please create an appropriate input file before running again."
+				<< std::endl;																			// Print an error message if the file does not exist
+		}
 		exit(1);																					// Exit if it does not exist
 	}
+	else
+	{
+		if(myrank_mpi==0)																				// only the process with rank 0 will do this
+		{
+			std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+			std::cout << "                 LANDAU-POISSON SOLVER                 " << std::endl;
+			std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl << std::endl;
+
+			std::cout << "Executable name: " << argv[0] << std::endl;
+			std::cout << "Input filename: " << input_filename << std::endl << std::endl;
+		}
+	}
+
 
 	ReadICOptions(iparse);																			// Read the initial condition for this run from the input file
 	CheckICOptions(IC_flag);																		// Check just one initial condition was set for this run
