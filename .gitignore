@@ -26,3 +26,6 @@ Makefile.in
 coverage/
 *.gcda
 *.gcno
+# extra input files & jobscripts
+LPsolver-input_*
+jobscript_*

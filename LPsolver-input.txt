@@ -11,24 +11,24 @@
 # Global input variable definitions
 #--------------------------------------------
 
-flag     = Test6
+flag     = Test_N32Nv48
 
-nT       = 5 	                # Number of time-steps
-Nx       = 16  	                # Number of space cells
-Nv       = 16	                # Number of velocity cells in each direction
-N        = 8 	                # Number of Fourier modes
+nT       = 50 	                # Number of time-steps
+Nx       = 24  	                # Number of space cells
+Nv       = 48	                # Number of velocity cells in each direction
+N        = 32 	                # Number of Fourier modes
 nu       = 0.05                 # Value of (Knudsen number)^{-1}
-dt       = 0.001                # Size of each time-step
+dt       = 0.01                 # Size of each time-step
 
-gamma    = 0                    # Value of gamma in collision kernel
+gamma    = -3                   # Value of gamma in collision kernel
 #--------------------------------------------
 # Boolean options to determine problem
 #--------------------------------------------
 
 # Options for initial conditions (choose one):
-Damping          = False        # Landau Damping ICs
+Damping          = True         # Landau Damping ICs
 TwoStream        = False        # Two Stream ICs
-FourHump         = True         # Four Hump ICs
+FourHump         = False        # Four Hump ICs
 TwoHump          = False        # Two Hump ICs
 Doping           = False        # Non-uniform doping ICs
 
@@ -37,7 +37,7 @@ First            = True         # Running for the first time with ICs
 Second           = False        # Picking up from a previous run
 
 # Choose if running the space homogeneous version:
-Homogeneous      = True         # Run for the space homogeneous setting
+Homogeneous      = False        # Run for the space homogeneous setting
 
 # Choose how the collisions are being modelled:
 FullandLinear    = False        # Include electron-ion collisions
@@ -50,9 +50,9 @@ MassConsOnly     = False        # Run with only conservation of mass
 
 [Damping]
 
-IC_name  = 'Landau Damping'	# Name of problem associated to ICs
+IC_name  = 'Landau Damping'	    # Name of problem associated to ICs
 A_amp    = 0.2                  # Amplitude of the perturbation
-k_wave   = 0.5			# Frequency of the perturbation
+k_wave   = 0.5					# Frequency of the perturbation
 Lv       = 5.25                 # Width of domain in v-space
 
 [TwoStream]
