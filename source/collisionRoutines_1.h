@@ -47,9 +47,13 @@ double gHat3_linear(double eta1, double eta2, double eta3, double ki1, double ki
 
 double gHat3_2(double eta1, double eta2, double eta3, double ki1, double ki2, double ki3, int id);
 
+double gHat_LH(double eta1_L, double eta2_L, double eta3_L, double ki1_L, double ki2_L, double ki3_L, double epsilon);
+
+double gHat_HL(double eta1_L, double eta2_L, double eta3_L, double ki1_L, double ki2_L, double ki3_L, double epsilon);
+
 //void generate_conv_weights(double **conv_weights, int gamma);
 
-void generate_conv_weights(double **conv_weights, double **conv_weights_HL, double **conv_weights_LH, int gamma);
+void generate_conv_weights(double **conv_weights, double **conv_weights_HL, double **conv_weights_LH, int gamma, double epsilon);
 
 void generate_conv_weights_linear(double **conv_weights_linear);
 
