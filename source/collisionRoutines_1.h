@@ -71,6 +71,10 @@ void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights);
 
 void IntModes(int k1, int k2,  int k3, int j1, int j2, int j3, double *result);
 
+void IntModes_L(int k1, int k2,  int k3, int j1, int j2, int j3, double *result);
+
+void IntModes_H(int k1, int k2,  int k3, int j1, int j2, int j3, double *result);
+
 void ProjectedNodeValue(fftw_complex *qHat, double *Q_incremental);
 
 void ComputeQ_FandL(double *f, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear);
