@@ -213,7 +213,7 @@ int main()
 
 	// MULTI-SPECIES:
 
-	mass_ratio = 0.1;
+	mass_ratio = 0.7;
 	Lv_H = Lv;
 	Lv_L = mass_ratio*Lv_H;
     dv_L=2.*Lv_L/Nv;
@@ -580,7 +580,8 @@ int main()
 	}
 
 	char buffer_moment[100], buffer_u[100], buffer_ufull[100], buffer_flags[flag.size() + 1],
-						buffer_phi[110], buffer_E[110], buffer_marg[110], buffer_ent[110];			// declare the arrays buffer_moment (to store the name of the file where the moments are printed), buffer_u (to store the name of the file where the solution U is printed), buffer_ufull (to store the name of the file where the solution U is printed in the TwoStream), buffer_flags (to store the flag added to the end of the filenames), buffer_phi (to store the name of the file where the values of phi are printed), buffer_marg (to store the name of the file where the marginals are printed) & buffer_ent (to store the name of the file where the entropy values are printed)
+						buffer_phi[110], buffer_E[110], buffer_marg[110], buffer_ent[110],
+						buffer_marg_L[110], buffer_marg_H[110];										// declare the arrays buffer_moment (to store the name of the file where the moments are printed), buffer_u (to store the name of the file where the solution U is printed), buffer_ufull (to store the name of the file where the solution U is printed in the TwoStream), buffer_flags (to store the flag added to the end of the filenames), buffer_phi (to store the name of the file where the values of phi are printed), buffer_marg (to store the name of the file where the marginals are printed) & buffer_ent (to store the name of the file where the entropy values are printed)
 
 	// EVERY TIME THE CODE IS RUN, CHANGE THE FLAG TO A NAME THAT IDENTIFIES THE CASE RUNNING FOR OR WHAT TIME RUN UP TO:
 	strcpy(buffer_flags, flag.c_str());																// copy the contents of flag to buffer_flags
@@ -593,6 +594,10 @@ int main()
 		sprintf(buffer_ufull,"Data/U2stream_nu%gA%gk%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
 						nu, A_amp, k_wave, Nv, Lv, N, dt, nT, buffer_flags);							// create a .dc file name, located in the directory Data, whose name is U2stream_ followed by the values of nu, A_amp, k_wave, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_ufull
 		sprintf(buffer_marg,"Data/Marginals_nu%gA%gk%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
+						nu, A_amp, k_wave, Nv, Lv, N, dt, nT, buffer_flags);							// create a .dc file name, located in the directory Data, whose name is Marginals_ followed by the values of nu, A_amp, k_wave, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
+		sprintf(buffer_marg_L,"Data/Marginals_L_nu%gA%gk%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
+						nu, A_amp, k_wave, Nv, Lv, N, dt, nT, buffer_flags);							// create a .dc file name, located in the directory Data, whose name is Marginals_ followed by the values of nu, A_amp, k_wave, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
+		sprintf(buffer_marg_H,"Data/Marginals_H_nu%gA%gk%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
 						nu, A_amp, k_wave, Nv, Lv, N, dt, nT, buffer_flags);							// create a .dc file name, located in the directory Data, whose name is Marginals_ followed by the values of nu, A_amp, k_wave, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
 		sprintf(buffer_phi,"Data/PhiVals_nu%gA%gk%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
 						nu, A_amp, k_wave, Nv, Lv, N, dt, nT, buffer_flags);							// create a .dc file name, located in the directory Data, whose name is PhiVals_ followed by the values of nu, A_amp, k_wave, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
@@ -668,7 +673,7 @@ int main()
 		}
 	}
 
-	FILE *fmom, *fu, *fufull, *fmarg, *fphi, *fE, *fent;											// declare pointers to the files fmom (which will store the moments), fu (which will store the solution U), fufull (which will store the solution U in the TwoStream case), fmarg (which will store the values of the marginals), fphi (which will store the values of the potential phi) & fent (which will store the values fo the entropy)
+	FILE *fmom, *fu, *fufull, *fmarg, *fmarg_L, *fmarg_H, *fphi, *fE, *fent;						// declare pointers to the files fmom (which will store the moments), fu (which will store the solution U), fufull (which will store the solution U in the TwoStream case), fmarg (which will store the values of the marginals), fphi (which will store the values of the potential phi) & fent (which will store the values fo the entropy)
 
 	if(myrank_mpi==0)																				// only the process with rank 0 will do this
 	{
@@ -723,6 +728,8 @@ int main()
 		fmom=fopen(buffer_moment,"w");																// set fmom to be a file with the name stored in buffer_moment and set the file access mode of fmom to w (which creates an empty file and allows it to be written to)
 		fu=fopen(buffer_u, "w");																	// set fu to be a file with the name stored in buffer_u and set the file access mode of fu to w (which creates an empty file and allows it to be written to)
 		fmarg=fopen(buffer_marg,"w");																// set fmarg to be a file with the name stored in buffer_marg and set the file access mode of fmarg to w (which creates an empty file and allows it to be written to)
+		fmarg_L=fopen(buffer_marg_L,"w");															// set fmarg to be a file with the name stored in buffer_marg and set the file access mode of fmarg to w (which creates an empty file and allows it to be written to)
+		fmarg_H=fopen(buffer_marg_H,"w");															// set fmarg to be a file with the name stored in buffer_marg and set the file access mode of fmarg to w (which creates an empty file and allows it to be written to)
 		fphi=fopen(buffer_phi,"w");																	// set fphi to be a file with the name stored in buffer_phi and set the file access mode of fphi to w (which creates an empty file and allows it to be written to)
 		fE=fopen(buffer_E,"w");																		// set fE to be a file with the name stored in buffer_E and set the file access mode of fphi to w (which creates an empty file and allows it to be written to)
 		fent=fopen(buffer_ent,"w");																	// set fent to be a file with the name stored in buffer_ent and set the file access mode of fent to w (which creates an empty file and allows it to be written to)
@@ -795,6 +802,9 @@ int main()
 
 		PrintMarginalLoc(fmarg);																	// print the values of x & v1 that the marginal will be evaluated at in the file tagged as fmarg
 		PrintMarginal(U, fmarg);																	// print the marginal distribution for the initial condition, using the DG coefficients in U, in the file tagged as fmarg
+		// MULTI-SPECIES:
+		PrintMarginalLoc_Homo_Multispecies(fmarg_L, fmarg_H);
+		PrintMarginal_Homo_Multispecies(U_L, U_H, fmarg_L, fmarg_H);
 
 		if(! Homogeneous)
 		{
@@ -1044,6 +1054,9 @@ int main()
 			if(t%20==0)		// DEGUG CHECK: PRINTING MARGINALS EVERY STEP INSTEAD OF EVERY 20
 			{
 				PrintMarginal(U, fmarg);															// print the marginal distribution, using the DG coefficients in U, in the file tagged as fmarg
+				// MULTI-SPECIES:
+				PrintMarginalLoc_Homo_Multispecies(fmarg_L, fmarg_H);
+				PrintMarginal_Homo_Multispecies(U_L, U_H, fmarg_L, fmarg_H);
 				if(! Homogeneous)
 				{
 					PrintFieldData(U, fphi, fE);														// print the values of phi & E, using the DG coefficients in U, in the files tagged as fphi & fE, respectively
@@ -1080,6 +1093,8 @@ int main()
 	{
 		fclose(fmom);  																				// remove the tag fmom to close the file
 		fclose(fmarg);  																			// remove the tag fmarg to close the file
+		fclose(fmarg_L);  																			// remove the tag fmarg to close the file
+		fclose(fmarg_H);  																			// remove the tag fmarg to close the file
 		fclose(fphi);  																				// remove the tag fphi to close the file
 		fclose(fE);  																				// remove the tag fE to close the file
 		fclose(fent);  																				// remove the tag fent to close the file
@@ -1133,7 +1148,7 @@ int main()
 		free(cp); free(intE); free(intE1); free(intE2);													// delete the dynamic memory allocated for cp, intE, intE1 & inteE2
 	}
 
-	free(fNegVals); free(fAvgVals);	free (fEquiVals);												// delete the dynamic memory allocated for fNegVals, fAvgVals & fEquiVals
+	free(fNegVals); free(fAvgVals);	free(fEquiVals);												// delete the dynamic memory allocated for fNegVals, fAvgVals & fEquiVals
   
 	iparse.Close();																					// close the input file
 

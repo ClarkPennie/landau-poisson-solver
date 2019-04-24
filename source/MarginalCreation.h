@@ -24,17 +24,25 @@
 
 double f_marg_Homo(double *U, int i, int j1, double x, double v1);
 
+double f_marg_Homo_L(double *U, int j1, int j2, double v1, double v2);
+
+double f_marg_Homo_H(double *U, int j1, int j2, double v1, double v2);
+
 double f_marg_Inhomo(double *U, int i, int j1, double x, double v1);
 
 void PrintMarginalLoc(FILE *margfile);
 
 void PrintMarginalLoc_Homo(FILE *margfile);
 
+void PrintMarginalLoc_Homo_Multispecies(FILE *margfile_L, FILE *margfile_H);
+
 void PrintMarginalLoc_Inhomo(FILE *margfile);
 
 void PrintMarginal(double *U, FILE *margfile);
 
 void PrintMarginal_Homo(double *U, FILE *margfile);
+
+void PrintMarginal_Homo_Multispecies(double *U_L, double *U_H, FILE *margfile_L, FILE *margfile_H);
 
 void PrintMarginal_Inhomo(double *U, FILE *margfile);
 
