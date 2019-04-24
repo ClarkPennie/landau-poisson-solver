@@ -221,16 +221,15 @@ double gHat0_LH(double eta1_L, double eta2_L, double eta3_L, double ki1_L, doubl
     return result;
 }
 
-/*
-double gHat_HL(double eta1_H, double eta2_H, double eta3_H, double ki1_H, double ki2_H, double ki3_H, double epsilon)
+double gHat_HL(double eta1_L, double eta2_L, double eta3_L, double ki1_L, double ki2_L, double ki3_L, double epsilon)
 {
     double result = 0.;
-    double ki_H[3]={ki1_H,ki2_H,ki3_H}, zeta_H[3]={eta1_H,eta2_H,eta3_H}; // ki=w, zeta=xi in the notes
+    double ki_L[3]={ki1_L,ki2_L,ki3_L}, zeta_L[3]={eta1_L,eta2_L,eta3_L};  // ki=w, zeta=xi in the notes
     double Shat[3][3];
-    double r=sqrt(ki1_H*ki1_H+ki2_H*ki2_H+ki3_H*ki3_H);
-    double ki1_tp=ki1_H-eta1_H;
-    double ki2_tp=ki2_H-eta2_H;
-    double ki3_tp=ki3_H-eta3_H;
+    double r=sqrt(ki1_L*ki1_L+ki2_L*ki2_L+ki3_L*ki3_L);
+    double ki1_tp=epsilon*(ki1_L-eta1_L);
+    double ki2_tp=epsilon*(ki2_L-eta2_L);
+    double ki3_tp=epsilon*(ki3_L-eta3_L);
     
     int i,j;
     
@@ -246,13 +245,14 @@ double gHat_HL(double eta1_H, double eta2_H, double eta3_H, double ki1_H, double
     for(i=0;i<3;i++){
         for(j=0;j<3;j++){
             
-            result += Shat[i][j]*(zeta_H[i]*(zeta_H[j]-ki_H[j])-epsilon*epsilon*zeta_H[i]*ki_H[j]);  //convolutiong weight R in Q_HL
+            result += Shat[i][j]*(zeta_L[i]*(zeta_L[j]-ki_L[j])-epsilon*epsilon*zeta_L[i]*ki_L[j]);  //convolutiong weight R in Q_HL
         }
     }
     return result;
 }
-*/
 
+
+/*
 double gHat_HL(double eta1_L, double eta2_L, double eta3_L, double ki1_L, double ki2_L, double ki3_L, double epsilon)
 {
     double result = 0.;
@@ -281,7 +281,7 @@ double gHat_HL(double eta1_L, double eta2_L, double eta3_L, double ki1_L, double
     }
     return result;
 }
-
+*/
 
 double gHat3_2( double eta1, double eta2, double eta3, double ki1, double ki2, double ki3, int id)
 {
@@ -352,8 +352,8 @@ void generate_conv_weights(double **conv_weights, double **conv_weights_LH, doub
 	    for(n=0;n<N;n++) {
 	     conv_weights[k + N*(j + N*i)][n + N*(m + N*l)] = gHat3(eta[i], eta[j], eta[k], eta[l], eta[m], eta[n], gamma); // in the notes, correspondingly, (i,j,k)-kxi, (l,m,n)-w
          conv_weights_LH[k + N*(j + N*i)][n + N*(m + N*l)] = gHat_LH(eta_L[i], eta_L[j], eta_L[k], eta_L[l], eta_L[m], eta_L[n], epsilon);
-         conv_weights_HL[k + N*(j + N*i)][n + N*(m + N*l)] = gHat_HL(eta_L[i], eta_L[j], eta_L[k], eta_L[l], eta_L[m], eta_L[n], epsilon);
-         conv_weights0_LH[k + N*(j + N*i)][n + N*(m + N*l)] = gHat0_LH(eta_L[i], eta_L[j], eta_L[k], eta_L[l], eta_L[m], eta_L[n], epsilon);
+        conv_weights_HL[k + N*(j + N*i)][n + N*(m + N*l)] = gHat_HL(eta_L[i], eta_L[j], eta_L[k], eta_L[l], eta_L[m], eta_L[n], epsilon);
+            conv_weights0_LH[k + N*(j + N*i)][n + N*(m + N*l)] = gHat0_LH(eta_L[i], eta_L[j], eta_L[k], eta_L[l], eta_L[m], eta_L[n], epsilon);
 	    }
 	  }
     }
@@ -1049,12 +1049,12 @@ void ComputeQ0_LH(double *f_L, double *f_H, fftw_complex *qHat, double **conv_we
 }
 
 
-void ComputeQ_HL(double *f_L, double *f_H, fftw_complex *qHat, double **conv_weights_HL)
+void ComputeQ_HL(double *f_L, double *f_H, fftw_complex *qHat, double **conv_weights_HL, double epsilon)
 {
     int i, j, k, l, m, n, x, y, z;                                                // declare (i,j,k) (the indices for a given value of given ki = ki_(i,j,k)), (l,m,n) (counters for the quadrature to calculate the integral w.r.t. eta in the evaluation of qHat and so also represent the indices of a given eta = eta_(l,m,n)) & (x,y,z) (the indices for the value of a subtraction in the calculation, namely eta_(x,y,z) = ki_(i,j,k) - eta_(l,m,n))
     int start_i, start_j, start_k, end_i, end_j, end_k;                            // declare start_i, start_j & start_k (the indices for the values of the lower bounds of integration in computation of the convolution, corresponding to the lowest point where both functions are non-zero, in each velocity direction) and end_i, end_j & end_k (the indices for the values of the upper bounds of integration in computation of the convolution, corresponding to the highest point where both functions are non-zero, in each velocity direction)
     double tempD_HL, tmp0, tmp1;                                                    // declare tempD (the value of the convolution weight at a given ki & eta), tmp0 (which will become the real part of qHat) & tmp1 (which will become the imaginary part of qHat)
-    double prefactor = h_eta_H*h_eta_H*h_eta_H;                                         // declare prefactor (the value of h_eta_H^3, as no scale3 in Fourier space) and set its value
+    double prefactor = h_eta_L*h_eta_L*h_eta_L;                                         // declare prefactor (the value of h_eta_H^3, as no scale3 in Fourier space) and set its value
     
     for(i=0;i<size_ft;i++)                                                        // initialise the input of the FFT
     {
@@ -1121,9 +1121,9 @@ void ComputeQ_HL(double *f_L, double *f_H, fftw_complex *qHat, double **conv_wei
                             
                             tempD_HL = conv_weights_HL[k + N*(j+ N*i)][n + N*(m + N*l)];        // set tempD to the value of the convolution weight corresponding to current value of ki(i,j,k) & eta(l,m,n)
                             // MULTI-SPECIES NOTE: Will need to update fftOut terms here to _H/_L
-                            tmp0 += prefactor*wtN[l]*wtN[m]*wtN[n]*tempD_HL*(fftOut_L[n + N*(m + N*l)][0]*fftOut_H[z + N*(y + N*x)][0] - fftOut_L[n + N*(m + N*l)][1]*fftOut_H[z + N*(y + N*x)][1]);        // increment the value of the real part of qHat(ki(i,j,k)) by fHat_L(eta(l,m,n))*fHat_H(epsilon*(ki(i,j,k)-eta(l,m,n)))*conv_weight(ki(i,j,k),eta(l,m,n)) for the current values of l, m & n in the quadrature sum
+                            tmp0 += prefactor*wtN[l]*wtN[m]*wtN[n]*tempD_HL*(fftOut_H[n + N*(m + N*l)][0]*fftOut_L[z + N*(y + N*x)][0] - fftOut_H[n + N*(m + N*l)][1]*fftOut_L[z + N*(y + N*x)][1]);        // increment the value of the real part of qHat(ki(i,j,k)) by fHat_L(eta(l,m,n))*fHat_H(epsilon*(ki(i,j,k)-eta(l,m,n)))*conv_weight(ki(i,j,k),eta(l,m,n)) for the current values of l, m & n in the quadrature sum
                             
-                            tmp1 += prefactor*wtN[l]*wtN[m]*wtN[n]*tempD_HL*(fftOut_L[n + N*(m + N*l)][0]*fftOut_H[z + N*(y + N*x)][1] + fftOut_L[n + N*(m + N*l)][1]*fftOut_H[z + N*(y + N*x)][0]);        // increment the value of the imaginary part of qHat(ki(i,j,k)) by fHat_L(eta(l,m,n))*fHat_H(epsilon*(ki(i,j,k)-eta(l,m,n)))*conv_weight(ki(i,j,k),eta(l,m,n)) for the current values of l, m & n in the quadrature sum
+                            tmp1 += prefactor*wtN[l]*wtN[m]*wtN[n]*tempD_HL*(fftOut_H[n + N*(m + N*l)][0]*fftOut_L[z + N*(y + N*x)][1] + fftOut_H[n + N*(m + N*l)][1]*fftOut_L[z + N*(y + N*x)][0]);        // increment the value of the imaginary part of qHat(ki(i,j,k)) by fHat_L(eta(l,m,n))*fHat_H(epsilon*(ki(i,j,k)-eta(l,m,n)))*conv_weight(ki(i,j,k),eta(l,m,n)) for the current values of l, m & n in the quadrature sum
                             
                             // printf(" tempD=%g, prefactor=%g, fftOut=[%g,%g] at %d, %d, %d; %d, %d, %d; %d, %d, %d\n",tempD, prefactor, fftOut[z + N*(y + N*x)][0], fftOut[z + N*(y + N*x)][1],i,j,k,l,m,n, x,y,z);
                             
@@ -1131,8 +1131,8 @@ void ComputeQ_HL(double *f_L, double *f_H, fftw_complex *qHat, double **conv_wei
                     }
                 }
                 // printf("%d, %d, %d done\n", i,j,k);
-                qHat[k + N*(j + N*i)][0] = -tmp0;                                // set the real part of qHat(ki(i,j,k)) to the value tmp0 calculated in the quadrature
-                qHat[k + N*(j + N*i)][1] = -tmp1;                                // set the imaginary part of qHat(ki(i,j,k)) to the value tmp1 calculated in the quadrature
+                qHat[k + N*(j + N*i)][0] = epsilon*tmp0;                                // set the real part of qHat(ki(i,j,k)) to the value tmp0 calculated in the quadrature
+                qHat[k + N*(j + N*i)][1] = epsilon*tmp1;                                // set the imaginary part of qHat(ki(i,j,k)) to the value tmp1 calculated in the quadrature
                 // printf("%d, %d, %d write-in done\n", i,j,k);
             }
         }
@@ -1635,7 +1635,7 @@ void RK4_Homo_H(double *f_L, double *f_H, fftw_complex *qHat_HH, fftw_complex *q
     }
     
     ComputeQ(f1_H, Q1_fft_HH, conv_weights);
-    ComputeQ_HL(f1_L, f1_H, Q1_fft_HL, conv_weights_HL);                                                   // calculate the Fourier tranform of Q(f1,f1) using conv_weights for the weights in the convolution, then store the results of the Fourier transform in Q1_fft
+    ComputeQ_HL(f1_L, f1_H, Q1_fft_HL, conv_weights_HL, epsilon);                                                   // calculate the Fourier tranform of Q(f1,f1) using conv_weights for the weights in the convolution, then store the results of the Fourier transform in Q1_fft
     
     FS(Q1_fft_HH, fftOut_HH);
     FS(Q1_fft_HL, fftOut_HL);
@@ -1648,7 +1648,7 @@ void RK4_Homo_H(double *f_L, double *f_H, fftw_complex *qHat_HH, fftw_complex *q
     }
     
     ComputeQ(f1_H, Q2_fft_HH, conv_weights);
-    ComputeQ_HL(f1_L, f1_H, Q2_fft_HL, conv_weights_HL);
+    ComputeQ_HL(f1_L, f1_H, Q2_fft_HL, conv_weights_HL, epsilon);
     
     FS(Q2_fft_HH, fftOut_HH);
     FS(Q2_fft_HL, fftOut_HL);
@@ -1661,7 +1661,7 @@ void RK4_Homo_H(double *f_L, double *f_H, fftw_complex *qHat_HH, fftw_complex *q
     }
     
     ComputeQ(f1_H, Q3_fft_HH, conv_weights);
-    ComputeQ_HL(f1_L, f1_H, Q3_fft_HL, conv_weights_HL);
+    ComputeQ_HL(f1_L, f1_H, Q3_fft_HL, conv_weights_HL, epsilon);
     
     
 	#pragma omp parallel for schedule(dynamic) private(k_loc,j1,j2,j3,i,j,k,k_v,k_eta,kk,Q_re, Q_im, tp0, tp2,tp3,tp4, tp5) shared(qHat_HH, qHat_HL, U, dU)   // calculate the fourth step of RK4 (still in Fourier space though?!) - reduction(+: tmp0, tmp2, tmp3, tmp4, tmp5)

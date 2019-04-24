@@ -213,7 +213,7 @@ int main()
 
 	// MULTI-SPECIES:
 
-	mass_ratio = 1.0;
+	mass_ratio = 0.1;
 	Lv_H = Lv;
 	Lv_L = mass_ratio*Lv_H;
     dv_L=2.*Lv_L/Nv;
@@ -545,9 +545,10 @@ int main()
 
 	//	generate_conv_weights(conv_weights, gamma); 														// calculate the values of the convolution weights (the matrix G_Hat(xi, omega), for xi = (xi_i, xi_j, xi_k), omega = (omega_l, omega_m, omega_n), i,j,k,l,m,n = 0,1,...,N-1) and store the values in conv_weights
 		
+        generate_conv_weights(conv_weights, conv_weights_LH, conv_weights_HL, conv_weights0_LH, gamma, mass_ratio);
 
         // MULTI-SPECIES TEST:
-/*        if(myrank_mpi == 0)
+  /*     if(myrank_mpi == 0)
         {
 			for(int i=0;i<N;i++){
 			  for(int j=0;j<N;j++){
@@ -565,7 +566,6 @@ int main()
 			}
         }
 */
-        generate_conv_weights(conv_weights, conv_weights_LH, conv_weights_HL, conv_weights0_LH, gamma, mass_ratio);
 
         
         //generate_conv_weights2(conv_weights1, 0); 													// calculate the values in the first matrix of the convolution weights (the matrix G_Hat(xi, omega), for xi = (xi_i, xi_j, xi_k), omega = (omega_l, omega_m, omega_n), i,j,k,l,m,n = 0,1,...,N-1) and store the values in conv_weights1
@@ -818,7 +818,8 @@ int main()
 	ComputeQ(f_L[0], qHat_LL, conv_weights);
 	ComputeQ(f_H[0], qHat_HH, conv_weights);
 	ComputeQ_LH(f_L[0], f_H[0], qHat_LH, conv_weights_LH);
-	fprintf(fqhat, " l  m  n    qHat(f)     qHat(f_L)    qHat(f_H)    qHat_LH   qHat_HL \n");
+    ComputeQ_HL(f_L[0], f_H[0], qHat_HL, conv_weights_HL, mass_ratio);
+    fprintf(fqhat, " l  m  n    qHat(f)     qHat(f_L)    qHat(f_H)    qHat_LH   qHat_HL \n");
 	fprintf(ffvals, " l  m  n       f           f_L          f_H   \n");
 	for(int l=0;l<N;l++){
 	  for(int m=0;m<N;m++){

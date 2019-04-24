@@ -79,7 +79,7 @@ void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights);
 
 void ComputeQ_LH(double *f_L, double *f_H, fftw_complex *qHat, double **conv_weights_LH);
 
-void ComputeQ_HL(double *f_L, double *f_H, fftw_complex *qHat, double **conv_weights_HL);
+void ComputeQ_HL(double *f_L, double *f_H, fftw_complex *qHat, double **conv_weights_HL, double epsilon);
 
 void RK4_FandL(double *f, int l, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear, double *U, double *dU);
 
