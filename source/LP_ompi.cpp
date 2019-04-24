@@ -100,6 +100,7 @@ int main()
 	double *U, **f, *output_buffer; //, **conv_weights_local;										// declare pointers to U (the vector containing the coefficients of the DG basis functions for the solution f(x,v,t) at the given time t), f (the solution which has been transformed from the DG discretisation to the appropriate spectral discretisation) & output_buffer (from where to send MPI messages)
     double **conv_weights, **conv_weights_linear; 												// declare a pointer to conv_weights (a matrix of the weights for the convolution in Fourier space of single species collisions) & conv_weights_linear (a matrix of convolution weights in Fourier space of two species collisions)
     double **conv_weights1, **conv_weights2;														// declare a pointer to conv_weights1 (the first matrix in the sum of matrices for the weights of the convolution in Fourier space of single species collisions) & conv_weights2 (the second matrix in the sum of matrices for the weights of the convolution in Fourier space of single species collisions)
+    double **conv_weights0_LH;
 	int gamma;																						// declare gamma (the power of |u| in the collision kernel))
 
 	fftw_complex *qHat, *qHat_linear;																// declare pointers to the complex numbers qHat (the DFT of Q) & qHat_linear (the DFT of the two species colission operator Q);
@@ -211,7 +212,8 @@ int main()
 	scaleL=8*Lv*Lv*Lv;																				// set scaleL to 8Lv^3
 
 	// MULTI-SPECIES:
-	mass_ratio = 1;
+
+	mass_ratio = 1.0;
 	Lv_H = Lv;
 	Lv_L = mass_ratio*Lv_H;
     dv_L=2.*Lv_L/Nv;
@@ -334,8 +336,13 @@ int main()
             conv_weights_HL[i] = (double *)malloc(size_ft*sizeof(double));                                // allocate enough space at the ith entry of conv_weights for size_ft many float numbers
         }
         
-
-		conv_weights1 = (double **)malloc(size_ft*sizeof(double *));								// allocate enough space at the pointer conv_weights1 for size_ft many pointers to float numbers
+        conv_weights0_LH = (double **)malloc(size_ft*sizeof(double *));                                    // allocate enough space at the pointer conv_weights for size_ft many pointers to float numbers
+        for (i=0;i<size_ft;i++)
+        {
+            conv_weights0_LH[i] = (double *)malloc(size_ft*sizeof(double));                                // allocate enough space at the ith entry of conv_weights for size_ft many float numbers
+        }
+        
+        conv_weights1 = (double **)malloc(size_ft*sizeof(double *));								// allocate enough space at the pointer conv_weights1 for size_ft many pointers to float numbers
 		for (i=0;i<size_ft;i++)
 		{
 			conv_weights1[i] = (double *)malloc(size_ft*sizeof(double));							// allocate enough space at the ith entry of conv_weights1 for size_ft many float numbers
@@ -538,7 +545,6 @@ int main()
 
 	//	generate_conv_weights(conv_weights, gamma); 														// calculate the values of the convolution weights (the matrix G_Hat(xi, omega), for xi = (xi_i, xi_j, xi_k), omega = (omega_l, omega_m, omega_n), i,j,k,l,m,n = 0,1,...,N-1) and store the values in conv_weights
 		
-        generate_conv_weights(conv_weights, conv_weights_LH, conv_weights_HL, gamma, mass_ratio);
 
         // MULTI-SPECIES TEST:
 /*        if(myrank_mpi == 0)
@@ -559,6 +565,8 @@ int main()
 			}
         }
 */
+        generate_conv_weights(conv_weights, conv_weights_LH, conv_weights_HL, conv_weights0_LH, gamma, mass_ratio);
+
         
         //generate_conv_weights2(conv_weights1, 0); 													// calculate the values in the first matrix of the convolution weights (the matrix G_Hat(xi, omega), for xi = (xi_i, xi_j, xi_k), omega = (omega_l, omega_m, omega_n), i,j,k,l,m,n = 0,1,...,N-1) and store the values in conv_weights1
 
@@ -810,14 +818,14 @@ int main()
 	ComputeQ(f_L[0], qHat_LL, conv_weights);
 	ComputeQ(f_H[0], qHat_HH, conv_weights);
 	ComputeQ_LH(f_L[0], f_H[0], qHat_LH, conv_weights_LH);
-	fprintf(fqhat, " l  m  n    qHat(f)     qHat(f_L)    qHat(f_H)     qHat_LH  \n");
+	fprintf(fqhat, " l  m  n    qHat(f)     qHat(f_L)    qHat(f_H)    qHat_LH   qHat_HL \n");
 	fprintf(ffvals, " l  m  n       f           f_L          f_H   \n");
 	for(int l=0;l<N;l++){
 	  for(int m=0;m<N;m++){
 		for(int n=0;n<N;n++){
 			k = l*N*N+m*N+n;
-			fprintf(fqhat, "%2d %2d %2d %11g %11g %11g %11g \n",
-								l, m, n, qHat[k][0], qHat_LL[k][0], qHat_HH[k][0], qHat_LH[k][0]);
+			fprintf(fqhat, "%2d %2d %2d %11g %11g %11g %11g %11g\n",
+								l, m, n, qHat[k][0], qHat_LL[k][0], qHat_HH[k][0], qHat_LH[k][0], qHat_HL[k][0]);
 			fprintf(ffvals, "%2d %2d %2d %11g %11g %11g \n",
 								l, m, n, f[0][k], f_L[0][k], f_H[0][k]);
 		}
