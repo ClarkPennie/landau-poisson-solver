@@ -72,6 +72,7 @@ fftw_complex *Q3_fft_LL, *Q3_fft_HH, *Q3_fft_LH, *Q3_fft_HL;
 fftw_complex *fftIn_L, *fftIn_H, *fftOut_L, *fftOut_H;
 fftw_complex *fftIn_LL, *fftIn_HH, *fftOut_LL, *fftOut_HH;
 fftw_complex *fftIn_LH, *fftIn_HL, *fftOut_LH, *fftOut_HL;
+double *Utmp_coll_L, *Utmp_coll_H;
 
 // SET UP FFT PLANS (WHICH ARE USED MULTIPLE TIMES):
 fftw_plan p_forward; 																				// declare the fftw_plan p_forward (an object which contains all the data which allows fftw3 to compute the FFT)
@@ -377,11 +378,14 @@ int main()
 		if(Homogeneous)
 		{
 			Utmp_coll = (double*)malloc(chunksize_dg*5*sizeof(double));								// allocate enough space at the pointer Utmp_coll for 5*chunk_Nx*size_v many double numbers
+            Utmp_coll_L = (double*)malloc(chunksize_dg*5*sizeof(double));
+            Utmp_coll_H = (double*)malloc(chunksize_dg*5*sizeof(double));
 			output_buffer = (double*)malloc(chunksize_dg*5*sizeof(double));							// allocate enough space at the pointer output_buffer for 5*chunk_Nx*size_v many double numbers
 		}
 		else
 		{
 			Utmp_coll = (double*)malloc(chunk_Nx*size_v*5*sizeof(double));								// allocate enough space at the pointer Utmp_coll for 5*chunk_Nx*size_v many double numbers
+            
 			output_buffer = (double*)malloc(chunk_Nx*size_v*5*sizeof(double));							// allocate enough space at the pointer output_buffer for 5*chunk_Nx*size_v many double numbers
 		}
 
