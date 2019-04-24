@@ -90,6 +90,8 @@ extern double L_v_L, L_v_H, R_v_L, R_v_H, L_eta_L, L_eta_H;
 extern double h_eta_L, h_eta_H, h_v_L, h_v_H;
 extern double *v_L, *v_H, *eta_L, *eta_H;
 extern double *f1_L, *f1_H;
+extern double scaleL_L, scalev_L;
+extern double scaleL_H, scalev_H;
 extern fftw_complex *Q1_fft_LL, *Q1_fft_HH, *Q1_fft_LH, *Q1_fft_HL;
 extern fftw_complex *Q2_fft_LL, *Q2_fft_HH, *Q2_fft_LH, *Q2_fft_HL;
 extern fftw_complex *Q3_fft_LL, *Q3_fft_HH, *Q3_fft_LH, *Q3_fft_HL;

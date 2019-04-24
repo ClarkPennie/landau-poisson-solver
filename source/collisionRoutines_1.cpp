@@ -1534,87 +1534,79 @@ void RK4_Homo(double *f, fftw_complex *qHat, double **conv_weights, double *U, d
 }
 
 
-void RK4_Homo_L(double *f_L, double *f_H, fftw_complex *qHat_LL, fftw_complex *qHat_LH, double **conv_weights, double **conv_weights_LH, double *U, double *dU, double epsilon)
+void Euler_Homo(fftw_complex *qHat_LL, fftw_complex *qHat_HH, fftw_complex *qHat_LH, fftw_complex *qHat_HL,
+					double *U_L, double *U_H, double *dU_L, double *dU_H, double epsilon)
 {
-    int i,j,k, j1, j2, j3, k_v, k_eta, kk, k_loc;
-    double Q_re, Q_im, tp0, tp2, tp3,tp4,tp5, tmp0=0., tmp2=0., tmp3=0., tmp4=0.,tmp5=0., tem;
+    int i,j,k, j1, j2, j3, k_v, k_eta, k_loc;
+    double Q_re, Q_im;
+    double tp0_L, tp2_L, tp3_L, tp4_L, tp5_L;
+    double tp0_H, tp2_H, tp3_H, tp4_H, tp5_H;
     
-    FS(qHat_LL, fftOut_LL);                                                                     // set fftOut to the Fourier series representation of qHat (i.e. the IFFT of qHat)
-    FS(qHat_LH, fftOut_LH);
+    double dt_scale_L = dt/(epsilon*epsilon);
+    double dt_scale_H = dt/epsilon;
     
-	#pragma omp parallel for private(i) shared(Q,fftOut,f1_L,f_L)
-    for(i=0;i<size_ft;i++)
-    {
-        Q[i] = fftOut_LL[i][0] + fftOut_LH[i][0];                                                          // this is Q(Fn, Fn) so that Kn^1 = dt*Q(Fn, Fn) = dt*Q[i]
-        f1_L[i] = f_L[i] + dt*Q[i]/(epsilon*epsilon);
-    }
-    
-    ComputeQ(f1_L, Q1_fft_LL, conv_weights);
-    ComputeQ_LH(f1_L, f1_H, Q1_fft_LH, conv_weights_LH);                                                   // calculate the Fourier tranform of Q(f1,f1) using conv_weights for the weights in the convolution, then store the results of the Fourier transform in Q1_fft
-    
-    FS(Q1_fft_LL, fftOut_LL);
-    FS(Q1_fft_LH, fftOut_LH);
-    
-	#pragma omp parallel for private(i) shared(Q,Q1,fftOut,f1_L,f_L)
-    for(i=0;i<size_ft;i++)                                                                // calculate the second step of RK4
-    {
-        Q1[i] = fftOut_LL[i][0] + fftOut_LH[i][0];
-        f1_L[i] = f_L[i] + 0.5*dt*Q[i]/(epsilon*epsilon) + 0.5*dt*Q1[i]/(epsilon*epsilon);
-    }
-    
-    ComputeQ(f1_L, Q2_fft_LL, conv_weights);
-    ComputeQ_LH(f1_L, f1_H, Q2_fft_LH, conv_weights_LH);
-   
-    FS(Q2_fft_LL, fftOut_LL);
-    FS(Q2_fft_LH, fftOut_LH);
-   
-	#pragma omp parallel for private(i) shared(Q,Q1,fftOut,f1_L,f_L)
-    for(i=0;i<size_ft;i++)                                                                // calculate the third step of RK4
-    {
-        Q1[i] = fftOut_LL[i][0] + fftOut_LH[i][0];
-        f1_L[i] = f_L[i] + 0.5*Q[i]/(epsilon*epsilon) + 0.5*Q1[i]/(epsilon*epsilon);
-    }
-    
-    ComputeQ(f1_L, Q3_fft_LL, conv_weights);
-    ComputeQ_LH(f1_L, f1_H, Q3_fft_LH, conv_weights_LH);
-
     // MULTI-SPECIES NOTE: Will probably need to change which U coefficients are being used here (most likely U_L?)
-	#pragma omp parallel for schedule(dynamic) private(k_loc,j1,j2,j3,i,j,k,k_v,k_eta,kk,Q_re, Q_im, tp0, tp2,tp3,tp4, tp5) shared(qHat_LL, qHat_LH,U, dU)   // calculate the fourth step of RK4 (still in Fourier space though?!) - reduction(+: tmp0, tmp2, tmp3, tmp4, tmp5)
+	#pragma omp parallel for schedule(dynamic) private(k_loc,j1,j2,j3,i,j,k,k_v,k_eta,Q_re,Q_im,tp0_L,tp2_L,tp3_L,tp4_L,tp5_L,tp0_H,tp2_H,tp3_H,tp4_H,tp5_H) shared(qHat_LL,qHat_HH,qHat_LH,qHat_HL,U_L,U_H,dU_L,dU_H)   // calculate the fourth step of RK4 (still in Fourier space though?!) - reduction(+: tmp0, tmp2, tmp3, tmp4, tmp5)
     for(k_v = myrank_mpi*chunksize_dg; k_v < (myrank_mpi+1)*chunksize_dg; k_v++){
         j3 = k_v % Nv; j2 = ((k_v-j3)/Nv) % Nv; j1 = (k_v - j3 - Nv*j2)/(Nv*Nv);
         k_loc = k_v%chunksize_dg;
-        tp0=0.; tp2=0.; tp3=0.; tp4=0.; tp5=0.;
+        tp0_L=0.; tp2_L=0.; tp3_L=0.; tp4_L=0.; tp5_L=0.;
+        tp0_H=0.; tp2_H=0.; tp3_H=0.; tp4_H=0.; tp5_H=0.;
         for(i=0;i<N;i++){
             for(j=0;j<N;j++){
                 for(k=0;k<N;k++){
                     k_eta = k + N*(j + N*i);
                     
-                    IntModes(i,j,k,j1,j2,j3,IntM); //the global IntM must be declared as threadprivate; BUG: forgot to uncomment this and thus IntM=0 !!
+                    IntModes_L(i,j,k,j1,j2,j3,IntM); //the global IntM must be declared as threadprivate; BUG: forgot to uncomment this and thus IntM=0 !!
                     
-                    Q_re = (0.5*qHat_LL[k_eta][0] + (Q1_fft_LL[k_eta][0]+Q2_fft_LL[k_eta][0]+Q3_fft_LL[k_eta][0])/6.)/(epsilon*epsilon) + (0.5*qHat_LH[k_eta][0] + (Q1_fft_LH[k_eta][0]+Q2_fft_LH[k_eta][0]+Q3_fft_LH[k_eta][0])/6.)/(epsilon*epsilon);
-                     Q_re = (0.5*qHat_LL[k_eta][1] + (Q1_fft_LL[k_eta][1]+Q2_fft_LL[k_eta][1]+Q3_fft_LL[k_eta][1])/6.)/(epsilon*epsilon) + (0.5*qHat_LH[k_eta][1] + (Q1_fft_LH[k_eta][1]+Q2_fft_LH[k_eta][1]+Q3_fft_LH[k_eta][1])/6.)/(epsilon*epsilon);
+                    Q_re = qHat_LL[k_eta][0] + qHat_LH[k_eta][0];
+                    Q_im = qHat_LL[k_eta][1] + qHat_LH[k_eta][1];
                     
                     //tem = scale3*wtN[i]*wtN[j]*wtN[k]*h_eta*h_eta*h_eta;
-                    tp0 += IntM[0]*Q_re - IntM[1]*Q_im;
-                    tp2 += IntM[1*2]*Q_re - IntM[1*2+1]*Q_im;
-                    tp3 += IntM[2*2]*Q_re - IntM[2*2+1]*Q_im;
-                    tp4 += IntM[3*2]*Q_re - IntM[3*2+1]*Q_im;
-                    tp5 += IntM[4*2]*Q_re - IntM[4*2+1]*Q_im;
+                    tp0_L += IntM[0]*Q_re - IntM[1]*Q_im;
+                    tp2_L += IntM[1*2]*Q_re - IntM[1*2+1]*Q_im;
+                    tp3_L += IntM[2*2]*Q_re - IntM[2*2+1]*Q_im;
+                    tp4_L += IntM[3*2]*Q_re - IntM[3*2+1]*Q_im;
+                    tp5_L += IntM[4*2]*Q_re - IntM[4*2+1]*Q_im;
+
+                    IntModes_H(i,j,k,j1,j2,j3,IntM); //the global IntM must be declared as threadprivate; BUG: forgot to uncomment this and thus IntM=0 !!
+
+                    Q_re = qHat_LL[k_eta][0] + qHat_LH[k_eta][0];
+                    Q_im = qHat_LL[k_eta][1] + qHat_LH[k_eta][1];
+
+                    //tem = scale3*wtN[i]*wtN[j]*wtN[k]*h_eta*h_eta*h_eta;
+                    tp0_H += IntM[0]*Q_re - IntM[1]*Q_im;
+                    tp2_H += IntM[1*2]*Q_re - IntM[1*2+1]*Q_im;
+                    tp3_H += IntM[2*2]*Q_re - IntM[2*2+1]*Q_im;
+                    tp4_H += IntM[3*2]*Q_re - IntM[3*2+1]*Q_im;
+                    tp5_H += IntM[4*2]*Q_re - IntM[4*2+1]*Q_im;
                 }
             }
         }
         
-        tp0 = U[k_v*6+0] + U[k_v*6+5]/4. + dt*tp0/scalev/scaleL/scale3;
-        tp2 = U[k_v*6+2] + dt*tp2*12./scalev/scaleL/scale3;
-        tp3 = U[k_v*6+3] + dt*tp3*12./scalev/scaleL/scale3;
-        tp4 = U[k_v*6+4] + dt*tp4*12./scalev/scaleL/scale3;
-        tp5 = U[k_v*6+0]/4. + U[k_v*6+5]*19./240. + dt*tp5/scalev/scaleL/scale3;
+        tp0_L = U_L[k_v*6+0] + U_L[k_v*6+5]/4. + dt_scale_L*tp0_L/scalev_L/scaleL_L/scale3;
+        tp2_L = U_L[k_v*6+2] + dt_scale_L*tp2_L*12./scalev_L/scaleL_L/scale3;
+        tp3_L = U_L[k_v*6+3] + dt_scale_L*tp3_L*12./scalev_L/scaleL_L/scale3;
+        tp4_L = U_L[k_v*6+4] + dt_scale_L*tp4_L*12./scalev_L/scaleL_L/scale3;
+        tp5_L = U_L[k_v*6+0]/4. + U_L[k_v*6+5]*19./240. + dt_scale_L*tp5_L/scalev_L/scaleL_L/scale3;
         
-        dU[(k_loc)*5] = 19*tp0/4. - 15*tp5;
-        dU[(k_loc)*5+4] = 60*tp5 - 15*tp0;
-        dU[(k_loc)*5+1] = tp2;
-        dU[(k_loc)*5+2] = tp3;
-        dU[(k_loc)*5+3] = tp4;
+        dU_L[(k_loc)*5] = 19*tp0_L/4. - 15*tp5_L;
+        dU_L[(k_loc)*5+4] = 60*tp5_L - 15*tp0_L;
+        dU_L[(k_loc)*5+1] = tp2_L;
+        dU_L[(k_loc)*5+2] = tp3_L;
+        dU_L[(k_loc)*5+3] = tp4_L;
+
+        tp0_H = U_H[k_v*6+0] + U_H[k_v*6+5]/4. + dt_scale_H*tp0_H/scalev_H/scaleL_H/scale3;
+        tp2_H = U_H[k_v*6+2] + dt_scale_H*tp2_H*12./scalev_H/scaleL_H/scale3;
+        tp3_H = U_H[k_v*6+3] + dt_scale_H*tp3_H*12./scalev_H/scaleL_H/scale3;
+        tp4_H = U_H[k_v*6+4] + dt_scale_H*tp4_H*12./scalev_H/scaleL_H/scale3;
+        tp5_H = U_H[k_v*6+0]/4. + U_H[k_v*6+5]*19./240. + dt_scale_H*tp5_H/scalev_H/scaleL_H/scale3;
+
+        dU_H[(k_loc)*5] = 19*tp0_H/4. - 15*tp5_H;
+        dU_H[(k_loc)*5+4] = 60*tp5_H - 15*tp0_H;
+        dU_H[(k_loc)*5+1] = tp2_H;
+        dU_H[(k_loc)*5+2] = tp3_H;
+        dU_H[(k_loc)*5+3] = tp4_H;
     }
 }
 
