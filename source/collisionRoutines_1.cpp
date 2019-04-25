@@ -531,6 +531,7 @@ function ComputeQ
 The main function for calculating the collision effects
  */
 
+
 void IntModes(int k1, int k2,  int k3, int j1, int j2, int j3, double *result) // \int_Ij exp(i\xi_k \cdot v) \phi_l(v) dv; l=0..4: 1, (v1-w_j1)/dv, (v2-w_j2)/dv, (v3-w_j3)/dv, square sum of last three components
 {
   double tmp_re, tmp_im, tmp1_re, tmp1_im, tmp2_re, tmp2_im, tmp3_re, tmp3_im, tem1_re, tem1_im, tem2_re, tem2_im, tem3_re, tem3_im, tp1_re, tp1_im, tp2_re, tp2_im, tp3_re, tp3_im, a_re, a_im;
@@ -686,6 +687,320 @@ void IntModes(int k1, int k2,  int k3, int j1, int j2, int j3, double *result) /
   result[4*2]=tmp_re; result[4*2+1]=tmp_im;
 
 }
+
+void IntModes_L(int k1, int k2,  int k3, int j1, int j2, int j3, double *result) // \int_Ij exp(i\xi_k \cdot v) \phi_l(v) dv; l=0..4: 1, (v1-w_j1)/dv, (v2-w_j2)/dv, (v3-w_j3)/dv, square sum of last three components
+{
+    double tmp_re, tmp_im, tmp1_re, tmp1_im, tmp2_re, tmp2_im, tmp3_re, tmp3_im, tem1_re, tem1_im, tem2_re, tem2_im, tem3_re, tem3_im, tp1_re, tp1_im, tp2_re, tp2_im, tp3_re, tp3_im, a_re, a_im;
+    
+    double v1, v2, v3;                                                                    // define v1, v2 & v3 (where v_k is the center of the current velocity cell in the kth direction)
+    double v1_l, v1_r, v2_l, v2_r, v3_l, v3_r;                                            // define v1_l, v1_r, v2_l, v2_r, v3_l & v3_r (where vk_l & vk_r are the values of v_(j_k) at the left and right edges of the velocity cell j in the kth direction)
+    v1 = Gridv_L((double)j1);                                                                        // calculate v1 by the formula -Lv+(j1+0.5)*dv
+    v2 = Gridv_L((double)j2);                                                                        // calculate v2 by the formula -Lv+(j2+0.5)*dv
+    v3 = Gridv_L((double)j3);                                                                        // calculate v3 by the formula -Lv+(j3+0.5)*dv
+    v1_l = Gridv_L(j1-0.5);                                                                    // calculate v1_l by the formula -Lv+j1*dv
+    v1_r = Gridv_L(j1+0.5);                                                                    // calculate v1_r by the formula -Lv+(j1+1)*dv
+    v2_l = Gridv_L(j2-0.5);                                                                    // calculate v2_l by the formula -Lv+j2*dv
+    v2_r = Gridv_L(j2+0.5);                                                                    // calculate v2_r by the formula -Lv+(j2+1)*dv
+    v3_l = Gridv_L(j3-0.5);                                                                    // calculate v3_l by the formula -Lv+j3*dv
+    v3_r = Gridv_L(j3+0.5);                                                                    // calculate v3_r by the formula -Lv+(j3+1)*dv
+    
+    if(eta_L[k1] != 0.){
+        tmp1_re = (sin(eta_L[k1]*v1_r) - sin(eta_L[k1]*v1_l))/eta_L[k1];
+        tmp1_im = (cos(eta_L[k1]*v1_l) - cos(eta_L[k1]*v1_r))/eta_L[k1];
+    }
+    else
+    {
+        tmp1_re = dv_L;
+        tmp1_im = 0.;
+    }
+    
+    if(eta_L[k2] != 0.){
+        tmp2_re = (sin(eta_L[k2]*v2_r) - sin(eta_L[k2]*v2_l))/eta_L[k2];
+        tmp2_im = (cos(eta_L[k2]*v2_l) - cos(eta_L[k2]*v2_r))/eta_L[k2];
+    }
+    else
+    {
+        tmp2_re = dv_L;
+        tmp2_im = 0.;
+    }
+    
+    if(eta_L[k3] != 0.){
+        tmp3_re = (sin(eta_L[k3]*v3_r) - sin(eta_L[k3]*v3_l))/eta_L[k3];
+        tmp3_im = (cos(eta_L[k3]*v3_l) - cos(eta_L[k3]*v3_r))/eta_L[k3];
+    }
+    else
+    {
+        tmp3_re = dv_L;
+        tmp3_im = 0.;
+    }
+    
+    tem1_re=tmp1_re; tem2_re=tmp2_re;  tem3_re=tmp3_re;
+    tem1_im=tmp1_im; tem2_im=tmp2_im;  tem3_im=tmp3_im;
+    
+    tmp_re = tmp3_re*(tmp1_re*tmp2_re - tmp1_im*tmp2_im) - tmp3_im*(tmp1_re*tmp2_im + tmp2_re*tmp1_im);
+    tmp_im = tmp3_re*(tmp1_re*tmp2_im + tmp2_re*tmp1_im) + tmp3_im*(tmp1_re*tmp2_re - tmp1_im*tmp2_im);
+    result[0]=tmp_re; result[1]=tmp_im;
+    /////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    if(eta_L[k1] != 0.){
+        tmp1_re = ((v1_r*sin(eta_L[k1]*v1_r) - v1_l*sin(eta_L[k1]*v1_l))/eta_L[k1] + (cos(eta_L[k1]*v1_r) - cos(eta_L[k1]*v1_l))/eta_L[k1]/eta_L[k1] -v1*tem1_re)/dv;
+        tmp1_im = ((sin(eta_L[k1]*v1_r) - sin(eta_L[k1]*v1_l))/eta_L[k1]/eta_L[k1] + (v1_l*cos(eta_L[k1]*v1_l) - v1_r*cos(eta_L[k1]*v1_r))/eta_L[k1] -v1*tem1_im)/dv;
+    }
+    else
+    {
+        tmp1_re = 0.;
+        tmp1_im = 0.;
+    }
+    
+    tmp_re = tem3_re*(tmp1_re*tem2_re - tmp1_im*tem2_im) - tem3_im*(tmp1_re*tem2_im + tem2_re*tmp1_im);
+    tmp_im = tem3_re*(tmp1_re*tem2_im + tem2_re*tmp1_im) + tem3_im*(tmp1_re*tem2_re - tmp1_im*tem2_im);
+    result[1*2]=tmp_re; result[1*2+1]=tmp_im;
+    /////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    
+    if(eta_L[k2] != 0.){
+        tmp2_re = ((v2_r*sin(eta_L[k2]*v2_r) - v2_l*sin(eta_L[k2]*v2_l))/eta_L[k2] + (cos(eta_L[k2]*v2_r) - cos(eta_L[k2]*v2_l))/eta_L[k2]/eta_L[k2] -v2*tem2_re)/dv_L;
+        tmp2_im = ((sin(eta_L[k2]*v2_r) - sin(eta_L[k2]*v2_l))/eta_L[k2]/eta_L[k2] + (v2_l*cos(eta_L[k2]*v2_l) - v2_r*cos(eta_L[k2]*v2_r))/eta_L[k2] -v2*tem2_im)/dv_L;
+    }
+    else
+    {
+        tmp2_re = 0;
+        tmp2_im = 0.;
+    }
+    
+    tmp_re = tem3_re*(tem1_re*tmp2_re - tem1_im*tmp2_im) - tmp3_im*(tem1_re*tmp2_im + tmp2_re*tem1_im);
+    tmp_im = tem3_re*(tem1_re*tmp2_im + tmp2_re*tem1_im) + tmp3_im*(tem1_re*tmp2_re - tem1_im*tmp2_im);
+    result[2*2]=tmp_re; result[2*2+1]=tmp_im;
+    /////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    if(eta_L[k3] != 0.){
+        tmp3_re = ((v3_r*sin(eta_L[k3]*v3_r) - v3_l*sin(eta_L[k3]*v3_l))/eta_L[k3] + (cos(eta_L[k3]*v3_r) - cos(eta_L[k3]*v3_l))/eta_L[k3]/eta_L[k3] -v3*tem3_re)/dv_L;;
+        tmp3_im = ((sin(eta_L[k3]*v3_r) - sin(eta_L[k3]*v3_l))/eta_L[k3]/eta_L[k3] + (v3_l*cos(eta_L[k3]*v3_l) - v3_r*cos(eta_L[k3]*v3_r))/eta_L[k3] -v3*tem3_im)/dv_L;;
+    }
+    else
+    {
+        tmp3_re = 0.;
+        tmp3_im = 0.;
+    }
+    
+    tmp_re = tmp3_re*(tem1_re*tem2_re - tem1_im*tem2_im) - tmp3_im*(tem1_re*tem2_im + tem2_re*tem1_im);
+    tmp_im = tmp3_re*(tem1_re*tem2_im + tem2_re*tem1_im) + tmp3_im*(tem1_re*tem2_re - tem1_im*tem2_im);
+    result[3*2]=tmp_re; result[3*2+1]=tmp_im;
+    /////////////////////////////////////////////////////////////////////////////////////////////////////
+    //BUG: wrote one cos as sin in the following tmp1_im, tmp2_im, tmp3_im !!
+    if(eta_L[k1] != 0.){
+        a_re = (v1_r*sin(eta_L[k1]*v1_r) - v1_l*sin(eta_L[k1]*v1_l))/eta_L[k1] + (cos(eta_L[k1]*v1_r) - cos(eta_L[k1]*v1_l))/eta_L[k1]/eta_L[k1]; // real part of \int exp(i\xi1.v1) v1 dv1
+        a_im = (sin(eta_L[k1]*v1_r) - sin(eta_L[k1]*v1_l))/eta_L[k1]/eta_L[k1] + (v1_l*cos(eta_L[k1]*v1_l) - v1_r*cos(eta_L[k1]*v1_r))/eta_L[k1];
+        
+        tmp1_re = ((v1_r*v1_r*sin(eta_L[k1]*v1_r) - v1_l*v1_l*sin(eta_L[k1]*v1_l) - 2*a_im)/eta_L[k1] - 2*v1*a_re + v1*v1*tem1_re)/dv_L/dv_L;
+        tmp1_im = ((v1_l*v1_l*cos(eta_L[k1]*v1_l) - v1_r*v1_r*cos(eta_L[k1]*v1_r) + 2*a_re)/eta_L[k1] - 2*v1*a_im + v1*v1*tem1_im)/dv_L/dv_L;
+    }
+    else
+    {
+        tmp1_re = dv_L/12.;
+        tmp1_im = 0.;
+    }
+    
+    tp1_re = tem3_re*(tmp1_re*tem2_re - tmp1_im*tem2_im) - tem3_im*(tmp1_re*tem2_im + tem2_re*tmp1_im);
+    tp1_im = tem3_re*(tmp1_re*tem2_im + tem2_re*tmp1_im) + tem3_im*(tmp1_re*tem2_re - tmp1_im*tem2_im);
+    ////////////////////////////////////////////////
+    
+    if(eta_L[k2] != 0.){
+        a_re = (v2_r*sin(eta_L[k2]*v2_r) - v2_l*sin(eta_L[k2]*v2_l))/eta_L[k2] + (cos(eta_L[k2]*v2_r) - cos(eta_L[k2]*v2_l))/eta_L[k2]/eta_L[k2];
+        a_im = (sin(eta_L[k2]*v2_r) - sin(eta_L[k2]*v2_l))/eta_L[k2]/eta_L[k2] + (v2_l*cos(eta_L[k2]*v2_l) - v2_r*cos(eta_L[k2]*v2_r))/eta_L[k2];
+        
+        tmp2_re = ((v2_r*v2_r*sin(eta_L[k2]*v2_r) - v2_l*v2_l*sin(eta_L[k2]*v2_l) - 2*a_im)/eta_L[k2] - 2*v2*a_re + v2*v2*tem2_re)/dv_L/dv_L;
+        tmp2_im = ((v2_l*v2_l*cos(eta_L[k2]*v2_l) - v2_r*v2_r*cos(eta_L[k2]*v2_r) + 2*a_re)/eta_L[k2] - 2*v2*a_im + v2*v2*tem2_im)/dv_L/dv_L;
+    }
+    else
+    {
+        tmp2_re = dv_L/12.;
+        tmp2_im = 0.;
+    }
+    
+    tp2_re = tem3_re*(tem1_re*tmp2_re - tem1_im*tmp2_im) - tem3_im*(tem1_re*tmp2_im + tmp2_re*tem1_im);
+    tp2_im = tem3_re*(tem1_re*tmp2_im + tmp2_re*tem1_im) + tem3_im*(tem1_re*tmp2_re - tem1_im*tmp2_im);
+    ////////////////////////////////////////////////
+    
+    if(eta_L[k3] != 0.){
+        a_re = (v3_r*sin(eta_L[k3]*v3_r) - v3_l*sin(eta_L[k3]*v3_l))/eta_L[k3] + (cos(eta_L[k3]*v3_r) - cos(eta_L[k3]*v3_l))/eta_L[k3]/eta_L[k3];
+        a_im = (sin(eta_L[k3]*v3_r) - sin(eta_L[k3]*v3_l))/eta_L[k3]/eta_L[k3] + (v3_l*cos(eta_L[k3]*v3_l) - v3_r*cos(eta_L[k3]*v3_r))/eta_L[k3];
+        
+        tmp3_re = ((v3_r*v3_r*sin(eta_L[k3]*v3_r) - v3_l*v3_l*sin(eta_L[k3]*v3_l) - 2*a_im)/eta_L[k3] - 2*v3*a_re + v3*v3*tem3_re)/dv_L/dv_L;
+        tmp3_im = ((v3_l*v3_l*cos(eta_L[k3]*v3_l) - v3_r*v3_r*cos(eta_L[k3]*v3_r) + 2*a_re)/eta_L[k3] - 2*v3*a_im + v3*v3*tem3_im)/dv_L/dv_L;
+    }
+    else
+    {
+        tmp3_re = dv_L/12.;
+        tmp3_im = 0.;
+    }
+    
+    tp3_re = tmp3_re*(tem1_re*tem2_re - tem1_im*tem2_im) - tmp3_im*(tem1_re*tem2_im + tem2_re*tem1_im);
+    tp3_im = tmp3_re*(tem1_re*tem2_im + tem2_re*tem1_im) + tmp3_im*(tem1_re*tem2_re - tem1_im*tem2_im);
+    ////////////////////////////////////////////////
+    tmp_re = tp1_re + tp2_re + tp3_re;
+    tmp_im = tp1_im + tp2_im + tp3_im;
+    result[4*2]=tmp_re; result[4*2+1]=tmp_im;
+    
+}
+
+void IntModes_H(int k1, int k2,  int k3, int j1, int j2, int j3, double *result) // \int_Ij exp(i\xi_k \cdot v) \phi_l(v) dv; l=0..4: 1, (v1-w_j1)/dv, (v2-w_j2)/dv, (v3-w_j3)/dv, square sum of last three components
+{
+    double tmp_re, tmp_im, tmp1_re, tmp1_im, tmp2_re, tmp2_im, tmp3_re, tmp3_im, tem1_re, tem1_im, tem2_re, tem2_im, tem3_re, tem3_im, tp1_re, tp1_im, tp2_re, tp2_im, tp3_re, tp3_im, a_re, a_im;
+    
+    double v1, v2, v3;                                                                    // define v1, v2 & v3 (where v_k is the center of the current velocity cell in the kth direction)
+    double v1_l, v1_r, v2_l, v2_r, v3_l, v3_r;                                            // define v1_l, v1_r, v2_l, v2_r, v3_l & v3_r (where vk_l & vk_r are the values of v_(j_k) at the left and right edges of the velocity cell j in the kth direction)
+    v1 = Gridv_H((double)j1);                                                                        // calculate v1 by the formula -Lv+(j1+0.5)*dv
+    v2 = Gridv_H((double)j2);                                                                        // calculate v2 by the formula -Lv+(j2+0.5)*dv
+    v3 = Gridv_H((double)j3);                                                                        // calculate v3 by the formula -Lv+(j3+0.5)*dv
+    v1_l = Gridv_H(j1-0.5);                                                                    // calculate v1_l by the formula -Lv+j1*dv
+    v1_r = Gridv_H(j1+0.5);                                                                    // calculate v1_r by the formula -Lv+(j1+1)*dv
+    v2_l = Gridv_H(j2-0.5);                                                                    // calculate v2_l by the formula -Lv+j2*dv
+    v2_r = Gridv_H(j2+0.5);                                                                    // calculate v2_r by the formula -Lv+(j2+1)*dv
+    v3_l = Gridv_H(j3-0.5);                                                                    // calculate v3_l by the formula -Lv+j3*dv
+    v3_r = Gridv_H(j3+0.5);                                                                    // calculate v3_r by the formula -Lv+(j3+1)*dv
+    
+    if(eta_H[k1] != 0.){
+        tmp1_re = (sin(eta_H[k1]*v1_r) - sin(eta_H[k1]*v1_l))/eta_H[k1];
+        tmp1_im = (cos(eta_H[k1]*v1_l) - cos(eta_H[k1]*v1_r))/eta_H[k1];
+    }
+    else
+    {
+        tmp1_re = dv_H;
+        tmp1_im = 0.;
+    }
+    
+    if(eta_H[k2] != 0.){
+        tmp2_re = (sin(eta_H[k2]*v2_r) - sin(eta_H[k2]*v2_l))/eta_H[k2];
+        tmp2_im = (cos(eta_H[k2]*v2_l) - cos(eta_H[k2]*v2_r))/eta_H[k2];
+    }
+    else
+    {
+        tmp2_re = dv_H;
+        tmp2_im = 0.;
+    }
+    
+    if(eta_H[k3] != 0.){
+        tmp3_re = (sin(eta_H[k3]*v3_r) - sin(eta_H[k3]*v3_l))/eta_H[k3];
+        tmp3_im = (cos(eta_H[k3]*v3_l) - cos(eta_H[k3]*v3_r))/eta_H[k3];
+    }
+    else
+    {
+        tmp3_re = dv_H;
+        tmp3_im = 0.;
+    }
+    
+    tem1_re=tmp1_re; tem2_re=tmp2_re;  tem3_re=tmp3_re;
+    tem1_im=tmp1_im; tem2_im=tmp2_im;  tem3_im=tmp3_im;
+    
+    tmp_re = tmp3_re*(tmp1_re*tmp2_re - tmp1_im*tmp2_im) - tmp3_im*(tmp1_re*tmp2_im + tmp2_re*tmp1_im);
+    tmp_im = tmp3_re*(tmp1_re*tmp2_im + tmp2_re*tmp1_im) + tmp3_im*(tmp1_re*tmp2_re - tmp1_im*tmp2_im);
+    result[0]=tmp_re; result[1]=tmp_im;
+    /////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    if(eta_H[k1] != 0.){
+        tmp1_re = ((v1_r*sin(eta_H[k1]*v1_r) - v1_l*sin(eta_H[k1]*v1_l))/eta_H[k1] + (cos(eta_H[k1]*v1_r) - cos(eta_H[k1]*v1_l))/eta_H[k1]/eta_H[k1] -v1*tem1_re)/dv;
+        tmp1_im = ((sin(eta_H[k1]*v1_r) - sin(eta_H[k1]*v1_l))/eta_H[k1]/eta_H[k1] + (v1_l*cos(eta_H[k1]*v1_l) - v1_r*cos(eta_H[k1]*v1_r))/eta_H[k1] -v1*tem1_im)/dv;
+    }
+    else
+    {
+        tmp1_re = 0.;
+        tmp1_im = 0.;
+    }
+    
+    tmp_re = tem3_re*(tmp1_re*tem2_re - tmp1_im*tem2_im) - tem3_im*(tmp1_re*tem2_im + tem2_re*tmp1_im);
+    tmp_im = tem3_re*(tmp1_re*tem2_im + tem2_re*tmp1_im) + tem3_im*(tmp1_re*tem2_re - tmp1_im*tem2_im);
+    result[1*2]=tmp_re; result[1*2+1]=tmp_im;
+    /////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    
+    if(eta_H[k2] != 0.){
+        tmp2_re = ((v2_r*sin(eta_H[k2]*v2_r) - v2_l*sin(eta_H[k2]*v2_l))/eta_H[k2] + (cos(eta_H[k2]*v2_r) - cos(eta_H[k2]*v2_l))/eta_H[k2]/eta_H[k2] -v2*tem2_re)/dv_H;
+        tmp2_im = ((sin(eta_H[k2]*v2_r) - sin(eta_H[k2]*v2_l))/eta_H[k2]/eta_H[k2] + (v2_l*cos(eta_H[k2]*v2_l) - v2_r*cos(eta_H[k2]*v2_r))/eta_H[k2] -v2*tem2_im)/dv_H;
+    }
+    else
+    {
+        tmp2_re = 0;
+        tmp2_im = 0.;
+    }
+    
+    tmp_re = tem3_re*(tem1_re*tmp2_re - tem1_im*tmp2_im) - tmp3_im*(tem1_re*tmp2_im + tmp2_re*tem1_im);
+    tmp_im = tem3_re*(tem1_re*tmp2_im + tmp2_re*tem1_im) + tmp3_im*(tem1_re*tmp2_re - tem1_im*tmp2_im);
+    result[2*2]=tmp_re; result[2*2+1]=tmp_im;
+    /////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    if(eta_H[k3] != 0.){
+        tmp3_re = ((v3_r*sin(eta_H[k3]*v3_r) - v3_l*sin(eta_H[k3]*v3_l))/eta_H[k3] + (cos(eta_H[k3]*v3_r) - cos(eta_H[k3]*v3_l))/eta_H[k3]/eta_H[k3] -v3*tem3_re)/dv_H;;
+        tmp3_im = ((sin(eta_H[k3]*v3_r) - sin(eta_H[k3]*v3_l))/eta_H[k3]/eta_H[k3] + (v3_l*cos(eta_H[k3]*v3_l) - v3_r*cos(eta_H[k3]*v3_r))/eta_H[k3] -v3*tem3_im)/dv_H;;
+    }
+    else
+    {
+        tmp3_re = 0.;
+        tmp3_im = 0.;
+    }
+    
+    tmp_re = tmp3_re*(tem1_re*tem2_re - tem1_im*tem2_im) - tmp3_im*(tem1_re*tem2_im + tem2_re*tem1_im);
+    tmp_im = tmp3_re*(tem1_re*tem2_im + tem2_re*tem1_im) + tmp3_im*(tem1_re*tem2_re - tem1_im*tem2_im);
+    result[3*2]=tmp_re; result[3*2+1]=tmp_im;
+    /////////////////////////////////////////////////////////////////////////////////////////////////////
+    //BUG: wrote one cos as sin in the following tmp1_im, tmp2_im, tmp3_im !!
+    if(eta_H[k1] != 0.){
+        a_re = (v1_r*sin(eta_H[k1]*v1_r) - v1_l*sin(eta_H[k1]*v1_l))/eta_H[k1] + (cos(eta_H[k1]*v1_r) - cos(eta_H[k1]*v1_l))/eta_H[k1]/eta_H[k1]; // real part of \int exp(i\xi1.v1) v1 dv1
+        a_im = (sin(eta_H[k1]*v1_r) - sin(eta_H[k1]*v1_l))/eta_H[k1]/eta_H[k1] + (v1_l*cos(eta_H[k1]*v1_l) - v1_r*cos(eta_H[k1]*v1_r))/eta_H[k1];
+        
+        tmp1_re = ((v1_r*v1_r*sin(eta_H[k1]*v1_r) - v1_l*v1_l*sin(eta_H[k1]*v1_l) - 2*a_im)/eta_H[k1] - 2*v1*a_re + v1*v1*tem1_re)/dv_H/dv_H;
+        tmp1_im = ((v1_l*v1_l*cos(eta_H[k1]*v1_l) - v1_r*v1_r*cos(eta_H[k1]*v1_r) + 2*a_re)/eta_H[k1] - 2*v1*a_im + v1*v1*tem1_im)/dv_H/dv_H;
+    }
+    else
+    {
+        tmp1_re = dv_H/12.;
+        tmp1_im = 0.;
+    }
+    
+    tp1_re = tem3_re*(tmp1_re*tem2_re - tmp1_im*tem2_im) - tem3_im*(tmp1_re*tem2_im + tem2_re*tmp1_im);
+    tp1_im = tem3_re*(tmp1_re*tem2_im + tem2_re*tmp1_im) + tem3_im*(tmp1_re*tem2_re - tmp1_im*tem2_im);
+    ////////////////////////////////////////////////
+    
+    if(eta_H[k2] != 0.){
+        a_re = (v2_r*sin(eta_H[k2]*v2_r) - v2_l*sin(eta_H[k2]*v2_l))/eta_H[k2] + (cos(eta_H[k2]*v2_r) - cos(eta_H[k2]*v2_l))/eta_H[k2]/eta_H[k2];
+        a_im = (sin(eta_H[k2]*v2_r) - sin(eta_H[k2]*v2_l))/eta_H[k2]/eta_H[k2] + (v2_l*cos(eta_H[k2]*v2_l) - v2_r*cos(eta_H[k2]*v2_r))/eta_H[k2];
+        
+        tmp2_re = ((v2_r*v2_r*sin(eta_H[k2]*v2_r) - v2_l*v2_l*sin(eta_H[k2]*v2_l) - 2*a_im)/eta_H[k2] - 2*v2*a_re + v2*v2*tem2_re)/dv_H/dv_H;
+        tmp2_im = ((v2_l*v2_l*cos(eta_H[k2]*v2_l) - v2_r*v2_r*cos(eta_H[k2]*v2_r) + 2*a_re)/eta_H[k2] - 2*v2*a_im + v2*v2*tem2_im)/dv_H/dv_H;
+    }
+    else
+    {
+        tmp2_re = dv_H/12.;
+        tmp2_im = 0.;
+    }
+    
+    tp2_re = tem3_re*(tem1_re*tmp2_re - tem1_im*tmp2_im) - tem3_im*(tem1_re*tmp2_im + tmp2_re*tem1_im);
+    tp2_im = tem3_re*(tem1_re*tmp2_im + tmp2_re*tem1_im) + tem3_im*(tem1_re*tmp2_re - tem1_im*tmp2_im);
+    ////////////////////////////////////////////////
+    
+    if(eta_H[k3] != 0.){
+        a_re = (v3_r*sin(eta_H[k3]*v3_r) - v3_l*sin(eta_H[k3]*v3_l))/eta_H[k3] + (cos(eta_H[k3]*v3_r) - cos(eta_H[k3]*v3_l))/eta_H[k3]/eta_H[k3];
+        a_im = (sin(eta_H[k3]*v3_r) - sin(eta_H[k3]*v3_l))/eta_H[k3]/eta_H[k3] + (v3_l*cos(eta_H[k3]*v3_l) - v3_r*cos(eta_H[k3]*v3_r))/eta_H[k3];
+        
+        tmp3_re = ((v3_r*v3_r*sin(eta_H[k3]*v3_r) - v3_l*v3_l*sin(eta_H[k3]*v3_l) - 2*a_im)/eta_H[k3] - 2*v3*a_re + v3*v3*tem3_re)/dv_H/dv_H;
+        tmp3_im = ((v3_l*v3_l*cos(eta_H[k3]*v3_l) - v3_r*v3_r*cos(eta_H[k3]*v3_r) + 2*a_re)/eta_H[k3] - 2*v3*a_im + v3*v3*tem3_im)/dv_H/dv_H;
+    }
+    else
+    {
+        tmp3_re = dv_H/12.;
+        tmp3_im = 0.;
+    }
+    
+    tp3_re = tmp3_re*(tem1_re*tem2_re - tem1_im*tem2_im) - tmp3_im*(tem1_re*tem2_im + tem2_re*tem1_im);
+    tp3_im = tmp3_re*(tem1_re*tem2_im + tem2_re*tem1_im) + tmp3_im*(tem1_re*tem2_re - tem1_im*tem2_im);
+    ////////////////////////////////////////////////
+    tmp_re = tp1_re + tp2_re + tp3_re;
+    tmp_im = tp1_im + tp2_im + tp3_im;
+    result[4*2]=tmp_re; result[4*2+1]=tmp_im;
+    
+}
+
+
 
 void ProjectedNodeValue(fftw_complex *qHat, double *Q_incremental) // incremental of node values, projected from qHat to DG mesh
 {

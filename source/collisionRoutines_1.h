@@ -71,6 +71,10 @@ void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights);
 
 void IntModes(int k1, int k2,  int k3, int j1, int j2, int j3, double *result);
 
+void IntModes_L(int k1, int k2,  int k3, int j1, int j2, int j3, double *result);
+
+void IntModes_H(int k1, int k2,  int k3, int j1, int j2, int j3, double *result);
+
 void ProjectedNodeValue(fftw_complex *qHat, double *Q_incremental);
 
 void ComputeQ_FandL(double *f, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear);
@@ -97,6 +101,8 @@ void RK4_Homo_L(double *f_L, double *f_H, fftw_complex *qHat_LL, fftw_complex *q
 
 void RK4_Homo_H(double *f_L, double *f_H, fftw_complex *qHat_HH, fftw_complex *qHat_HL, double **conv_weights, double **conv_weights_HL, double *U, double *dU, double epsilon);
 
+void Euler_Homo(fftw_complex *qHat_LL, fftw_complex *qHat_HH, fftw_complex *qHat_LH, fftw_complex *qHat_HL,
+					double *U_L, double *U_H, double *dU_L, double *dU_H, double epsilon);
 /*
 void ComputeQ_MPI_FandL(double *f, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear);
 
