@@ -744,8 +744,11 @@ int main()
 		fmom=fopen(buffer_moment,"w");																// set fmom to be a file with the name stored in buffer_moment and set the file access mode of fmom to w (which creates an empty file and allows it to be written to)
 		fu=fopen(buffer_u, "w");																	// set fu to be a file with the name stored in buffer_u and set the file access mode of fu to w (which creates an empty file and allows it to be written to)
 		fmarg=fopen(buffer_marg,"w");																// set fmarg to be a file with the name stored in buffer_marg and set the file access mode of fmarg to w (which creates an empty file and allows it to be written to)
-		fmarg_L=fopen(buffer_marg_L,"w");															// set fmarg to be a file with the name stored in buffer_marg and set the file access mode of fmarg to w (which creates an empty file and allows it to be written to)
-		fmarg_H=fopen(buffer_marg_H,"w");															// set fmarg to be a file with the name stored in buffer_marg and set the file access mode of fmarg to w (which creates an empty file and allows it to be written to)
+		if(Homogeneous)
+		{
+			fmarg_L=fopen(buffer_marg_L,"w");															// set fmarg to be a file with the name stored in buffer_marg and set the file access mode of fmarg to w (which creates an empty file and allows it to be written to)
+			fmarg_H=fopen(buffer_marg_H,"w");															// set fmarg to be a file with the name stored in buffer_marg and set the file access mode of fmarg to w (which creates an empty file and allows it to be written to)
+		}
 		fphi=fopen(buffer_phi,"w");																	// set fphi to be a file with the name stored in buffer_phi and set the file access mode of fphi to w (which creates an empty file and allows it to be written to)
 		fE=fopen(buffer_E,"w");																		// set fE to be a file with the name stored in buffer_E and set the file access mode of fphi to w (which creates an empty file and allows it to be written to)
 		fent=fopen(buffer_ent,"w");																	// set fent to be a file with the name stored in buffer_ent and set the file access mode of fent to w (which creates an empty file and allows it to be written to)
@@ -819,8 +822,8 @@ int main()
 		PrintMarginalLoc(fmarg);																	// print the values of x & v1 that the marginal will be evaluated at in the file tagged as fmarg
 		PrintMarginal(U, fmarg);																	// print the marginal distribution for the initial condition, using the DG coefficients in U, in the file tagged as fmarg
 		// MULTI-SPECIES:
-		PrintMarginalLoc_Homo_Multispecies(fmarg_L, fmarg_H);
-		PrintMarginal_Homo_Multispecies(U_L, U_H, fmarg_L, fmarg_H);
+		PrintMarginalLoc_Multispecies(fmarg_L, fmarg_H);
+		PrintMarginal_Multispecies(U_L, U_H, fmarg_L, fmarg_H);
 
 		if(! Homogeneous)
 		{
@@ -1071,8 +1074,7 @@ int main()
 			{
 				PrintMarginal(U, fmarg);															// print the marginal distribution, using the DG coefficients in U, in the file tagged as fmarg
 				// MULTI-SPECIES:
-				PrintMarginalLoc_Homo_Multispecies(fmarg_L, fmarg_H);
-				PrintMarginal_Homo_Multispecies(U_L, U_H, fmarg_L, fmarg_H);
+				PrintMarginal_Multispecies(U_L, U_H, fmarg_L, fmarg_H);
 				if(! Homogeneous)
 				{
 					PrintFieldData(U, fphi, fE);														// print the values of phi & E, using the DG coefficients in U, in the files tagged as fphi & fE, respectively
@@ -1109,8 +1111,11 @@ int main()
 	{
 		fclose(fmom);  																				// remove the tag fmom to close the file
 		fclose(fmarg);  																			// remove the tag fmarg to close the file
-		fclose(fmarg_L);  																			// remove the tag fmarg to close the file
-		fclose(fmarg_H);  																			// remove the tag fmarg to close the file
+		if(Homogeneous)
+		{
+			fclose(fmarg_L);  																		// remove the tag fmarg to close the file
+			fclose(fmarg_H);  																		// remove the tag fmarg to close the file
+		}
 		fclose(fphi);  																				// remove the tag fphi to close the file
 		fclose(fE);  																				// remove the tag fE to close the file
 		fclose(fent);  																				// remove the tag fent to close the file

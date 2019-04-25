@@ -190,7 +190,19 @@ void PrintMarginalLoc_Homo(FILE *margfile)															// function to print th
 	fprintf(margfile, "\n");																	// print a new line in the file tagged as fmarg
 }
 
-void PrintMarginalLoc_Homo_Multispecies(FILE *margfile_L, FILE *margfile_H)															// function to print the values of x & v1 which the marginal will be evaluated at in the first two rows of the file with tag margfile (subsequent rows will be the values of the marginal at given timesteps)
+void PrintMarginalLoc_Multispecies(FILE *margfile_L, FILE *margfile_H)
+{
+	if(Homogeneous)
+	{
+		PrintMarginalLoc_Multispecies_Homo(margfile_L, margfile_H);
+	}
+	else
+	{
+
+	}
+}
+
+void PrintMarginalLoc_Multispecies_Homo(FILE *margfile_L, FILE *margfile_H)															// function to print the values of x & v1 which the marginal will be evaluated at in the first two rows of the file with tag margfile (subsequent rows will be the values of the marginal at given timesteps)
 {
 	int j1, j2, np, nv1, nv2;																	// declare j1 (the index of the velocity cell in the v1 direction), j2 (the index of the velocity cell in the v2 direction), np (the number of points to evaluate in a given space/velocity cell), nv1 & nv2 (counters for the points in the velocity cell)
 	double v1_0_L, v1_val_L, v2_0_L, v2_val_L, ddv_L;											// declare v1_0 (the v1 value at the left edge of a given cell), v1_val (the v1 value to be evaluated at), v2_0 (the v2 value at the left edge of a given cell), v2_val (the v2 value to be evaluated at) & ddv (the space between v values)
@@ -312,7 +324,19 @@ void PrintMarginal_Homo(double *U, FILE *margfile)													// function to pr
 	fprintf(margfile, "\n");																	// print a new line in the file tagged as fmarg
 }
 
-void PrintMarginal_Homo_Multispecies(double *U_L, double *U_H, FILE *margfile_L, FILE *margfile_H)													// function to print the values of the marginal in the file tagged as margfile at the given timestep
+void PrintMarginal_Multispecies(double *U_L, double *U_H, FILE *margfile_L, FILE *margfile_H)
+{
+	if(Homogeneous)
+	{
+		PrintMarginal_Multispecies_Homo(U_L, U_H, margfile_L, margfile_H);
+	}
+	else
+	{
+
+	}
+}
+
+void PrintMarginal_Multispecies_Homo(double *U_L, double *U_H, FILE *margfile_L, FILE *margfile_H)													// function to print the values of the marginal in the file tagged as margfile at the given timestep
 {
 	int j1, j2, np, nv1, nv2;																	// declare j1 (the index of the velocity cell in the v1 direction), j2 (the index of the velocity cell in the v2 direction), np (the number of points to evaluate in a given space/velocity cell), nv1 & nv2 (counters for the points in the velocity cell)
 	double v1_0_L, v1_val_L, v2_0_L, v2_val_L, fM_val_L, ddx_L, ddv_L;							// declare v1_0 (the v1 value at the left edge of a given cell), v1_val (the v1 value to be evaluated at), v2_0 (the v2 value at the left edge of a given cell), v2_val (the v2 value to be evaluated at), fM_val (the value of the marginal evaluated at (x_val, v1_val), ddx (the space between x values) & ddv (the space between v1 values)

@@ -34,16 +34,20 @@ void PrintMarginalLoc(FILE *margfile);
 
 void PrintMarginalLoc_Homo(FILE *margfile);
 
-void PrintMarginalLoc_Homo_Multispecies(FILE *margfile_L, FILE *margfile_H);
-
 void PrintMarginalLoc_Inhomo(FILE *margfile);
+
+void PrintMarginalLoc_Multispecies(FILE *margfile_L, FILE *margfile_H);
+
+void PrintMarginalLoc_Multispecies_Homo(FILE *margfile_L, FILE *margfile_H);
 
 void PrintMarginal(double *U, FILE *margfile);
 
 void PrintMarginal_Homo(double *U, FILE *margfile);
 
-void PrintMarginal_Homo_Multispecies(double *U_L, double *U_H, FILE *margfile_L, FILE *margfile_H);
-
 void PrintMarginal_Inhomo(double *U, FILE *margfile);
+
+void PrintMarginal_Multispecies(double *U_L, double *U_H, FILE *margfile_L, FILE *margfile_H);
+
+void PrintMarginal_Multispecies_Homo(double *U_L, double *U_H, FILE *margfile_L, FILE *margfile_H);
 
 #endif /* MARGINALCREATION_H_ */
