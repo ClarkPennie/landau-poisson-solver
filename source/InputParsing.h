@@ -21,33 +21,35 @@
 //   FUNCTION PROTOTYPES  //
 //************************//
 
-extern void ReadICOptions(GRVY_Input_Class& iparse);
+void ReadICOptions(GRVY_Input_Class& iparse);
 
-extern void CheckICOptions(std::string& IC_flag);
+void CheckICOptions(std::string& IC_flag);
 
-extern void ReadICName(GRVY_Input_Class& iparse, std::string IC_flag, std::string& IC_name);
+void ReadICName(GRVY_Input_Class& iparse, std::string IC_flag, std::string& IC_name);
 
-extern void ReadFirstOrSecond(GRVY_Input_Class& iparse);
+void ReadFirstOrSecond(GRVY_Input_Class& iparse);
 
-extern void CheckFirstOrSecond();
+void CheckFirstOrSecond();
 
-extern void ReadGamma(GRVY_Input_Class& iparse, int& gamma);
+void ReadGamma(GRVY_Input_Class& iparse, int& gamma);
 
-extern void ReadHomogeneous(GRVY_Input_Class& iparse);
+void ReadMassRatio(GRVY_Input_Class& iparse, double& epsilon);
 
-extern void ReadFullandLinear(GRVY_Input_Class& iparse);
+void ReadHomogeneous(GRVY_Input_Class& iparse);
 
-extern void ReadLinearLandau(GRVY_Input_Class& iparse);
+void ReadFullandLinear(GRVY_Input_Class& iparse);
 
-extern void ReadMassConsOnly(GRVY_Input_Class& iparse);
+void ReadLinearLandau(GRVY_Input_Class& iparse);
 
-extern void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
+void ReadMassConsOnly(GRVY_Input_Class& iparse);
+
+void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 								int& Nx, int& Nv, int& N, double& nu, double& dt, double& A_amp,
 								double& k_wave, double& Lv, double& Lx);
 
-extern void ReadDopingParameters(GRVY_Input_Class& iparse, double& NL, double& NH,
+void ReadDopingParameters(GRVY_Input_Class& iparse, double& NL, double& NH,
 								double& T_L, double& T_R, double& eps);
 
-extern void PrintError(std::string var_name);
+void PrintError(std::string var_name);
 
 #endif /* INPUTPARSING_H_ */

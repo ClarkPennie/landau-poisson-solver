@@ -239,6 +239,25 @@ void ReadGamma(GRVY_Input_Class& iparse, int& gamma)												// Function to r
 	}
 }
 
+void ReadMassRatio(GRVY_Input_Class& iparse, double& epsilon)												// Function to read the value of the mass ratio epsilon
+{
+	// Check if the value of the mass ratio epsilon has been set and print its value from the
+	// processor with rank 0 (if not, set default value to 1)
+	iparse.Read_Var("mass_ratio",&epsilon,1.);
+	if(myrank_mpi==0)
+	{
+		std::cout << "--> Mass ratio = " << epsilon << std::endl << std::endl;
+		if(epsilon==1)
+		{
+			std::cout << "Mass ratio is 1 so only one species being modeled." << std::endl << std::endl;
+		}
+		else
+		{
+			std::cout << "Mass ratio is " << epsilon << " so there are two species with disparate masses." << std::endl << std::endl;
+		}
+	}
+}
+
 void ReadFullandLinear(GRVY_Input_Class& iparse)												// Function to read the Boolean option to decide if running with single species collisions or mixed
 {
 	// Check if FullandLinear has been set and print its value from the 

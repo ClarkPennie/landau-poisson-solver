@@ -93,7 +93,6 @@ bool MassConsOnly;																					// declare a Boolean variable to determin
 
 int main()
 {
-    double mass_ratio;                                                                              // declare mass_ratio (of light to heavy particles, epsilon)
 	int i, j, k, j1, j2, j3, l; 																	// declare i, j, k (counters), j1, j2, j3 (velocity space counters) & l (the index of the current DG basis function being integrated against)
 	int  tp, t=0; 																					// declare tp (the amount size of the data which stores the DG coefficients of the solution read from a previous run) & t (the current time-step) and set it to 0
 	int k_v, k_eta, k_local, nprocs_vlasov;															// declare k_v (the index of a DG coefficient), k_eta (the index of a DG coefficient in Fourier space), k_local (the index of a DG coefficient, local to the space chunk on the current process) & nprocs_vlasov (the number of processes used for solving the Vlasov equation)
@@ -101,18 +100,19 @@ int main()
 	double *U, **f, *output_buffer; //, **conv_weights_local;										// declare pointers to U (the vector containing the coefficients of the DG basis functions for the solution f(x,v,t) at the given time t), f (the solution which has been transformed from the DG discretisation to the appropriate spectral discretisation) & output_buffer (from where to send MPI messages)
     double **conv_weights, **conv_weights_linear; 												// declare a pointer to conv_weights (a matrix of the weights for the convolution in Fourier space of single species collisions) & conv_weights_linear (a matrix of convolution weights in Fourier space of two species collisions)
     double **conv_weights1, **conv_weights2;														// declare a pointer to conv_weights1 (the first matrix in the sum of matrices for the weights of the convolution in Fourier space of single species collisions) & conv_weights2 (the second matrix in the sum of matrices for the weights of the convolution in Fourier space of single species collisions)
-    double **conv_weights0_LH;
 	int gamma;																						// declare gamma (the power of |u| in the collision kernel))
 
 	fftw_complex *qHat, *qHat_linear;																// declare pointers to the complex numbers qHat (the DFT of Q) & qHat_linear (the DFT of the two species colission operator Q);
 	fftw_complex **DFTMaxwell;																		// declare pointer to the FFT variable DFTMaxwell (to store the FFT of the initial Maxwellian)
 
-	// MULTI-SPECIES GLOBAL VARIABLES:
+	// MULTI-SPECIES VARIABLES:
 	// (Note: these parallel the corresponding single-species variables above)
+    double mass_ratio;                                                                              // declare mass_ratio (of light to heavy particles, epsilon)
 	double *U_L, *U_H;
 	double **f_L, **f_H;
     double **conv_weights_LH, **conv_weights_HL;
     double **conv_weights_LL, **conv_weights_HH;
+    double **conv_weights0_LH;
     fftw_complex *qHat_LL, *qHat_HH, *qHat_LH, *qHat_HL;
 
 	std::string flag;																				// declare a string flag (used to identify files generated associated to the current run)
@@ -215,7 +215,8 @@ int main()
 
 	// MULTI-SPECIES:
 
-	mass_ratio = 0.7;
+//	mass_ratio = 0.7;
+	ReadMassRatio(iparse, mass_ratio);
 	Lv_H = Lv;
 	Lv_L = mass_ratio*Lv_H;
     dv_L=2.*Lv_L/Nv;
