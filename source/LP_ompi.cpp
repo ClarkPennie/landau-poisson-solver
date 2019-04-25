@@ -112,6 +112,7 @@ int main()
 	double *U_L, *U_H;
 	double **f_L, **f_H;
     double **conv_weights_LH, **conv_weights_HL;
+    double **conv_weights_LL, **conv_weights_HH;
     fftw_complex *qHat_LL, *qHat_HH, *qHat_LH, *qHat_HL;
 
 	std::string flag;																				// declare a string flag (used to identify files generated associated to the current run)
@@ -326,6 +327,7 @@ int main()
 		{
 			conv_weights[i] = (double *)malloc(size_ft*sizeof(double));								// allocate enough space at the ith entry of conv_weights for size_ft many float numbers
 		}
+        
         conv_weights_LH = (double **)malloc(size_ft*sizeof(double *));                                    // allocate enough space at the pointer conv_weights for size_ft many pointers to float numbers
         for (i=0;i<size_ft;i++)
         {
@@ -337,6 +339,16 @@ int main()
             conv_weights_HL[i] = (double *)malloc(size_ft*sizeof(double));                                // allocate enough space at the ith entry of conv_weights for size_ft many float numbers
         }
         
+        conv_weights_LL = (double **)malloc(size_ft*sizeof(double *));                                    // allocate enough space at the pointer conv_weights for size_ft many pointers to float numbers
+        for (i=0;i<size_ft;i++)
+        {
+            conv_weights_LL[i] = (double *)malloc(size_ft*sizeof(double));                                // allocate enough space at the ith entry of conv_weights for size_ft many float numbers
+        }
+        conv_weights_HH = (double **)malloc(size_ft*sizeof(double *));                                    // allocate enough space at the pointer conv_weights for size_ft many pointers to float numbers
+        for (i=0;i<size_ft;i++)
+        {
+            conv_weights_HH[i] = (double *)malloc(size_ft*sizeof(double));                                // allocate enough space at the ith entry of conv_weights for size_ft many float numbers
+        }
         conv_weights0_LH = (double **)malloc(size_ft*sizeof(double *));                                    // allocate enough space at the pointer conv_weights for size_ft many pointers to float numbers
         for (i=0;i<size_ft;i++)
         {

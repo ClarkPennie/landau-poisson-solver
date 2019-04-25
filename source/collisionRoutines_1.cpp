@@ -353,7 +353,7 @@ void generate_conv_weights(double **conv_weights, double **conv_weights_LL, doub
 	     conv_weights_HH[k + N*(j + N*i)][n + N*(m + N*l)] = gHat3(eta[i], eta[j], eta[k], eta[l], eta[m], eta[n], R_v_H, gamma); // in the notes, correspondingly, (i,j,k)-kxi, (l,m,n)-w
          conv_weights_LH[k + N*(j + N*i)][n + N*(m + N*l)] = gHat_LH(eta_L[i], eta_L[j], eta_L[k], eta_L[l], eta_L[m], eta_L[n], epsilon);
         conv_weights_HL[k + N*(j + N*i)][n + N*(m + N*l)] = gHat_HL(eta_L[i], eta_L[j], eta_L[k], eta_L[l], eta_L[m], eta_L[n], epsilon);
-            conv_weights0_LH[k + N*(j + N*i)][n + N*(m + N*l)] = gHat0_LH(eta_L[i], eta_L[j], eta_L[k], eta_L[l], eta_L[m], eta_L[n], epsilon);
+        conv_weights0_LH[k + N*(j + N*i)][n + N*(m + N*l)] = gHat0_LH(eta_L[i], eta_L[j], eta_L[k], eta_L[l], eta_L[m], eta_L[n], epsilon);
 	    }
 	  }
     }
