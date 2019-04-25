@@ -202,12 +202,12 @@ double gHat0_LH(double eta1_L, double eta2_L, double eta3_L, double ki1_L, doubl
 
     int i,j;
 
-    Shat[0][0]=S1hat(ki1_tp,ki2_tp,ki3_tp)-S233hat(ki2_tp,ki3_tp,ki1_tp);
-    Shat[1][1]=S1hat(ki1_tp,ki2_tp,ki3_tp)-S233hat(ki1_tp,ki3_tp,ki2_tp);
-    Shat[2][2]=S1hat(ki1_tp,ki2_tp,ki3_tp)-S233hat(ki1_tp,ki2_tp,ki3_tp);
-    Shat[0][1]=-S213hat(ki1_tp,ki3_tp,ki2_tp);
-    Shat[0][2]=-S213hat(ki1_tp,ki2_tp,ki3_tp);
-    Shat[1][2]=-S213hat(ki2_tp,ki1_tp,ki3_tp);
+    Shat[0][0]=S1hat(ki1_tp,ki2_tp,ki3_tp,R_v_L)-S233hat(ki2_tp,ki3_tp,ki1_tp,R_v_L);
+    Shat[1][1]=S1hat(ki1_tp,ki2_tp,ki3_tp,R_v_L)-S233hat(ki1_tp,ki3_tp,ki2_tp,R_v_L);
+    Shat[2][2]=S1hat(ki1_tp,ki2_tp,ki3_tp,R_v_L)-S233hat(ki1_tp,ki2_tp,ki3_tp,R_v_L);
+    Shat[0][1]=-S213hat(ki1_tp,ki3_tp,ki2_tp,R_v_L);
+    Shat[0][2]=-S213hat(ki1_tp,ki2_tp,ki3_tp,R_v_L);
+    Shat[1][2]=-S213hat(ki2_tp,ki1_tp,ki3_tp,R_v_L);
     Shat[1][0]=Shat[0][1]; Shat[2][0]=Shat[0][2]; Shat[2][1]=Shat[1][2];
 
 
@@ -290,12 +290,12 @@ double gHat3_2( double eta1, double eta2, double eta3, double ki1, double ki2, d
 	double eta_ki=ki1*eta1+ki2*eta2+ki3*eta3;
 	int i,j;
 
-	Shat[0][0]=S1hat(ki1,ki2,ki3)-S233hat(ki2,ki3,ki1);
-	Shat[1][1]=S1hat(ki1,ki2,ki3)-S233hat(ki1,ki3,ki2);
-	Shat[2][2]=S1hat(ki1,ki2,ki3)-S233hat(ki1,ki2,ki3);
-	Shat[0][1]=-S213hat(ki1,ki3,ki2);
-	Shat[0][2]=-S213hat(ki1,ki2,ki3);
-	Shat[1][2]=-S213hat(ki2,ki1,ki3);
+	Shat[0][0]=S1hat(ki1,ki2,ki3,R_v)-S233hat(ki2,ki3,ki1,R_v);
+	Shat[1][1]=S1hat(ki1,ki2,ki3,R_v)-S233hat(ki1,ki3,ki2,R_v);
+	Shat[2][2]=S1hat(ki1,ki2,ki3,R_v)-S233hat(ki1,ki2,ki3,R_v);
+	Shat[0][1]=-S213hat(ki1,ki3,ki2,R_v);
+	Shat[0][2]=-S213hat(ki1,ki2,ki3,R_v);
+	Shat[1][2]=-S213hat(ki2,ki1,ki3,R_v);
 	Shat[1][0]=Shat[0][1]; Shat[2][0]=Shat[0][2]; Shat[2][1]=Shat[1][2];
 
 	for(i=0;i<3;i++){
@@ -320,12 +320,12 @@ double gHat3_linear(double eta1, double eta2, double eta3, double ki1, double ki
 	//double darg[3][2];
 	int i,j;
 
-	Shat[0][0]=S1hat(ki1,ki2,ki3)-S233hat(ki2,ki3,ki1);
-	Shat[1][1]=S1hat(ki1,ki2,ki3)-S233hat(ki1,ki3,ki2);
-	Shat[2][2]=S1hat(ki1,ki2,ki3)-S233hat(ki1,ki2,ki3);
-	Shat[0][1]=-S213hat(ki1,ki3,ki2);
-	Shat[0][2]=-S213hat(ki1,ki2,ki3);
-	Shat[1][2]=-S213hat(ki2,ki1,ki3);
+	Shat[0][0]=S1hat(ki1,ki2,ki3,R_v)-S233hat(ki2,ki3,ki1,R_v);
+	Shat[1][1]=S1hat(ki1,ki2,ki3,R_v)-S233hat(ki1,ki3,ki2,R_v);
+	Shat[2][2]=S1hat(ki1,ki2,ki3,R_v)-S233hat(ki1,ki2,ki3,R_v);
+	Shat[0][1]=-S213hat(ki1,ki3,ki2,R_v);
+	Shat[0][2]=-S213hat(ki1,ki2,ki3,R_v);
+	Shat[1][2]=-S213hat(ki2,ki1,ki3,R_v);
 	Shat[1][0]=Shat[0][1]; Shat[2][0]=Shat[0][2]; Shat[2][1]=Shat[1][2];
 
 	for(i=0;i<3;i++){

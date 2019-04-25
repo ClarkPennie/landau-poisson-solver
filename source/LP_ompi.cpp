@@ -561,7 +561,7 @@ int main()
 
 	//	generate_conv_weights(conv_weights, gamma); 														// calculate the values of the convolution weights (the matrix G_Hat(xi, omega), for xi = (xi_i, xi_j, xi_k), omega = (omega_l, omega_m, omega_n), i,j,k,l,m,n = 0,1,...,N-1) and store the values in conv_weights
 		
-        generate_conv_weights(conv_weights, conv_weights_LH, conv_weights_HL, conv_weights0_LH, gamma, mass_ratio);
+        generate_conv_weights(conv_weights, conv_weights_LL, conv_weights_HH, conv_weights_LH, conv_weights_HL, conv_weights0_LH, gamma, mass_ratio);
 
         // MULTI-SPECIES TEST:
   /*     if(myrank_mpi == 0)
