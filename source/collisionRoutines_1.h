@@ -23,11 +23,11 @@
 //   FUNCTION PROTOTYPES  //
 //************************//
 
-double S1hat(double ki1,double ki2,double ki3);
+double S1hat(double ki1, double ki2, double ki3, double R);
 
-double S233hat(double ki1, double ki2, double ki3);
+double S233hat(double ki1, double ki2, double ki3, double R);
 
-double S213hat(double ki1, double ki2, double ki3);
+double S213hat(double ki1, double ki2, double ki3, double R);
 
 double S1hat_maxmols(double ki1,double ki2,double ki3);
 
@@ -41,7 +41,7 @@ double S233hat_hardspheres(double ki1, double ki2, double ki3);
 
 double S213hat_hardspheres(double ki1, double ki2, double ki3);
 
-double gHat3(double eta1, double eta2, double eta3, double ki1, double ki2, double ki3, int gamma);
+double gHat3(double eta1, double eta2, double eta3, double ki1, double ki2, double ki3, double R, int gamma);
 
 double gHat3_linear(double eta1, double eta2, double eta3, double ki1, double ki2, double ki3 );
 
@@ -53,7 +53,7 @@ double gHat_HL(double eta1_L, double eta2_L, double eta3_L, double ki1_L, double
 
 //void generate_conv_weights(double **conv_weights, int gamma);
 
-void generate_conv_weights(double **conv_weights, double **conv_weights_HL, double **conv_weights_LH, double **conv_weights0_LH, int gamma, double epsilon);
+void generate_conv_weights(double **conv_weights, double **conv_weights_LL, double **conv_weights_HH, double **conv_weights_LH, double **conv_weights_HL, double **conv_weights0_LH, int gamma, double epsilon)
 
 void generate_conv_weights_linear(double **conv_weights_linear);
 

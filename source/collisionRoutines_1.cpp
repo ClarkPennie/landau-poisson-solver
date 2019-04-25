@@ -15,26 +15,24 @@ extern fftw_complex *temp;
 double IntM[10];																					// declare an array IntM to hold 10 double variables
 #pragma omp threadprivate(IntM)																		// start the OpenMP parallel construct to start the threads which will run in parallel, passing IntM to each thread as private variables which will have their contents deleted when the threads finish (doesn't seem to be doing anything since no {} afterwards???)
 
-double S1hat(double ki1,double ki2,double ki3)
+double S1hat(double ki1, double ki2, double ki3, double R)
 {
-  if(ki1==0. && ki2==0. && ki3==0.) return sqrt(1./(2*PI))*R_v*R_v;
-  else return sqrt(2.0/PI)*(1-cos(R_v*sqrt(ki1*ki1+ki2*ki2+ki3*ki3)))/(ki1*ki1+ki2*ki2+ki3*ki3);
+  if(ki1==0. && ki2==0. && ki3==0.) return sqrt(1./(2*PI))*R*R;
+  else return sqrt(2.0/PI)*(1-cos(R*sqrt(ki1*ki1+ki2*ki2+ki3*ki3)))/(ki1*ki1+ki2*ki2+ki3*ki3);
 }
 
-double S233hat(double ki1, double ki2, double ki3)
+double S233hat(double ki1, double ki2, double ki3, double R)
 {
   double r=sqrt(ki1*ki1+ki2*ki2+ki3*ki3);
-  if(r==0.) return sqrt(1./(2.*PI))*R_v*R_v/3.;
-  else return  sqrt(2./PI)*((ki1*ki1+ki2*ki2)*(R_v*r-sin(R_v*r))/(R_v*r)-ki3*ki3*(R_v*r+R_v*r*cos(R_v*r)-2.*sin(R_v*r))/(R_v*r))/pow(r,4.);
+  if(r==0.) return sqrt(1./(2.*PI))*R*R/3.;
+  else return  sqrt(2./PI)*((ki1*ki1+ki2*ki2)*(R*r-sin(R*r))/(R*r)-ki3*ki3*(R*r+R*r*cos(R*r)-2.*sin(R*r))/(R*r))/pow(r,4.);
 }
 
-
-
-double S213hat(double ki1, double ki2, double ki3)
+double S213hat(double ki1, double ki2, double ki3, double R)
 {
   double r=sqrt(ki1*ki1+ki2*ki2+ki3*ki3);
   if(ki1==0. || ki3==0.) return 0.;
-  else return -sqrt(2/PI)*ki1*ki3*(2.*R_v*r+R_v*r*cos(R_v*r)-3.*sin(R_v*r))/(R_v*pow(r,5.));
+  else return -sqrt(2/PI)*ki1*ki3*(2.*R*r+R*r*cos(R*r)-3.*sin(R*r))/(R*pow(r,5.));
 }
 
 double S1hat_maxmols(double ki1,double ki2,double ki3)
@@ -97,7 +95,7 @@ double S213hat_hardspheres(double ki1, double ki2, double ki3)
 	else return sqrt(2./PI)*ki1*ki3*((Rr*Rr*(24. - Rr*Rr) - 48.)*cos_Rr + (7.*Rr*Rr - 48.)*Rr*sin_Rr + 48.)/(pow(r,8.));
 }
 
-double gHat3(double eta1, double eta2, double eta3, double ki1, double ki2, double ki3, int gamma)
+double gHat3(double eta1, double eta2, double eta3, double ki1, double ki2, double ki3, double R, int gamma)
 {
 	double result = 0.;
 	double ki[3]={ki1,ki2,ki3}, zeta[3]={eta1,eta2,eta3}; // ki=w, zeta=xi in the notes
@@ -107,12 +105,12 @@ double gHat3(double eta1, double eta2, double eta3, double ki1, double ki2, doub
 	
 	if(gamma==-3)
 	{
-		Shat[0][0]=S1hat(ki1,ki2,ki3)-S233hat(ki2,ki3,ki1);
-		Shat[1][1]=S1hat(ki1,ki2,ki3)-S233hat(ki1,ki3,ki2);
-		Shat[2][2]=S1hat(ki1,ki2,ki3)-S233hat(ki1,ki2,ki3);
-		Shat[0][1]=-S213hat(ki1,ki3,ki2);
-		Shat[0][2]=-S213hat(ki1,ki2,ki3);
-		Shat[1][2]=-S213hat(ki2,ki1,ki3);
+		Shat[0][0]=S1hat(ki1,ki2,ki3,R)-S233hat(ki2,ki3,ki1,R);
+		Shat[1][1]=S1hat(ki1,ki2,ki3,R)-S233hat(ki1,ki3,ki2,R);
+		Shat[2][2]=S1hat(ki1,ki2,ki3,R)-S233hat(ki1,ki2,ki3,R);
+		Shat[0][1]=-S213hat(ki1,ki3,ki2,R);
+		Shat[0][2]=-S213hat(ki1,ki2,ki3,R);
+		Shat[1][2]=-S213hat(ki2,ki1,ki3,R);
 		Shat[1][0]=Shat[0][1]; Shat[2][0]=Shat[0][2]; Shat[2][1]=Shat[1][2];
 	}
 	else if(gamma==0)
@@ -147,7 +145,7 @@ double gHat3(double eta1, double eta2, double eta3, double ki1, double ki2, doub
 			}
 		}
 		if(r==0.)result = -result;
-		else result = (sqrt(8./PI))*(R_v*r-sin(R_v*r))/(R_v*r) - result;
+		else result = (sqrt(8./PI))*(R*r-sin(R*r))/(R*r) - result;
 	}
 	else
 	{
@@ -174,12 +172,12 @@ double gHat_LH(double eta1_L, double eta2_L, double eta3_L, double ki1_L, double
     
     int i,j;
     
-    Shat[0][0]=S1hat(ki1_tp,ki2_tp,ki3_tp)-S233hat(ki2_tp,ki3_tp,ki1_tp);
-    Shat[1][1]=S1hat(ki1_tp,ki2_tp,ki3_tp)-S233hat(ki1_tp,ki3_tp,ki2_tp);
-    Shat[2][2]=S1hat(ki1_tp,ki2_tp,ki3_tp)-S233hat(ki1_tp,ki2_tp,ki3_tp);
-    Shat[0][1]=-S213hat(ki1_tp,ki3_tp,ki2_tp);
-    Shat[0][2]=-S213hat(ki1_tp,ki2_tp,ki3_tp);
-    Shat[1][2]=-S213hat(ki2_tp,ki1_tp,ki3_tp);
+    Shat[0][0]=S1hat(ki1_tp,ki2_tp,ki3_tp,R_v_L)-S233hat(ki2_tp,ki3_tp,ki1_tp,R_v_L);
+    Shat[1][1]=S1hat(ki1_tp,ki2_tp,ki3_tp,R_v_L)-S233hat(ki1_tp,ki3_tp,ki2_tp,R_v_L);
+    Shat[2][2]=S1hat(ki1_tp,ki2_tp,ki3_tp,R_v_L)-S233hat(ki1_tp,ki2_tp,ki3_tp,R_v_L);
+    Shat[0][1]=-S213hat(ki1_tp,ki3_tp,ki2_tp,R_v_L);
+    Shat[0][2]=-S213hat(ki1_tp,ki2_tp,ki3_tp,R_v_L);
+    Shat[1][2]=-S213hat(ki2_tp,ki1_tp,ki3_tp,R_v_L);
     Shat[1][0]=Shat[0][1]; Shat[2][0]=Shat[0][2]; Shat[2][1]=Shat[1][2];
     
     
@@ -233,12 +231,12 @@ double gHat_HL(double eta1_L, double eta2_L, double eta3_L, double ki1_L, double
     
     int i,j;
     
-    Shat[0][0]=S1hat(ki1_tp,ki2_tp,ki3_tp)-S233hat(ki2_tp,ki3_tp,ki1_tp);
-    Shat[1][1]=S1hat(ki1_tp,ki2_tp,ki3_tp)-S233hat(ki1_tp,ki3_tp,ki2_tp);
-    Shat[2][2]=S1hat(ki1_tp,ki2_tp,ki3_tp)-S233hat(ki1_tp,ki2_tp,ki3_tp);
-    Shat[0][1]=-S213hat(ki1_tp,ki3_tp,ki2_tp);
-    Shat[0][2]=-S213hat(ki1_tp,ki2_tp,ki3_tp);
-    Shat[1][2]=-S213hat(ki2_tp,ki1_tp,ki3_tp);
+    Shat[0][0]=S1hat(ki1_tp,ki2_tp,ki3_tp,R_v_L)-S233hat(ki2_tp,ki3_tp,ki1_tp,R_v_L);
+    Shat[1][1]=S1hat(ki1_tp,ki2_tp,ki3_tp,R_v_L)-S233hat(ki1_tp,ki3_tp,ki2_tp,R_v_L);
+    Shat[2][2]=S1hat(ki1_tp,ki2_tp,ki3_tp,R_v_L)-S233hat(ki1_tp,ki2_tp,ki3_tp,R_v_L);
+    Shat[0][1]=-S213hat(ki1_tp,ki3_tp,ki2_tp,R_v_L);
+    Shat[0][2]=-S213hat(ki1_tp,ki2_tp,ki3_tp,R_v_L);
+    Shat[1][2]=-S213hat(ki2_tp,ki1_tp,ki3_tp,R_v_L);
     Shat[1][0]=Shat[0][1]; Shat[2][0]=Shat[0][2]; Shat[2][1]=Shat[1][2];
 
     
@@ -340,7 +338,7 @@ double gHat3_linear(double eta1, double eta2, double eta3, double ki1, double ki
   	return result;	
 }
 
-void generate_conv_weights(double **conv_weights, double **conv_weights_LH, double **conv_weights_HL, double **conv_weights0_LH, int gamma, double epsilon)
+void generate_conv_weights(double **conv_weights, double **conv_weights_LL, double **conv_weights_HH, double **conv_weights_LH, double **conv_weights_HL, double **conv_weights0_LH, int gamma, double epsilon)
 {
   int i, j, k, l, m, n;
    #pragma omp parallel for private(i,j,k,l,m,n) shared(conv_weights, conv_weights_LH, conv_weights_HL)
@@ -350,7 +348,9 @@ void generate_conv_weights(double **conv_weights, double **conv_weights_LH, doub
 	for(l=0;l<N;l++){
 	  for(m=0;m<N;m++){
 	    for(n=0;n<N;n++) {
-	     conv_weights[k + N*(j + N*i)][n + N*(m + N*l)] = gHat3(eta[i], eta[j], eta[k], eta[l], eta[m], eta[n], gamma); // in the notes, correspondingly, (i,j,k)-kxi, (l,m,n)-w
+	     conv_weights[k + N*(j + N*i)][n + N*(m + N*l)] = gHat3(eta[i], eta[j], eta[k], eta[l], eta[m], eta[n], R_v, gamma); // in the notes, correspondingly, (i,j,k)-kxi, (l,m,n)-w
+	     conv_weights_LL[k + N*(j + N*i)][n + N*(m + N*l)] = gHat3(eta[i], eta[j], eta[k], eta[l], eta[m], eta[n], R_v_L, gamma); // in the notes, correspondingly, (i,j,k)-kxi, (l,m,n)-w
+	     conv_weights_HH[k + N*(j + N*i)][n + N*(m + N*l)] = gHat3(eta[i], eta[j], eta[k], eta[l], eta[m], eta[n], R_v_H, gamma); // in the notes, correspondingly, (i,j,k)-kxi, (l,m,n)-w
          conv_weights_LH[k + N*(j + N*i)][n + N*(m + N*l)] = gHat_LH(eta_L[i], eta_L[j], eta_L[k], eta_L[l], eta_L[m], eta_L[n], epsilon);
         conv_weights_HL[k + N*(j + N*i)][n + N*(m + N*l)] = gHat_HL(eta_L[i], eta_L[j], eta_L[k], eta_L[l], eta_L[m], eta_L[n], epsilon);
             conv_weights0_LH[k + N*(j + N*i)][n + N*(m + N*l)] = gHat0_LH(eta_L[i], eta_L[j], eta_L[k], eta_L[l], eta_L[m], eta_L[n], epsilon);
