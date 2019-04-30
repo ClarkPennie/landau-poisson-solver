@@ -17,7 +17,7 @@
 
 #include "LP_ompi.h"																				// LP_ompi.h is where the libraries required by the program included, all macros (to decide the behaviour of a given run) are defined and all variables to be used throughout the various files are defined as external
 
-int Nx=24, Nv=24, nT=200, N=16; 											 							// declare Nx (no. of x discretised points), Nv (no. of v discretised point), nT (no. of time discretised points) & N (no. of nodes in the spectral method) and setting all their values
+int Nx=48, Nv=24, nT=2000, N=16; 											 							// declare Nx (no. of x discretised points), Nv (no. of v discretised point), nT (no. of time discretised points) & N (no. of nodes in the spectral method) and setting all their values
 int size_v=Nv*Nv*Nv, size=Nx*size_v, size_ft=N*N*N; 												// declare size_v (no. of total v discretised points in 3D) and set it to Nv^3, size (the total no. of discretised points) and set it to size_v*Nx & size_ft (total no. of spectral discretised points in 3D) and set it to N*N*N
 
 double PI=M_PI;																						// declare PI and set it to M_PI (the value stored in the library math.h)
@@ -76,7 +76,7 @@ double h_eta, h_v;																					// declare h_eta (the Fourier stepsize) &
 double dt=0.01;//, nthread=32;																			// declare dt (the timestep) and set it to 0.004 & nthread (the number of OpenMP threads) and set it to 16
 double NL = 0.001;																						// declare NL (the density of ions in the middle of the well, the Lower value) and set its value
 double NH = 1;																						// declare NH (the density of ions on the edges of the well, the Higher value) and set its value
-int a_i = 2*Nx/12 - 1;																					// declare a_i (the index such that ND(x) = NH, for x <= x_{a_i-1/2}, & ND(x) = NL, for x > x_{a_i+1/2}) and set its value
+int a_i = 9*Nx/12 - 1;																					// declare a_i (the index such that ND(x) = NH, for x <= x_{a_i-1/2}, & ND(x) = NL, for x > x_{a_i+1/2}) and set its value
 int b_i = 10*Nx/12 - 1;																					// declare b_i (the index such that ND(x) = NL, for x <= x_{b_i-1/2}, & ND(x) = NH, for x > x_{b_i+1/2}) and set its value
 double T_R = 0.4;																					// declare T_R (the temperature at the right edge of space) and set its value
 double T_L = 0.4;																					// declare T_L (the temperature at the left edge of space) and set its value
@@ -386,10 +386,10 @@ int main()
 	}
 
 	char buffer_moment[110], buffer_u[110], buffer_ufull[110], buffer_flags[110],
-						buffer_phi[110], buffer_E[110], buffer_marg[110], buffer_ent[110];			// declare the arrays buffer_moment (to store the name of the file where the moments are printed), buffer_u (to store the name of the file where the solution U is printed), buffer_ufull (to store the name of the file where the solution U is printed in the TwoStream), buffer_flags (to store the flag added to the end of the filenames), buffer_phi (to store the name of the file where the values of phi are printed), buffer_marg (to store the name of the file where the marginals are printed) & buffer_ent (to store the name of the file where the entropy values are printed)
+			buffer_phi[110], buffer_E[110], buffer_marg[110], buffer_ent[110], buffer_rho[110];		// declare the arrays buffer_moment (to store the name of the file where the moments are printed), buffer_u (to store the name of the file where the solution U is printed), buffer_ufull (to store the name of the file where the solution U is printed in the TwoStream), buffer_flags (to store the flag added to the end of the filenames), buffer_phi (to store the name of the file where the values of phi are printed), buffer_marg (to store the name of the file where the marginals are printed), buffer_ent (to store the name of the file where the entropy values are printed) & buffer_rho (to store the name of the file where the density values are printed)
 
 	// EVERY TIME THE CODE IS RUN, CHANGE THE FLAG TO A NAME THAT IDENTIFIES THE CASE RUNNING FOR OR WHAT TIME RUN UP TO:
-	sprintf(buffer_flags,"QLinear_WideTest");												// store a string in buffer_flags, so that files associated to this run can be identified
+	sprintf(buffer_flags,"IonsTwelfthWideShift_T20");												// store a string in buffer_flags, so that files associated to this run can be identified
 	sprintf(buffer_moment,"Data/Moments_nuMax%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
 					nu_max, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is Moments_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
 	sprintf(buffer_u,"Data/U_nuMax%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
@@ -404,6 +404,8 @@ int main()
 					nu_max, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is PhiVals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
 	sprintf(buffer_ent,"Data/EntropyVals_nuMax%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
 					nu_max, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is EntropyVals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
+	sprintf(buffer_rho,"Data/RhoVals_nuMax%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
+					nu_max, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is RhoVals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
 
 	#ifdef First																					// only do this if First was defined (setting initial conditions)
 		#ifdef Damping																				// only do this if Damping was defined
@@ -427,7 +429,7 @@ int main()
 		#endif	/* LinearLandau */
 	#endif	/* First */
 
-	FILE *fmom, *fu, *fufull, *fmarg, *fphi, *fE, *fent;											// declare pointers to the files fmom (which will store the moments), fu (which will store the solution U), fufull (which will store the solution U in the TwoStream case), fmarg (which will store the values of the marginals), fphi (which will store the values of the potential phi) & fent (which will store the values fo the entropy)
+	FILE *fmom, *fu, *fufull, *fmarg, *fphi, *fE, *fent, *frho;										// declare pointers to the files fmom (which will store the moments), fu (which will store the solution U), fufull (which will store the solution U in the TwoStream case), fmarg (which will store the values of the marginals), fphi (which will store the values of the potential phi), fent (which will store the values fo the entropy) & frho (which will store values of density in x)
 
 	if(myrank_mpi==0)																				// only the process with rank 0 will do this
 	{
@@ -514,6 +516,7 @@ int main()
 		fphi=fopen(buffer_phi,"w");																	// set fphi to be a file with the name stored in buffer_phi and set the file access mode of fphi to w (which creates an empty file and allows it to be written to)
 		fE=fopen(buffer_E,"w");																		// set fE to be a file with the name stored in buffer_E and set the file access mode of fphi to w (which creates an empty file and allows it to be written to)
 		fent=fopen(buffer_ent,"w");																	// set fent to be a file with the name stored in buffer_ent and set the file access mode of fent to w (which creates an empty file and allows it to be written to)
+		frho=fopen(buffer_rho,"w");																	// set frho to be a file with the name stored in buffer_rho and set the file access mode of fent to w (which creates an empty file and allows it to be written to)
 
 		FindNegVals(U, fNegVals, fAvgVals);															// find out in which cells the approximate solution goes negative and record it in fNegVals
 
@@ -548,7 +551,7 @@ int main()
 //		ent2 = computeRelEntropy(U, fEquiVals);														// set ent2 the value calculated through computeRelEntropy
 //		l_ent2 = log(fabs(ent2));																	// set l_ent2 to the log of ent2
 //		ll_ent2 = log(fabs(l_ent2));																// set ll_ent2 to the log of l_ent2
-		printf("\nstep #0: %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g %11.8g %11.8g \n",
+		printf("\nstep 0: %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g %11.8g %11.8g \n",
 				mass, a[0], a[1], a[2], KiE, EleE, tmp, log(tmp), KiE+EleE, ent1);					// display in the output file that this is step 0 (so these are the initial conditions), then the mass, 3 components of momentum, kinetic energy, electric energy, sqrt(electric energy), log(sqrt(electric energy)), total energy & entropy
 		fprintf(fmom, "%11.8g %11.8g %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g \n",
 				mass, a[0], a[1], a[2], KiE, EleE, tmp, log(tmp), KiE+EleE);						// in the file tagged as fmom, print the initial mass, 3 components of momentum, kinetic energy, electric energy, sqrt(electric energy), log(sqrt(electric energy)) & total energy
@@ -573,6 +576,19 @@ int main()
 
 		PrintFieldLoc(fphi, fE);																	// print the values of x that phi & E will be evaluated at in the files tagged as fphi & fE, respectively
 		PrintFieldData(U, fphi, fE);																// print the values of phi & E for the initial condition, using the DG coefficients in U, in the files tagged as fphi & fE, respectively
+		// Print the values of x that the density will be evaluated at in the file tagged frho:
+		for(int i=0; i<Nx+1; i++)
+		{
+			fprintf(frho, "%g ", i*dx);
+		}
+		fprintf(frho, "\n");
+		// Print the values of the density rho for teh initial condition, using the DG coefficients in U in the file tagged as frho:
+		for(int i=0; i<Nx; i++)
+		{
+			fprintf(frho, "%g ", rho_x(i*dx, U, i));
+		}
+		fprintf(frho, "%g ", rho_x(Lx, U, Nx-1));
+		fprintf(frho, "\n");
 	}
   
 	MPI_Bcast(U, size*6, MPI_DOUBLE, 0, MPI_COMM_WORLD);   											// send the contents of U, which will be 6*size entries of datatype MPI_DOUBLE, from the process with rank 0 to all processes, using the communicator MPI_COMM_WORLD
@@ -721,6 +737,13 @@ int main()
 			{
 				PrintMarginal(U, fmarg);															// print the marginal distribution, using the DG coefficients in U, in the file tagged as fmarg
 				PrintFieldData(U, fphi, fE);														// print the values of phi & E, using the DG coefficients in U, in the files tagged as fphi & fE, respectively
+				// Print the values of the density rho for teh initial condition, using the DG coefficients in U in the file tagged as frho:
+				for(int i=0; i<Nx; i++)
+				{
+					fprintf(frho, "%g ", rho_x(i*dx, U, i));
+				}
+				fprintf(frho, "%g ", rho_x(Lx, U, Nx-1));
+				fprintf(frho, "\n");
 			}
 		}
 	
@@ -748,6 +771,7 @@ int main()
 		fclose(fphi);  																				// remove the tag fphi to close the file
 		fclose(fE);  																				// remove the tag fE to close the file
 		fclose(fent);  																				// remove the tag fent to close the file
+		fclose(frho);																				// remove the tag frho to close the file
 		#ifdef TwoStream																			// only do this if TwoStream was defined
 		//fclose(fufull);
 		#endif
