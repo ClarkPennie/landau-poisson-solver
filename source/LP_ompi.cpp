@@ -90,6 +90,7 @@ bool FullandLinear;																					// declare a Boolean variable to determi
 bool First, Second;																					// declare Boolean variables which will determine if this is the first or a subsequent run
 bool LinearLandau;																					// declare a Boolean variable to determine if running with the full collision operator or linear collisions with a Maxwellian
 bool MassConsOnly;																					// declare a Boolean variable to determine if conserving all moments or all mass
+bool DisparateMass;																					// declare a Boolean variable to determine if running the model with disparate masses
 
 int main()
 {
@@ -181,6 +182,7 @@ int main()
 	ReadFullandLinear(iparse);																		// Read in if running multi-species collisions
 	ReadLinearLandau(iparse);																		// Read in if running full or linear Landau
 	ReadMassConsOnly(iparse);																		// Read in if running conservation of all moments or just mass
+
 
 	ReadInputParameters(iparse, flag, nT, Nx, Nv, N, nu, dt, A_amp, k_wave, Lv, Lx);				// Read in all input parameters
 

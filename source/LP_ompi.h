@@ -112,6 +112,7 @@ extern bool Homogeneous;																			// declare a Boolean variable to dete
 extern bool FullandLinear;																			// declare a Boolean variable to determine if running with a mixture
 extern bool LinearLandau;																			// declare a Boolean variable to determine if running with the full collision operator or linear collisions with a Maxwellian
 extern bool MassConsOnly;																			// declare a Boolean variable to determine if conserving all moments or all mass
+extern bool DisparateMass;																			// declare a Boolean variable to determine if running the model with disparate masses
 
 //************************//
 //        INCLUDES        //

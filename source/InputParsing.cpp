@@ -302,6 +302,26 @@ void ReadHomogeneous(GRVY_Input_Class& iparse)												// Function to read th
 	}
 }
 
+void ReadDisparateMass(GRVY_Input_Class& iparse)												// Function to read the Boolean option to decide if running with single species collisions or mixed
+{
+	// Check if DisparateMass has been set and print its value from the
+	// processor with rank 0 (if not, set default value to false):
+	iparse.Read_Var("DisparateMass",&DisparateMass,false)
+	if(myrank_mpi==0)
+	{
+		std::cout << "--> DisparateMasss = " << DisparateMass << std::endl << std::endl;
+		if(DisparateMass)
+		{
+			std::cout << "Running the model with disparate masses."
+				<< std::endl << std::endl;
+		}
+		else
+		{
+			std::cout << "Running the regular single species code." << std::endl << std::endl;
+		}
+	}
+}
+
 void ReadLinearLandau(GRVY_Input_Class& iparse)												// Function to read the Boolean option to decide if running with single species collisions or mixed
 {
 	// Check if FullandLinear has been set and print its value from the
