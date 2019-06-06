@@ -39,6 +39,9 @@ Second           = False        # Picking up from a previous run
 # Choose if running the space homogeneous version:
 Homogeneous      = False        # Run for the space homogeneous setting
 
+# Choose if running with a self-consistent field or not:
+NoField          = True         # Run without a field
+
 # Choose how the collisions are being modelled:
 FullandLinear    = False        # Include electron-ion collisions
 LinearLandau     = False        # Run with Linear Landau operator Q(f,M)
