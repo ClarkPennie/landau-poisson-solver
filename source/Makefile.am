@@ -1,4 +1,4 @@
-bin_PROGRAMS  = solver_HS_T_Small
+bin_PROGRAMS  = solver
 AM_CPPFLAGS   = $(FFTW_CFLAGS) 
 AM_CPPFLAGS  += -I$(OPENBLAS_INC)
 LIBS          = $(BLAS_LIBS) $(MKL_LIBS)
@@ -11,4 +11,4 @@ cpp_sources = EntropyCalculations.cpp LP_ompi.cpp NegativityChecks.cpp  collisio
               MarginalCreation.cpp SetInit_1.cpp conservationRoutines.cpp \
 	      FieldCalculations.cpp MomentCalculations.cpp advection_1.cpp InputParsing.cpp
 
-solver_HS_T_Small_SOURCES = $(cpp_sources) $(h_sources)
+solver_SOURCES = $(cpp_sources) $(h_sources)

@@ -351,7 +351,7 @@ void ReadNoField(GRVY_Input_Class& iparse)												// Function to read the Bo
 
 void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT, 
 							int& Nx, int& Nv, int& N, double& nu, double& dt, double& A_amp, 
-							double& k_wave, double& Lv, double& Lx, double& T_hump, double& shift)					// Function to read all input parameters (IC_flag, nT,  Nx, Nv, N, nu, dt, A_amp, k_wave, L_v & L_x)
+							double& k_wave, double& Lv, double& Lx, double& T_hump, double& shift, double& T_0)					// Function to read all input parameters (IC_flag, nT,  Nx, Nv, N, nu, dt, A_amp, k_wave, L_v & L_x)
 {
 	// Print a header for the input parameters from the processor with rank 0:
 	if(myrank_mpi==0)
@@ -457,6 +457,7 @@ void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 			exit(1);
 		}
 		iparse.Read_Var("Damping/Lx",&Lx,2*PI/k_wave);
+		iparse.Read_Var("Damping/T_0",&T_0,1.2);
 	}
 
 	// Try to read all input parameters associated to the TwoStream option 
@@ -531,6 +532,10 @@ void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 		{
 			printf("--> %-11s = %g\n","T_hump",T_hump);
 			printf("--> %-11s = %g\n\n","4Hump shift",shift);
+		}
+		if(Damping)
+		{
+			printf("--> %-11s = %g\n\n","T_0",T_0);
 		}
 		printf("--> %-11s = %g\n","Lv",Lv);
 		printf("--> %-11s = %g\n\n","Lx",Lx);
