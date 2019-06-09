@@ -65,7 +65,7 @@ int chunksize_dg, chunksize_ft, chunk_Nx;															// declare chunksize_dg 
 int *fNegVals;																						// declare fNegVals (to store where DG solution goes negative - a 1 if negative and a 0 if positive)
 double *fAvgVals;																					// declare fAvgVals (to store the average values of f on each cell)
 
-bool Damping, TwoStream, FourHump, TwoHump, Doping;													// declare Boolean variables which will determine the ICs for the problem
+bool Damping, TwoStream, FourHump, TwoHump, TwoHump_sin, Doping;									// declare Boolean variables which will determine the ICs for the problem
 bool Homogeneous;																					// declare a Boolean variable to determine if running the space homogeneous code or not
 bool FullandLinear;																					// declare a Boolean variable to determine if running with a mixture
 bool First, Second;																					// declare Boolean variables which will determine if this is the first or a subsequent run
@@ -957,11 +957,15 @@ int main(int argc, char** argv)
 			}
 			if(FourHump)																				// only do this if FourHump is true
 			{
-				SetInit_4H(U, T_hump, shift);																			// set initial DG solution with the 4Hump IC. For the first time run t=0, use this to give init solution (otherwise, comment out)
+				SetInit_4H(U, T_hump, shift);															// set initial DG solution with the 4Hump IC. For the first time run t=0, use this to give init solution (otherwise, comment out)
 			}
 			if(TwoHump)																					// only do this if TwoHump is true
 			{
-				SetInit_2H(U);																			// set initial DG solution with the 2Hump IC. For the first time run t=0, use this to give init solution (otherwise, comment out)
+				SetInit_2H(U, T_hump, shift);															// set initial DG solution with the 2Hump IC. For the first time run t=0, use this to give init solution (otherwise, comment out)
+			}
+			if(TwoHump_sin)																					// only do this if TwoHump is true
+			{
+				SetInit_2H_sin(U);																		// set initial DG solution with the 2Hump IC, using sin perturbation. For the first time run t=0, use this to give init solution (otherwise, comment out)
 			}
 			if(Doping)																					// only do this if Damping was defined
 			{

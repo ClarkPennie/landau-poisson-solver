@@ -49,6 +49,13 @@ void ReadICOptions(GRVY_Input_Class& iparse)													// Function to read the
 			std::cout << "--> TwoHump = " << TwoHump << std::endl;
 		}
 	}
+	if( iparse.Read_Var("TwoHump_sin",&TwoHump_sin,false) )
+	{
+		if(myrank_mpi==0)
+		{
+			std::cout << "--> TwoHump_sin = " << TwoHump_sin << std::endl;
+		}
+	}
 	if( iparse.Read_Var("Doping",&Doping,false) )
 	{
 		if(myrank_mpi==0)
@@ -85,6 +92,11 @@ void CheckICOptions(std::string& IC_flag)															// Function to verify th
 		IC_count++;
 		IC_flag.assign("TwoHump/IC_name");
 	}
+	if(TwoHump_sin)
+	{
+		IC_count++;
+		IC_flag.assign("TwoHump_sin/IC_name");
+	}
 	if(Doping)
 	{
 		IC_count++;
@@ -98,7 +110,7 @@ void CheckICOptions(std::string& IC_flag)															// Function to verify th
 		if(myrank_mpi==0)
 		{
 			std::cout << "Program cannot run... No initial condition has been chosen. \n"
-					"Please set one of Damping, TwoStream, FourHump or TwoHump to true "
+					"Please set one of Damping, TwoStream, FourHump, TwoHump, TwoHump_sin or Doping to true "
 					"in LPsolver-input.txt." << std::endl;
 		}
 		exit(1);
@@ -111,7 +123,7 @@ void CheckICOptions(std::string& IC_flag)															// Function to verify th
 		{
 			std::cout << "Program cannot run... " << IC_count << " initial conditions have been chosen." 
 						<< std::endl;
-			std::cout << "Please ONLY set ONE of Damping, TwoStream, FourHump or TwoHump to true "
+			std::cout << "Please ONLY set ONE of Damping, TwoStream, FourHump, TwoHump, TwoHump_sin or Doping to true "
 							"in LPsolver-input.txt." << std::endl;
 		}
 		exit(1);
@@ -494,18 +506,34 @@ void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 		iparse.Read_Var("FourHump/Lx",&Lx,2*PI/k_wave);
 	}
 
-	// Try to read all input parameters associated to the TwoHump option 
+	// Try to read all input parameters associated to the FourHump option
 	// (some have default values but others will exit if not available)
 	if(TwoHump)
 	{
 		iparse.Read_Var("TwoHump/A_amp",&A_amp,0.);
 		iparse.Read_Var("TwoHump/k_wave",&k_wave,0.5);
+		iparse.Read_Var("TwoHump/T_hump",&T_hump,0.4);
+		iparse.Read_Var("TwoHump/shift",&shift,1.);
 		if (! iparse.Read_Var("TwoHump/Lv",&Lv) )
 		{
 			PrintError("TwoHump/Lv");
 			exit(1);
 		}
 		iparse.Read_Var("TwoHump/Lx",&Lx,2*PI/k_wave);
+	}
+
+	// Try to read all input parameters associated to the TwoHump_sin option
+	// (some have default values but others will exit if not available)
+	if(TwoHump_sin)
+	{
+		iparse.Read_Var("TwoHump_sin/A_amp",&A_amp,0.);
+		iparse.Read_Var("TwoHump_sin/k_wave",&k_wave,0.5);
+		if (! iparse.Read_Var("TwoHump_sin/Lv",&Lv) )
+		{
+			PrintError("TwoHump_sin/Lv");
+			exit(1);
+		}
+		iparse.Read_Var("TwoHump_sin/Lx",&Lx,2*PI/k_wave);
 	}
 
 	if(Doping)

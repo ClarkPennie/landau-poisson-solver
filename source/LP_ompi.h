@@ -91,7 +91,7 @@ extern int chunksize_dg, chunksize_ft, chunk_Nx;													// declare chunksiz
 extern int *fNegVals;																				// declare fNegVals (to store where DG solution goes negative - a 1 if negative and a 0 if positive)
 extern double *fAvgVals;																			// declare fAvgVals (to store the average values of f on each cell)
 
-extern bool Damping, TwoStream, FourHump, TwoHump, Doping;											// declare Boolean variables which will determin the ICs for the problem
+extern bool Damping, TwoStream, FourHump, TwoHump, TwoHump_sin, Doping;								// declare Boolean variables which will determine the ICs for the problem
 extern bool First, Second;																			// declare Boolean variables which will determine if this is the first or a subsequent run
 extern bool Homogeneous;																			// declare a Boolean variable to determine if running the space homogeneous code or not
 extern bool FullandLinear;																			// declare a Boolean variable to determine if running with a mixture

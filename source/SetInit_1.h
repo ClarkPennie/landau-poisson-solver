@@ -41,7 +41,9 @@ void SetInit_4H(double *U, double T0, double C);
 
 void SetInit_4H_Homo(double *U, double T0, double C);
 
-void SetInit_2H(double *U);
+void SetInit_2H(double *U, double T0, double C);
+
+void SetInit_2H_sin(double *U);
 
 void SetInit_ND(double *U);
 
