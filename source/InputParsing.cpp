@@ -561,6 +561,11 @@ void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 			printf("--> %-11s = %g\n","T_hump",T_hump);
 			printf("--> %-11s = %g\n\n","4Hump shift",shift);
 		}
+		if(TwoHump)
+		{
+			printf("--> %-11s = %g\n","T_hump",T_hump);
+			printf("--> %-11s = %g\n\n","2Hump shift",shift);
+		}
 		if(Damping)
 		{
 			printf("--> %-11s = %g\n\n","T_0",T_0);

@@ -79,8 +79,8 @@ shift    = 0.02	          	# Shift from zero of each of the four humps
 
 IC_name  = 'Two Hump'           # Name of problem associated to ICs
 Lv       = 5.25                 # Width of domain in v-space
-T_hump   = 0.15  	        # Variance of each of the four humps
-shift    = 0.75	          	# Shift from zero of each of the four humps
+T_hump   = 0.8  	        # Variance of each of the four humps
+shift    = 0.8	          	# Shift from zero of each of the four humps
 
 [TwoHump_sin]
 

@@ -1347,6 +1347,16 @@ int main(int argc, char** argv)
 				}
 			}
 		}
+
+		if(KiEratio < -1)
+		{
+			if(myrank_mpi==0)
+			{
+				std::cout << std::endl << "Program exiting..." << std::endl;
+				std::cout << "The kinetic energy ratio has dropped below -1 and the solution has blown up." << std::endl;
+			}
+			exit(1);
+		}
 	
 		t++;																						// increment t by one
 	
