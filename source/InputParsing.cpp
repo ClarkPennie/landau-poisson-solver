@@ -310,6 +310,22 @@ void ReadDisparateMass(GRVY_Input_Class& iparse)												// Function to read 
 	if(myrank_mpi==0)
 	{
 		std::cout << "--> DisparateMass = " << DisparateMass << std::endl << std::endl;
+	}
+
+	// Check if Homogeneous has been set and, if not, exit the program
+	// because the code cannot yet handle the inhomogeneous setting:
+	if(!Homogeneous)	// Eventually, the DisparateMass problem should run in the space inhomogeneous setting too!
+	{
+		if(myrank_mpi==0)
+		{
+			std::cout << "Program cannot run..." << std::endl;
+			std::cout << "Currently the Disparate Mass problem can only run in the space homogeneous setting." << std::endl;
+		}
+		exit(1);
+	}
+
+	if(myrank_mpi==0)
+	{
 		if(DisparateMass)
 		{
 			std::cout << "Running the model for two species with disparate masses."
@@ -320,6 +336,18 @@ void ReadDisparateMass(GRVY_Input_Class& iparse)												// Function to read 
 			std::cout << "Running the regular single species code." << std::endl << std::endl;
 		}
 	}
+
+	if(DisparateMass)
+	{
+		iparse.Read_Var("DisparateMass/DM_Check",&DisparateMass_Check,false);
+		if(DisparateMass_Check && myrank_mpi==0)
+		{
+			std::cout << "--> DisparateMass_Check = " << DisparateMass_Check << std::endl << std::endl;
+			std::cout << "Running the single species code simultaneously to benchmark the disparate mass results."
+				<< std::endl << std::endl;
+		}
+	}
+
 }
 
 void ReadLinearLandau(GRVY_Input_Class& iparse)												// Function to read the Boolean option to decide if running with single species collisions or mixed

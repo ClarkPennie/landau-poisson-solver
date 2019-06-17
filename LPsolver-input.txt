@@ -16,7 +16,7 @@ flag            = TestQ_LH
 nT              = 0		       # Number of time-steps
 Nx              = 8		       # Number of space cells
 Nv              = 8		       # Number of velocity cells in each direction
-N               = 16		       # Number of Fourier modes
+N               = 8		       # Number of Fourier modes
 nu              = 0.05                 # Value of (Knudsen number)^{-1}
 dt              = 0.01                 # Size of each time-step
 
@@ -83,13 +83,14 @@ IC_name  = 'Non-uniform Doping' # Name of problem associated to ICs
 Lv       = 5.25                 # Width of domain in v-space
 NL       = 0.001                # Value of background density in lower regions
 NH       = 1                    # Value of background density in higher regions
-eps      = 0.1                 # Value of dielectric constant
+eps      = 0.1                  # Value of dielectric constant
 T_L      = 0.4                  # Temperature at left wall (if using Dirichlet BCs)
 T_R      = 0.4                  # Temperature at right wall (if using Dirichlet BCs)
 
 [DisparateMass]
 
-mass_ratio 	= 0.1		       # Mass ratio epsilon between species
+DM_Check        = True          # Check solution against single species results
+mass_ratio 	= 0.1		# Mass ratio epsilon between species
 
 #--------------------------------------------
 # Name of file from previous run to pick up

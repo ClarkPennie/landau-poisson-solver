@@ -91,6 +91,7 @@ bool First, Second;																					// declare Boolean variables which will 
 bool LinearLandau;																					// declare a Boolean variable to determine if running with the full collision operator or linear collisions with a Maxwellian
 bool MassConsOnly;																					// declare a Boolean variable to determine if conserving all moments or all mass
 bool DisparateMass;																					// declare a Boolean variable to determine if running the model with disparate masses
+bool DisparateMass_Check;																			// declare a Boolean variable to determine if running the model with disparate masses and checking against the single species model
 
 int main()
 {
@@ -208,12 +209,7 @@ int main()
 		size=Nx*size_v;																					// set size to size_v*Nx
 	}
 	size_ft=N*N*N; 																					// set size_ft to N^3
-	dv=2.*Lv/Nv;  // set dv to 2Lv/Nv
 	dx=Lx/Nx; 																						// set dx to Lx/Nx
-	scalev=dv*dv*dv;																				// set scalev to dv^3
-	L_v=Lv;																							// set L_v to Lv
-	R_v=Lv; // set R_v to Lv
-	scaleL=8*Lv*Lv*Lv;																				// set scaleL to 8Lv^3
 
 	// MULTI-SPECIES:
 
@@ -232,6 +228,14 @@ int main()
 		R_v_H=Lv_H;
 		scaleL_L=8*Lv_L*Lv_L*Lv_L;
 		scaleL_H=8*Lv_H*Lv_H*Lv_H;
+	}
+	if(!DisparateMass || DisparateMass_Check)	// If no longer needing to debug DisparateMass, just change to else
+	{
+		dv=2.*Lv/Nv;  // set dv to 2Lv/Nv
+		scalev=dv*dv*dv;																				// set scalev to dv^3
+		L_v=Lv;																							// set L_v to Lv
+		R_v=Lv; // set R_v to Lv
+		scaleL=8*Lv*Lv*Lv;																				// set scaleL to 8Lv^3
 	}
 
 	if(MassConsOnly)																				// only do this if MassConsOnly is true and only conserving mass
@@ -275,13 +279,16 @@ int main()
 		nprocs_Nx = nprocs_mpi;
 	}
 	
-	U = (double*)malloc(size*6*sizeof(double));														// allocate enough space at the pointer U for 6*size many double numbers
 	U1 = (double*)malloc(size*6*sizeof(double));													// allocate enough space at the pointer U1 for 6*size many floating point numbers
 
 	if(DisparateMass)
 	{
 		U_L = (double*)malloc(size*6*sizeof(double));
 		U_H = (double*)malloc(size*6*sizeof(double));
+	}
+	if(!DisparateMass || DisparateMass_Check)	// If no longer needing to debug DisparateMass, just change to else
+	{
+		U = (double*)malloc(size*6*sizeof(double));														// allocate enough space at the pointer U for 6*size many double numbers
 	}
 
 	Utmp = (double*)malloc(chunksize_dg*6*sizeof(double));											// allocate enough space at the pointer Utmp for 6*chunksize_dg many floating point numbers
@@ -315,11 +322,6 @@ int main()
 				C2[i] = (double *)malloc(size_ft*sizeof(double));									// allocate enough space at the ith entry of C2 for size_ft many double numbers
 			}
 		}
-		f = (double **)malloc(chunk_Nx*sizeof(double *));											// allocate enough space at the pointer f for chunk_Nx many pointers to double numbers
-		for (i=0;i<chunk_Nx;i++)
-		{
-			f[i] = (double *)malloc(size_ft*sizeof(double));										// allocate enough space at the ith entry of f for size_ft many double numbers
-		}
 
 		if(DisparateMass)
 		{
@@ -334,12 +336,15 @@ int main()
 				f_H[i] = (double *)malloc(size_ft*sizeof(double));										// allocate enough space at the ith entry of f for size_ft many double numbers
 			}
 		}
-
-		conv_weights = (double **)malloc(size_ft*sizeof(double *));									// allocate enough space at the pointer conv_weights for size_ft many pointers to float numbers
-		for (i=0;i<size_ft;i++)
+		if(!DisparateMass || DisparateMass_Check)	// If no longer needing to debug DisparateMass, just change to else
 		{
-			conv_weights[i] = (double *)malloc(size_ft*sizeof(double));								// allocate enough space at the ith entry of conv_weights for size_ft many float numbers
+			f = (double **)malloc(chunk_Nx*sizeof(double *));											// allocate enough space at the pointer f for chunk_Nx many pointers to double numbers
+			for (i=0;i<chunk_Nx;i++)
+			{
+				f[i] = (double *)malloc(size_ft*sizeof(double));										// allocate enough space at the ith entry of f for size_ft many double numbers
+			}
 		}
+
         
 		if(DisparateMass)
 		{
@@ -369,17 +374,24 @@ int main()
 				conv_weights0_LH[i] = (double *)malloc(size_ft*sizeof(double));                                // allocate enough space at the ith entry of conv_weights for size_ft many float numbers
 			}
 		}
-        
-        conv_weights1 = (double **)malloc(size_ft*sizeof(double *));								// allocate enough space at the pointer conv_weights1 for size_ft many pointers to float numbers
-		for (i=0;i<size_ft;i++)
+		if(!DisparateMass || DisparateMass_Check)	// If no longer needing to debug DisparateMass, just change to else
 		{
-			conv_weights1[i] = (double *)malloc(size_ft*sizeof(double));							// allocate enough space at the ith entry of conv_weights1 for size_ft many float numbers
-		}
+			conv_weights = (double **)malloc(size_ft*sizeof(double *));									// allocate enough space at the pointer conv_weights for size_ft many pointers to float numbers
+			for (i=0;i<size_ft;i++)
+			{
+				conv_weights[i] = (double *)malloc(size_ft*sizeof(double));								// allocate enough space at the ith entry of conv_weights for size_ft many float numbers
+			}
+			conv_weights1 = (double **)malloc(size_ft*sizeof(double *));								// allocate enough space at the pointer conv_weights1 for size_ft many pointers to float numbers
+			for (i=0;i<size_ft;i++)
+			{
+				conv_weights1[i] = (double *)malloc(size_ft*sizeof(double));							// allocate enough space at the ith entry of conv_weights1 for size_ft many float numbers
+			}
 
-		conv_weights2 = (double **)malloc(size_ft*sizeof(double *));								// allocate enough space at the pointer conv_weights2 for size_ft many pointers to float numbers
-		for (i=0;i<size_ft;i++)
-		{
-			conv_weights2[i] = (double *)malloc(size_ft*sizeof(double));							// allocate enough space at the ith entry of conv_weights2 for size_ft many float numbers
+			conv_weights2 = (double **)malloc(size_ft*sizeof(double *));								// allocate enough space at the pointer conv_weights2 for size_ft many pointers to float numbers
+			for (i=0;i<size_ft;i++)
+			{
+				conv_weights2[i] = (double *)malloc(size_ft*sizeof(double));							// allocate enough space at the ith entry of conv_weights2 for size_ft many float numbers
+			}
 		}
 
 		if(FullandLinear)																			// only do this if FullandLinear is true
@@ -398,27 +410,34 @@ int main()
 		}
 
 		Q = (double*)malloc(size_ft*sizeof(double));												// allocate enough space at the pointer Q for size_ft many double numbers
-		f1 = (double*)malloc(size_ft*sizeof(double)); 												// allocate enough space at the pointer f1 for size_ft many double numbers
+		Q1 = (double*)malloc(size_ft*sizeof(double));												// allocate enough space at the pointer Q1 for size_ft many double numbers
+
 		if(DisparateMass)
 		{
 			f1_L = (double*)malloc(size_ft*sizeof(double)); 												// allocate enough space at the pointer f1 for size_ft many double numbers
 			f1_H = (double*)malloc(size_ft*sizeof(double)); 												// allocate enough space at the pointer f1 for size_ft many double numbers
 		}
-		Q1 = (double*)malloc(size_ft*sizeof(double));												// allocate enough space at the pointer Q1 for size_ft many double numbers
+		if(!DisparateMass || DisparateMass_Check)	// If no longer needing to debug DisparateMass, just change to else
+		{
+			f1 = (double*)malloc(size_ft*sizeof(double)); 												// allocate enough space at the pointer f1 for size_ft many double numbers
+		}
+
 		if(Homogeneous)
 		{
-			Utmp_coll = (double*)malloc(chunksize_dg*5*sizeof(double));								// allocate enough space at the pointer Utmp_coll for 5*chunk_Nx*size_v many double numbers
 			if(DisparateMass)
 			{
 				Utmp_coll_L = (double*)malloc(chunksize_dg*5*sizeof(double));
 				Utmp_coll_H = (double*)malloc(chunksize_dg*5*sizeof(double));
+			}
+			if(!DisparateMass || DisparateMass_Check)	// If no longer needing to debug DisparateMass, just change to else
+			{
+				Utmp_coll = (double*)malloc(chunksize_dg*5*sizeof(double));								// allocate enough space at the pointer Utmp_coll for 5*chunk_Nx*size_v many double numbers
 			}
 			output_buffer = (double*)malloc(chunksize_dg*5*sizeof(double));							// allocate enough space at the pointer output_buffer for 5*chunk_Nx*size_v many double numbers
 		}
 		else
 		{
 			Utmp_coll = (double*)malloc(chunk_Nx*size_v*5*sizeof(double));								// allocate enough space at the pointer Utmp_coll for 5*chunk_Nx*size_v many double numbers
-            
 			output_buffer = (double*)malloc(chunk_Nx*size_v*5*sizeof(double));							// allocate enough space at the pointer output_buffer for 5*chunk_Nx*size_v many double numbers
 		}
 
@@ -429,7 +448,6 @@ int main()
 
 		temp = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer temp for size_ft many complex numbers
 		//qHat_local = (fftw_complex *)fftw_malloc(chunksize_ft*sizeof(fftw_complex));
-		qHat = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer qHat for size_ft many complex numbers
 		if(DisparateMass)
 		{
 			qHat_LL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));
@@ -437,6 +455,11 @@ int main()
 			qHat_LH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));
 			qHat_HL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));
 		}
+		if(!DisparateMass || DisparateMass_Check)	// If no longer needing to debug DisparateMass, just change to else
+		{
+			qHat = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer qHat for size_ft many complex numbers
+		}
+
 		// INITIALISE FFTW FOR USE WITH THREADING (MUST BE DONE BEFORE ANY PLAN IS CREATED):
 		fftw_init_threads();																		// initialise the environment for using the fftw3 routines with multiple threads
 		fftw_plan_with_nthreads(nthread);															// set the number of threads used by fftw3 routines to nthread
@@ -446,8 +469,6 @@ int main()
 		p_backward = fftw_plan_dft_3d (N, N, N, temp, temp, FFTW_BACKWARD, FFTW_MEASURE);			// set p_backward to a 3D fftw plan of dimension NxNxN, which will take the FFT of the vector in temp, store the result back in temp, set the sign to FFTW_BACKWARD (so that this is an inverse FFT) and set the flag to FFT_MEASURE so that at this stage fftw3 finds the most efficient way to compute the FFT of this size
 
 		wtN = (double *)malloc(N*sizeof(double));													// allocate enough space at the pointer wtN to store N many double numbers
-		v = (double *)malloc(N*sizeof(double));														// allocate enough space at the pointer v to store N many double numbers
-		eta = (double *)malloc(N*sizeof(double));													// allocate enough space at the pointer eta to store N many double numbers
   
 		if(DisparateMass)
 		{
@@ -456,12 +477,12 @@ int main()
 			v_H = (double *)malloc(N*sizeof(double));													// allocate enough space at the pointer v to store N many double numbers
 			eta_H = (double *)malloc(N*sizeof(double));													// allocate enough space at the pointer eta to store N many double numbers
 		}
+		if(!DisparateMass || DisparateMass_Check)	// If no longer needing to debug DisparateMass, just change to else
+		{
+			v = (double *)malloc(N*sizeof(double));														// allocate enough space at the pointer v to store N many double numbers
+			eta = (double *)malloc(N*sizeof(double));													// allocate enough space at the pointer eta to store N many double numbers
+		}
 
-		Q1_fft = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer Q1_fft for size_ft many complex numbers
-		Q2_fft = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer Q2_fft for size_ft many complex numbers
-		Q3_fft = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer Q3_fft for size_ft many complex numbers
-		fftOut = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer fftOut for size_ft many complex numbers
-		fftIn = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex)); 							// allocate enough space at the pointer fftIn for size_ft many complex numbers
 		if(DisparateMass)
 		{
 			Q1_fft_LL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q1_fft for size_ft many complex numbers
@@ -489,6 +510,14 @@ int main()
 			fftOut_HL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftOut for size_ft many complex numbers
 			fftIn_HL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftIn for size_ft many complex numbers
 		}
+		if(!DisparateMass || DisparateMass_Check)	// If no longer needing to debug DisparateMass, just change to else
+		{
+			Q1_fft = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer Q1_fft for size_ft many complex numbers
+			Q2_fft = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer Q2_fft for size_ft many complex numbers
+			Q3_fft = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer Q3_fft for size_ft many complex numbers
+			fftOut = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer fftOut for size_ft many complex numbers
+			fftIn = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex)); 							// allocate enough space at the pointer fftIn for size_ft many complex numbers
+		}
  
 		if(LinearLandau)																			// only do this is LinearLandau is true, for using Q(f,M)
 		{
@@ -512,10 +541,6 @@ int main()
 		scale3 = pow(scale, 3.0);																	// set scale3 to scale^3
 
 		//INITIALISE VELOCITY AND FOURIER DOMAINS:
-        L_v = Lv;//sqrt(0.5*(double)N*PI); 															// set L_v to Lv
-		L_eta = 0.5*(double)(N-1)*PI/L_v;					// BUG: N-1?							// set L_eta to (N-1)*Pi/(2*L_v)
-		h_v = 2.0*L_v/(double)(N-1);						// BUG: N-1?// set h_v to 2*L_v/(N-1)
-        h_eta = 2.0*L_eta/(double)(N);						// BUG: N?								// set h_eta to 2*L_eta/N
 
         // MULTI-SPECIES:
     	if(DisparateMass)
@@ -527,25 +552,35 @@ int main()
 			h_eta_L = 2.0*L_eta_L/(double)(N);
 			h_eta_H = 2.0*L_eta_H/(double)(N);
     	}
+    	if(!DisparateMass || DisparateMass_Check)	// If no longer needing to debug DisparateMass, just change to else
+    	{
+			L_eta = 0.5*(double)(N-1)*PI/L_v;					// BUG: N-1?							// set L_eta to (N-1)*Pi/(2*L_v)
+			h_v = 2.0*L_v/(double)(N-1);						// BUG: N-1?// set h_v to 2*L_v/(N-1)
+			h_eta = 2.0*L_eta/(double)(N);						// BUG: N?								// set h_eta to 2*L_eta/N
+    	}
 
         for(i=0;i<N;i++)																			// store the discretised velocity and Fourier space points
 		{
-			eta[i] = -L_eta + (double)i*h_eta;														// set the ith value of eta to -L_eta + i*h_eta
-			v[i] = -L_v + (double)i*h_v;															// set the ith value of v to -L_v + i*h_v
-            
 			if(DisparateMass)
 			{
 				eta_L[i] = -L_eta_L + (double)i*h_eta_L;                                                        // set the ith value of eta_L to -L_eta_L + i*h_eta_L
-				v_L[i] = -L_v_L + (double)i*h_v_L;                                                             // set the ith value of v_L to -L_v_L + i*h_v_L
-
 				eta_H[i] = -L_eta_H + (double)i*h_eta_H;                                                        // set the ith value of eta_H to -L_eta_H + i*h_eta_H
+				v_L[i] = -L_v_L + (double)i*h_v_L;                                                             // set the ith value of v_L to -L_v_L + i*h_v_L
 				v_H[i] = -L_v_H + (double)i*h_v_H;                                                              // set the ith value of v_H to -L_v_H + i*h_v_H
+			}
+			if(!DisparateMass || DisparateMass_Check)	// If no longer needing to debug DisparateMass, just change to else
+			{
+				eta[i] = -L_eta + (double)i*h_eta;														// set the ith value of eta to -L_eta + i*h_eta
+				v[i] = -L_v + (double)i*h_v;															// set the ith value of v to -L_v + i*h_v
 			}
 		}
 
 		trapezoidalRule(N, wtN);																	// set wtN to the weights required for a trapezoidal rule with N points
   
-		createCCtAndPivot();																		// calculate the values of the conservation matrices
+		if(!DisparateMass)	// Not yet conserving for DisparateMass...
+		{
+			createCCtAndPivot();																		// calculate the values of the conservation matrices
+		}
 
 		FILE *fidWeights;																			// declare a pointer to the file fidWeights (which will store the precomputed weights in Fourier transform of Q)
 		//check to see if these convolution weights have already been pre-computed
@@ -597,11 +632,11 @@ int main()
 		
 		if(DisparateMass)
 		{
-			generate_conv_weights(conv_weights, gamma, conv_weights_LL, conv_weights_HH, conv_weights_LH, conv_weights_HL, conv_weights0_LH, mass_ratio);
+			generate_conv_weights_multi(conv_weights_LL, conv_weights_HH, conv_weights_LH, conv_weights_HL, conv_weights0_LH, gamma, mass_ratio);
 		}
-		else
+		if(!DisparateMass || DisparateMass_Check)	// If no longer needing to debug DisparateMass, just change to else
 		{
-			generate_conv_weights(conv_weights, gamma); 														// calculate the values of the convolution weights (the matrix G_Hat(xi, omega), for xi = (xi_i, xi_j, xi_k), omega = (omega_l, omega_m, omega_n), i,j,k,l,m,n = 0,1,...,N-1) and store the values in conv_weights
+			generate_conv_weights_single(conv_weights, gamma); 														// calculate the values of the convolution weights (the matrix G_Hat(xi, omega), for xi = (xi_i, xi_j, xi_k), omega = (omega_l, omega_m, omega_n), i,j,k,l,m,n = 0,1,...,N-1) and store the values in conv_weights
 		}
 
         // MULTI-SPECIES TEST:
@@ -693,10 +728,13 @@ int main()
 		{
 			if(FourHump)
 			{
-				SetInit_4H_Homo(U);																			// set initial DG solution with the 4Hump IC. For the first time run t=0, use this to give init solution (otherwise, comment out)
 				if(DisparateMass)
 				{
 					SetInit_4H_Homo_Multispecies(U_L, U_H, mass_ratio);
+				}
+				if(!DisparateMass || DisparateMass_Check)	// If no longer needing to debug DisparateMass, just change to else
+				{
+					SetInit_4H_Homo(U);																			// set initial DG solution with the 4Hump IC. For the first time run t=0, use this to give init solution (otherwise, comment out)
 				}
 			}
 			else
@@ -793,17 +831,23 @@ int main()
       
 		fmom=fopen(buffer_moment,"w");																// set fmom to be a file with the name stored in buffer_moment and set the file access mode of fmom to w (which creates an empty file and allows it to be written to)
 		fu=fopen(buffer_u, "w");																	// set fu to be a file with the name stored in buffer_u and set the file access mode of fu to w (which creates an empty file and allows it to be written to)
-		fmarg=fopen(buffer_marg,"w");																// set fmarg to be a file with the name stored in buffer_marg and set the file access mode of fmarg to w (which creates an empty file and allows it to be written to)
 		if(DisparateMass)
 		{
 			fmarg_L=fopen(buffer_marg_L,"w");															// set fmarg to be a file with the name stored in buffer_marg and set the file access mode of fmarg to w (which creates an empty file and allows it to be written to)
 			fmarg_H=fopen(buffer_marg_H,"w");															// set fmarg to be a file with the name stored in buffer_marg and set the file access mode of fmarg to w (which creates an empty file and allows it to be written to)
 		}
+		else
+		{
+			fmarg=fopen(buffer_marg,"w");																// set fmarg to be a file with the name stored in buffer_marg and set the file access mode of fmarg to w (which creates an empty file and allows it to be written to)
+		}
 		fphi=fopen(buffer_phi,"w");																	// set fphi to be a file with the name stored in buffer_phi and set the file access mode of fphi to w (which creates an empty file and allows it to be written to)
 		fE=fopen(buffer_E,"w");																		// set fE to be a file with the name stored in buffer_E and set the file access mode of fphi to w (which creates an empty file and allows it to be written to)
 		fent=fopen(buffer_ent,"w");																	// set fent to be a file with the name stored in buffer_ent and set the file access mode of fent to w (which creates an empty file and allows it to be written to)
 
-		FindNegVals(U, fNegVals, fAvgVals);															// find out in which cells the approximate solution goes negative and record it in fNegVals
+		if(!DisparateMass)	// Should probably check for both U_L & U_H for DisparateMass...
+		{
+			FindNegVals(U, fNegVals, fAvgVals);															// find out in which cells the approximate solution goes negative and record it in fNegVals
+		}
 
 		/* DEBUG TEST
 		for(int i=0;i<Nx;i++)
@@ -828,35 +872,38 @@ int main()
 		std::cout << "#                     OUTPUT DATA                     #" << std::endl;
 		std::cout << "#=====================================================#" << std::endl << std::endl;
 
-		mass=computeMass(U);																		// set mass to the value calculated through computeMass, for the solution f(x,v,t) at the current time t, using its DG coefficients stored U
-		computeMomentum(U, a);																		// calculate the momentum for the solution f(x,v,t) at the current time t, using its DG coefficients stored U, and store it in a
-		KiE=computeKiE(U);																			// set KiE to the value calculated through computeKiE, for the solution f(x,v,t) at the current time t, using its DG coefficients stored U
-		if(! Homogeneous)
+		if(!DisparateMass)	// Need to update moment calculations for U_L & U_H for DisparateMass...
 		{
-			EleE=computeEleE(U);																		// set EleE to the value calculated through computeEleE, for the solution f(x,v,t) at the current time t, using its DG coefficients stored U
-			tmp = sqrt(EleE);																			// set tmp to the square root of EleE
-		}
-		ent1 = computeEntropy(U);																	// set ent1 the value calculated through computeEntropy
-		l_ent1 = log(fabs(ent1));																	// set l_ent1 to the log of ent1
-		ll_ent1 = log(fabs(l_ent1));																// set ll_ent1 to the log of l_ent1
-		if(Homogeneous)
-		{
-			printf("step 0: %11.8g  %11.8g  %11.8g  %11.8g  %11.8g %11.8g \n",
-					mass, a[0], a[1], a[2], KiE, ent1);									// display in the output file that this is step 0 (so these are the initial conditions), then the mass, 3 components of momentum, kinetic energy, entropy & Strain and Guo weighted L2 norm
-			fprintf(fmom, "%11.8g %11.8g %11.8g %11.8g %11.8g %11.8g %11.8g %11.8g \n",
-					mass, a[0], a[1], a[2], 0.0, 0.0, 0.0, KiE);														// in the file tagged as fmom, print the initial mass, 3 components of momentum & kinetic energy
-		}
-		else
-		{
-			printf("step 0: %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g %11.8g %11.8g \n",
-					mass, a[0], a[1], a[2], KiE, EleE, tmp, log(tmp), KiE+EleE, ent1);					// display in the output file that this is step 0 (so these are the initial conditions), then the mass, 3 components of momentum, kinetic energy, electric energy, sqrt(electric energy), log(sqrt(electric energy)), total energy & entropy
-			fprintf(fmom, "%11.8g %11.8g %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g \n",
-					mass, a[0], a[1], a[2], KiE, EleE, tmp, log(tmp), KiE+EleE);						// in the file tagged as fmom, print the initial mass, 3 components of momentum, kinetic energy, electric energy, sqrt(electric energy), log(sqrt(electric energy)) & total energy
-		}
-		fprintf(fent, "%11.8g %11.8g %11.8g \n", ent1, l_ent1, ll_ent1);							// in the file tagged as fent, print the entropy, its log and the log of that
+			mass=computeMass(U);																		// set mass to the value calculated through computeMass, for the solution f(x,v,t) at the current time t, using its DG coefficients stored U
+			computeMomentum(U, a);																		// calculate the momentum for the solution f(x,v,t) at the current time t, using its DG coefficients stored U, and store it in a
+			KiE=computeKiE(U);																			// set KiE to the value calculated through computeKiE, for the solution f(x,v,t) at the current time t, using its DG coefficients stored U
+			if(! Homogeneous)
+			{
+				EleE=computeEleE(U);																		// set EleE to the value calculated through computeEleE, for the solution f(x,v,t) at the current time t, using its DG coefficients stored U
+				tmp = sqrt(EleE);																			// set tmp to the square root of EleE
+			}
+			ent1 = computeEntropy(U);																	// set ent1 the value calculated through computeEntropy
+			l_ent1 = log(fabs(ent1));																	// set l_ent1 to the log of ent1
+			ll_ent1 = log(fabs(l_ent1));																// set ll_ent1 to the log of l_ent1
+			if(Homogeneous)
+			{
+				printf("step 0: %11.8g  %11.8g  %11.8g  %11.8g  %11.8g %11.8g \n",
+						mass, a[0], a[1], a[2], KiE, ent1);									// display in the output file that this is step 0 (so these are the initial conditions), then the mass, 3 components of momentum, kinetic energy, entropy & Strain and Guo weighted L2 norm
+				fprintf(fmom, "%11.8g %11.8g %11.8g %11.8g %11.8g %11.8g %11.8g %11.8g \n",
+						mass, a[0], a[1], a[2], 0.0, 0.0, 0.0, KiE);														// in the file tagged as fmom, print the initial mass, 3 components of momentum & kinetic energy
+			}
+			else
+			{
+				printf("step 0: %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g %11.8g %11.8g \n",
+						mass, a[0], a[1], a[2], KiE, EleE, tmp, log(tmp), KiE+EleE, ent1);					// display in the output file that this is step 0 (so these are the initial conditions), then the mass, 3 components of momentum, kinetic energy, electric energy, sqrt(electric energy), log(sqrt(electric energy)), total energy & entropy
+				fprintf(fmom, "%11.8g %11.8g %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g \n",
+						mass, a[0], a[1], a[2], KiE, EleE, tmp, log(tmp), KiE+EleE);						// in the file tagged as fmom, print the initial mass, 3 components of momentum, kinetic energy, electric energy, sqrt(electric energy), log(sqrt(electric energy)) & total energy
+			}
+			fprintf(fent, "%11.8g %11.8g %11.8g \n", ent1, l_ent1, ll_ent1);							// in the file tagged as fent, print the entropy, its log and the log of that
 
-		KiEratio = computeKiEratio(U, fNegVals);													// compute the ratio of the kinetic energy where f is negative to that where it is positive and store it in KiEratio
-		printf("Kinetic Energy Ratio = %g\n", KiEratio);											// print the ratio of the kinetic energy where f is negative to that where it is positive
+			KiEratio = computeKiEratio(U, fNegVals);													// compute the ratio of the kinetic energy where f is negative to that where it is positive and store it in KiEratio
+			printf("Kinetic Energy Ratio = %g\n", KiEratio);											// print the ratio of the kinetic energy where f is negative to that where it is positive
+		}
 
 		//fufull=fopen("Data/U_nu0.02A0.5k1.5708Nx48Lx4Nv32Lv4SpectralN24dt0.004_non_nu002_time15s.dc", "w");
 		//fprintf(fmom, "%11.8g  %11.8g\n", EleE, log(tmp));
@@ -886,12 +933,20 @@ int main()
 			PrintFieldData(U, fphi, fE);																// print the values of phi & E for the initial condition, using the DG coefficients in U, in the files tagged as fphi & fE, respectively
 		}
 	}
-  
-	MPI_Bcast(U, size*6, MPI_DOUBLE, 0, MPI_COMM_WORLD);   											// send the contents of U, which will be 6*size entries of datatype MPI_DOUBLE, from the process with rank 0 to all processes, using the communicator MPI_COMM_WORLD
+
+	if(DisparateMass)
+	{
+		MPI_Bcast(U_L, size*6, MPI_DOUBLE, 0, MPI_COMM_WORLD);   										// send the contents of U_L, which will be 6*size entries of datatype MPI_DOUBLE, from the process with rank 0 to all processes, using the communicator MPI_COMM_WORLD
+		MPI_Bcast(U_H, size*6, MPI_DOUBLE, 0, MPI_COMM_WORLD);   										// send the contents of U_H, which will be 6*size entries of datatype MPI_DOUBLE, from the process with rank 0 to all processes, using the communicator MPI_COMM_WORLD
+	}
+	if(!DisparateMass || DisparateMass_Check)	// If no longer needing to debug DisparateMass, just change to else
+	{
+		MPI_Bcast(U, size*6, MPI_DOUBLE, 0, MPI_COMM_WORLD);   											// send the contents of U, which will be 6*size entries of datatype MPI_DOUBLE, from the process with rank 0 to all processes, using the communicator MPI_COMM_WORLD
+	}
 	MPI_Barrier(MPI_COMM_WORLD);																	// set an MPI barrier to ensure that all processes have reached this point before continuing
 
 	// MULTI-SPECIES TEST:
-	if(DisparateMass)
+	if(DisparateMass_Check)
 	{
 		setInit_spectral(U, f);
 		setInit_spectral_Homo_Multispecies(U_L, U_H, f_L, f_H);
@@ -925,6 +980,15 @@ int main()
 	MPIt1 = MPI_Wtime();																			// set MPIt1 to the current time in the MPI process
 	while(t < nT) 																					// if t < nT (i.e. not yet reached the final timestep), perform time-splitting to first advect the particle through the collisionless step and then perform one space homogeneous collisional step)
 	{
+		if(DisparateMass)
+		{
+			if(myrank_mpi==0)
+			{
+				std::cout << "Program cannot run..." << std::endl;
+				std::cout << "Not ready for time-stepping with the Disparate Mass problem yet." << std::endl;
+			}
+			exit(1);
+		}
 		if(! Homogeneous)
 		{
 			RK3(U); 																					// Use RK3 to perform one timestep of the collisionless problem
@@ -1190,7 +1254,6 @@ int main()
 	}
 	if(nu > 0.)
 	{
-		free(v); free(eta); free(wtN); 																// delete the dynamic memory allocated for v, eta & wtN
 		if(MassConsOnly)																			// only do this if MassConsOnly is true and only conserving mass
 		{
 			free(C1_1);																				// delete the dynamic memory allocated for C1_1
@@ -1199,15 +1262,17 @@ int main()
 		{
 			free(C1_5); free(C2);																	// delete the dynamic memory allocated for C1_5 & C2
 		}
-		free(f); free(conv_weights); free(output_buffer); 											// delete the dynamic memory allocated for f, conv_weights, output_buffer
-		fftw_free(temp); fftw_free(qHat);															// delete the dynamic memory allocated for temp & qhat
-		free(conv_weights1); free(conv_weights2); 													// delete the dynamic memory allocated for conv_weights1 & conv_weights2
-		fftw_free(Q1_fft); fftw_free(Q2_fft); fftw_free(Q3_fft); fftw_free(fftOut); fftw_free(fftIn); // delete the dynamic memory allocated for Q1_fft, Q2_fft, Q3_fft, fftOut & fftIn
-		free(Q);free(f1);free(Q1); free(Utmp_coll);// free(f2); free(f3);//free(Q3);				// delete the dynamic memory allocated for Q, f1, Q1 & Utmp_coll
+		free(wtN); 																					// delete the dynamic memory allocated for wtN
+		free(output_buffer); 																		// delete the dynamic memory allocated for output_buffer
+		fftw_free(temp); 																			// delete the dynamic memory allocated for temp
+		free(Q); free(Q1); free(Utmp_coll);															// delete the dynamic memory allocated for Q, Q1 & Utmp_coll
 		// MULTI-SPECIES:
 		if(DisparateMass)
 		{
 			free(v_L); free(v_H); free(eta_L); free(eta_H);
+			free(conv_weights_LL); free(conv_weights_HH); free(conv_weights_LH); free(conv_weights_HL);
+			free(conv_weights0_LH);
+			free(f_L); free(f_H);
 			free(f1_L); free(f1_H);
 			fftw_free(Q1_fft_LL); fftw_free(Q1_fft_HH); fftw_free(Q1_fft_LH); fftw_free(Q1_fft_HL);
 			fftw_free(Q2_fft_LL); fftw_free(Q2_fft_HH); fftw_free(Q2_fft_LH); fftw_free(Q2_fft_HL);
@@ -1215,9 +1280,16 @@ int main()
 			fftw_free(fftIn_L); fftw_free(fftIn_H); fftw_free(fftOut_L); fftw_free(fftOut_H);
 			fftw_free(fftIn_LL); fftw_free(fftIn_HH); fftw_free(fftOut_LL); fftw_free(fftOut_HH);
 			fftw_free(fftIn_LH); fftw_free(fftIn_HL); fftw_free(fftOut_LH); fftw_free(fftOut_HL);
-			free(f_L); free(f_H);
-			free(conv_weights_LH); free(conv_weights_HL);
 			fftw_free(qHat_LL); fftw_free(qHat_HH); fftw_free(qHat_LH); fftw_free(qHat_HL);
+		}
+		if(!DisparateMass || DisparateMass_Check)	// If no longer needing to debug DisparateMass, just change to else
+		{
+			free(v); free(eta); 																// delete the dynamic memory allocated for v & eta
+			free(f); free(conv_weights);			 											// delete the dynamic memory allocated for f & conv_weights
+			fftw_free(qHat);																	// delete the dynamic memory allocated for qhat
+			free(conv_weights1); free(conv_weights2); 													// delete the dynamic memory allocated for conv_weights1 & conv_weights2
+			fftw_free(Q1_fft); fftw_free(Q2_fft); fftw_free(Q3_fft); fftw_free(fftOut); fftw_free(fftIn); // delete the dynamic memory allocated for Q1_fft, Q2_fft, Q3_fft, fftOut & fftIn
+			free(f1);																			// delete the dynamic memory allocated for f1
 		}
 		if(FullandLinear)																			// only do this if FullandLinear is true
 		{
@@ -1231,12 +1303,17 @@ int main()
 		}
 	}
 	free(output_buffer_vp);																			// delete the dynamic memory allocated for output_buffer_vp
-	free(U); free(U1); free(Utmp); // free(H);														// delete the dynamic memory allocated for U, U1 & Utmp
+	free(U1); free(Utmp); 																			// delete the dynamic memory allocated for U1 & Utmp
 	// MULTI-SPECIES
 	if(DisparateMass)
 	{
 		free(U_L); free(U_H);
 	}
+	if(!DisparateMass || DisparateMass_Check)	// If no longer needing to debug DisparateMass, just change to else
+	{
+		free(U); 																					// delete the dynamic memory allocated for U
+	}
+
 	if(! Homogeneous)
 	{
 		free(cp); free(intE); free(intE1); free(intE2);													// delete the dynamic memory allocated for cp, intE, intE1 & inteE2
