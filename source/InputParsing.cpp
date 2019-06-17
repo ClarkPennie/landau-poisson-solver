@@ -243,7 +243,7 @@ void ReadMassRatio(GRVY_Input_Class& iparse, double& epsilon)												// Func
 {
 	// Check if the value of the mass ratio epsilon has been set and print its value from the
 	// processor with rank 0 (if not, set default value to 1)
-	iparse.Read_Var("mass_ratio",&epsilon,1.);
+	iparse.Read_Var("DisparateMass/mass_ratio",&epsilon,1.);
 	if(myrank_mpi==0)
 	{
 		std::cout << "--> Mass ratio = " << epsilon << std::endl << std::endl;
@@ -306,13 +306,13 @@ void ReadDisparateMass(GRVY_Input_Class& iparse)												// Function to read 
 {
 	// Check if DisparateMass has been set and print its value from the
 	// processor with rank 0 (if not, set default value to false):
-	iparse.Read_Var("DisparateMass",&DisparateMass,false)
+	iparse.Read_Var("DisparateMass",&DisparateMass,false);
 	if(myrank_mpi==0)
 	{
-		std::cout << "--> DisparateMasss = " << DisparateMass << std::endl << std::endl;
+		std::cout << "--> DisparateMass = " << DisparateMass << std::endl << std::endl;
 		if(DisparateMass)
 		{
-			std::cout << "Running the model with disparate masses."
+			std::cout << "Running the model for two species with disparate masses."
 				<< std::endl << std::endl;
 		}
 		else

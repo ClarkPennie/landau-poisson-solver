@@ -43,6 +43,8 @@ void ReadLinearLandau(GRVY_Input_Class& iparse);
 
 void ReadMassConsOnly(GRVY_Input_Class& iparse);
 
+void ReadDisparateMass(GRVY_Input_Class& iparse);
+
 void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 								int& Nx, int& Nv, int& N, double& nu, double& dt, double& A_amp,
 								double& k_wave, double& Lv, double& Lx);

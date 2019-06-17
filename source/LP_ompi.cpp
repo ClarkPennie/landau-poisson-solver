@@ -182,7 +182,7 @@ int main()
 	ReadFullandLinear(iparse);																		// Read in if running multi-species collisions
 	ReadLinearLandau(iparse);																		// Read in if running full or linear Landau
 	ReadMassConsOnly(iparse);																		// Read in if running conservation of all moments or just mass
-
+	ReadDisparateMass(iparse);
 
 	ReadInputParameters(iparse, flag, nT, Nx, Nv, N, nu, dt, A_amp, k_wave, Lv, Lx);				// Read in all input parameters
 
@@ -217,20 +217,22 @@ int main()
 
 	// MULTI-SPECIES:
 
-//	mass_ratio = 0.7;
-	ReadMassRatio(iparse, mass_ratio);
-	Lv_H = Lv;
-	Lv_L = mass_ratio*Lv_H;
-    dv_L=2.*Lv_L/Nv;
-    dv_H=2.*Lv_H/Nv;
-	scalev_L=dv_L*dv_L*dv_L;
-	scalev_H=dv_H*dv_H*dv_H;
-    L_v_L=Lv_L;
-    L_v_H=Lv_H;
-    R_v_L=Lv_L;
-    R_v_H=Lv_H;
-    scaleL_L=8*Lv_L*Lv_L*Lv_L;
-    scaleL_H=8*Lv_H*Lv_H*Lv_H;
+	if(DisparateMass)
+	{
+		ReadMassRatio(iparse, mass_ratio);
+		Lv_H = Lv;
+		Lv_L = mass_ratio*Lv_H;
+		dv_L=2.*Lv_L/Nv;
+		dv_H=2.*Lv_H/Nv;
+		scalev_L=dv_L*dv_L*dv_L;
+		scalev_H=dv_H*dv_H*dv_H;
+		L_v_L=Lv_L;
+		L_v_H=Lv_H;
+		R_v_L=Lv_L;
+		R_v_H=Lv_H;
+		scaleL_L=8*Lv_L*Lv_L*Lv_L;
+		scaleL_H=8*Lv_H*Lv_H*Lv_H;
+	}
 
 	if(MassConsOnly)																				// only do this if MassConsOnly is true and only conserving mass
 	{
@@ -275,8 +277,12 @@ int main()
 	
 	U = (double*)malloc(size*6*sizeof(double));														// allocate enough space at the pointer U for 6*size many double numbers
 	U1 = (double*)malloc(size*6*sizeof(double));													// allocate enough space at the pointer U1 for 6*size many floating point numbers
-	U_L = (double*)malloc(size*6*sizeof(double));
-	U_H = (double*)malloc(size*6*sizeof(double));
+
+	if(DisparateMass)
+	{
+		U_L = (double*)malloc(size*6*sizeof(double));
+		U_H = (double*)malloc(size*6*sizeof(double));
+	}
 
 	Utmp = (double*)malloc(chunksize_dg*6*sizeof(double));											// allocate enough space at the pointer Utmp for 6*chunksize_dg many floating point numbers
   
@@ -314,15 +320,19 @@ int main()
 		{
 			f[i] = (double *)malloc(size_ft*sizeof(double));										// allocate enough space at the ith entry of f for size_ft many double numbers
 		}
-		f_L = (double **)malloc(chunk_Nx*sizeof(double *));											// allocate enough space at the pointer f for chunk_Nx many pointers to double numbers
-		for (i=0;i<chunk_Nx;i++)
+
+		if(DisparateMass)
 		{
-			f_L[i] = (double *)malloc(size_ft*sizeof(double));										// allocate enough space at the ith entry of f for size_ft many double numbers
-		}
-		f_H = (double **)malloc(chunk_Nx*sizeof(double *));											// allocate enough space at the pointer f for chunk_Nx many pointers to double numbers
-		for (i=0;i<chunk_Nx;i++)
-		{
-			f_H[i] = (double *)malloc(size_ft*sizeof(double));										// allocate enough space at the ith entry of f for size_ft many double numbers
+			f_L = (double **)malloc(chunk_Nx*sizeof(double *));											// allocate enough space at the pointer f for chunk_Nx many pointers to double numbers
+			for (i=0;i<chunk_Nx;i++)
+			{
+				f_L[i] = (double *)malloc(size_ft*sizeof(double));										// allocate enough space at the ith entry of f for size_ft many double numbers
+			}
+			f_H = (double **)malloc(chunk_Nx*sizeof(double *));											// allocate enough space at the pointer f for chunk_Nx many pointers to double numbers
+			for (i=0;i<chunk_Nx;i++)
+			{
+				f_H[i] = (double *)malloc(size_ft*sizeof(double));										// allocate enough space at the ith entry of f for size_ft many double numbers
+			}
 		}
 
 		conv_weights = (double **)malloc(size_ft*sizeof(double *));									// allocate enough space at the pointer conv_weights for size_ft many pointers to float numbers
@@ -331,32 +341,34 @@ int main()
 			conv_weights[i] = (double *)malloc(size_ft*sizeof(double));								// allocate enough space at the ith entry of conv_weights for size_ft many float numbers
 		}
         
-        conv_weights_LH = (double **)malloc(size_ft*sizeof(double *));                                    // allocate enough space at the pointer conv_weights for size_ft many pointers to float numbers
-        for (i=0;i<size_ft;i++)
-        {
-            conv_weights_LH[i] = (double *)malloc(size_ft*sizeof(double));                                // allocate enough space at the ith entry of conv_weights for size_ft many float numbers
-        }
-        conv_weights_HL = (double **)malloc(size_ft*sizeof(double *));                                    // allocate enough space at the pointer conv_weights for size_ft many pointers to float numbers
-        for (i=0;i<size_ft;i++)
-        {
-            conv_weights_HL[i] = (double *)malloc(size_ft*sizeof(double));                                // allocate enough space at the ith entry of conv_weights for size_ft many float numbers
-        }
-        
-        conv_weights_LL = (double **)malloc(size_ft*sizeof(double *));                                    // allocate enough space at the pointer conv_weights for size_ft many pointers to float numbers
-        for (i=0;i<size_ft;i++)
-        {
-            conv_weights_LL[i] = (double *)malloc(size_ft*sizeof(double));                                // allocate enough space at the ith entry of conv_weights for size_ft many float numbers
-        }
-        conv_weights_HH = (double **)malloc(size_ft*sizeof(double *));                                    // allocate enough space at the pointer conv_weights for size_ft many pointers to float numbers
-        for (i=0;i<size_ft;i++)
-        {
-            conv_weights_HH[i] = (double *)malloc(size_ft*sizeof(double));                                // allocate enough space at the ith entry of conv_weights for size_ft many float numbers
-        }
-        conv_weights0_LH = (double **)malloc(size_ft*sizeof(double *));                                    // allocate enough space at the pointer conv_weights for size_ft many pointers to float numbers
-        for (i=0;i<size_ft;i++)
-        {
-            conv_weights0_LH[i] = (double *)malloc(size_ft*sizeof(double));                                // allocate enough space at the ith entry of conv_weights for size_ft many float numbers
-        }
+		if(DisparateMass)
+		{
+			conv_weights_LH = (double **)malloc(size_ft*sizeof(double *));                                    // allocate enough space at the pointer conv_weights for size_ft many pointers to float numbers
+			for (i=0;i<size_ft;i++)
+			{
+				conv_weights_LH[i] = (double *)malloc(size_ft*sizeof(double));                                // allocate enough space at the ith entry of conv_weights for size_ft many float numbers
+			}
+			conv_weights_HL = (double **)malloc(size_ft*sizeof(double *));                                    // allocate enough space at the pointer conv_weights for size_ft many pointers to float numbers
+			for (i=0;i<size_ft;i++)
+			{
+				conv_weights_HL[i] = (double *)malloc(size_ft*sizeof(double));                                // allocate enough space at the ith entry of conv_weights for size_ft many float numbers
+			}
+			conv_weights_LL = (double **)malloc(size_ft*sizeof(double *));                                    // allocate enough space at the pointer conv_weights for size_ft many pointers to float numbers
+			for (i=0;i<size_ft;i++)
+			{
+				conv_weights_LL[i] = (double *)malloc(size_ft*sizeof(double));                                // allocate enough space at the ith entry of conv_weights for size_ft many float numbers
+			}
+			conv_weights_HH = (double **)malloc(size_ft*sizeof(double *));                                    // allocate enough space at the pointer conv_weights for size_ft many pointers to float numbers
+			for (i=0;i<size_ft;i++)
+			{
+				conv_weights_HH[i] = (double *)malloc(size_ft*sizeof(double));                                // allocate enough space at the ith entry of conv_weights for size_ft many float numbers
+			}
+			conv_weights0_LH = (double **)malloc(size_ft*sizeof(double *));                                    // allocate enough space at the pointer conv_weights for size_ft many pointers to float numbers
+			for (i=0;i<size_ft;i++)
+			{
+				conv_weights0_LH[i] = (double *)malloc(size_ft*sizeof(double));                                // allocate enough space at the ith entry of conv_weights for size_ft many float numbers
+			}
+		}
         
         conv_weights1 = (double **)malloc(size_ft*sizeof(double *));								// allocate enough space at the pointer conv_weights1 for size_ft many pointers to float numbers
 		for (i=0;i<size_ft;i++)
@@ -387,14 +399,20 @@ int main()
 
 		Q = (double*)malloc(size_ft*sizeof(double));												// allocate enough space at the pointer Q for size_ft many double numbers
 		f1 = (double*)malloc(size_ft*sizeof(double)); 												// allocate enough space at the pointer f1 for size_ft many double numbers
-		f1_L = (double*)malloc(size_ft*sizeof(double)); 												// allocate enough space at the pointer f1 for size_ft many double numbers
-		f1_H = (double*)malloc(size_ft*sizeof(double)); 												// allocate enough space at the pointer f1 for size_ft many double numbers
+		if(DisparateMass)
+		{
+			f1_L = (double*)malloc(size_ft*sizeof(double)); 												// allocate enough space at the pointer f1 for size_ft many double numbers
+			f1_H = (double*)malloc(size_ft*sizeof(double)); 												// allocate enough space at the pointer f1 for size_ft many double numbers
+		}
 		Q1 = (double*)malloc(size_ft*sizeof(double));												// allocate enough space at the pointer Q1 for size_ft many double numbers
 		if(Homogeneous)
 		{
 			Utmp_coll = (double*)malloc(chunksize_dg*5*sizeof(double));								// allocate enough space at the pointer Utmp_coll for 5*chunk_Nx*size_v many double numbers
-            Utmp_coll_L = (double*)malloc(chunksize_dg*5*sizeof(double));
-            Utmp_coll_H = (double*)malloc(chunksize_dg*5*sizeof(double));
+			if(DisparateMass)
+			{
+				Utmp_coll_L = (double*)malloc(chunksize_dg*5*sizeof(double));
+				Utmp_coll_H = (double*)malloc(chunksize_dg*5*sizeof(double));
+			}
 			output_buffer = (double*)malloc(chunksize_dg*5*sizeof(double));							// allocate enough space at the pointer output_buffer for 5*chunk_Nx*size_v many double numbers
 		}
 		else
@@ -412,10 +430,13 @@ int main()
 		temp = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer temp for size_ft many complex numbers
 		//qHat_local = (fftw_complex *)fftw_malloc(chunksize_ft*sizeof(fftw_complex));
 		qHat = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer qHat for size_ft many complex numbers
-        qHat_LL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));
-        qHat_HH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));
-        qHat_LH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));
-        qHat_HL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));
+		if(DisparateMass)
+		{
+			qHat_LL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));
+			qHat_HH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));
+			qHat_LH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));
+			qHat_HL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));
+		}
 		// INITIALISE FFTW FOR USE WITH THREADING (MUST BE DONE BEFORE ANY PLAN IS CREATED):
 		fftw_init_threads();																		// initialise the environment for using the fftw3 routines with multiple threads
 		fftw_plan_with_nthreads(nthread);															// set the number of threads used by fftw3 routines to nthread
@@ -428,40 +449,46 @@ int main()
 		v = (double *)malloc(N*sizeof(double));														// allocate enough space at the pointer v to store N many double numbers
 		eta = (double *)malloc(N*sizeof(double));													// allocate enough space at the pointer eta to store N many double numbers
   
-		v_L = (double *)malloc(N*sizeof(double));													// allocate enough space at the pointer v to store N many double numbers
-		eta_L = (double *)malloc(N*sizeof(double));													// allocate enough space at the pointer eta to store N many double numbers
-		v_H = (double *)malloc(N*sizeof(double));													// allocate enough space at the pointer v to store N many double numbers
-		eta_H = (double *)malloc(N*sizeof(double));													// allocate enough space at the pointer eta to store N many double numbers
+		if(DisparateMass)
+		{
+			v_L = (double *)malloc(N*sizeof(double));													// allocate enough space at the pointer v to store N many double numbers
+			eta_L = (double *)malloc(N*sizeof(double));													// allocate enough space at the pointer eta to store N many double numbers
+			v_H = (double *)malloc(N*sizeof(double));													// allocate enough space at the pointer v to store N many double numbers
+			eta_H = (double *)malloc(N*sizeof(double));													// allocate enough space at the pointer eta to store N many double numbers
+		}
 
 		Q1_fft = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer Q1_fft for size_ft many complex numbers
 		Q2_fft = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer Q2_fft for size_ft many complex numbers
 		Q3_fft = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer Q3_fft for size_ft many complex numbers
-        Q1_fft_LL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q1_fft for size_ft many complex numbers
-        Q2_fft_LL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q2_fft for size_ft many complex numbers
-        Q3_fft_LL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q3_fft for size_ft many complex numbers
-        Q1_fft_HH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q1_fft for size_ft many complex numbers
-        Q2_fft_HH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q2_fft for size_ft many complex numbers
-        Q3_fft_HH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q3_fft for size_ft many complex numbers
-        Q1_fft_LH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q1_fft for size_ft many complex numbers
-        Q2_fft_LH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q2_fft for size_ft many complex numbers
-        Q3_fft_LH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q3_fft for size_ft many complex numbers
-        Q1_fft_HL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q1_fft for size_ft many complex numbers
-        Q2_fft_HL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q2_fft for size_ft many complex numbers
-        Q3_fft_HL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q3_fft for size_ft many complex numbers
 		fftOut = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer fftOut for size_ft many complex numbers
 		fftIn = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex)); 							// allocate enough space at the pointer fftIn for size_ft many complex numbers
-        fftIn_L = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));
-        fftIn_H = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));
-        fftOut_L = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));
-        fftOut_H = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));
-        fftOut_LL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftOut for size_ft many complex numbers
-        fftIn_LL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftIn for size_ft many complex numbers
-        fftOut_HH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftOut for size_ft many complex numbers
-        fftIn_HH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftIn for size_ft many complex numbers
-        fftOut_LH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftOut for size_ft many complex numbers
-        fftIn_LH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftIn for size_ft many complex numbers
-        fftOut_HL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftOut for size_ft many complex numbers
-        fftIn_HL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftIn for size_ft many complex numbers
+		if(DisparateMass)
+		{
+			Q1_fft_LL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q1_fft for size_ft many complex numbers
+			Q2_fft_LL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q2_fft for size_ft many complex numbers
+			Q3_fft_LL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q3_fft for size_ft many complex numbers
+			Q1_fft_HH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q1_fft for size_ft many complex numbers
+			Q2_fft_HH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q2_fft for size_ft many complex numbers
+			Q3_fft_HH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q3_fft for size_ft many complex numbers
+			Q1_fft_LH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q1_fft for size_ft many complex numbers
+			Q2_fft_LH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q2_fft for size_ft many complex numbers
+			Q3_fft_LH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q3_fft for size_ft many complex numbers
+			Q1_fft_HL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q1_fft for size_ft many complex numbers
+			Q2_fft_HL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q2_fft for size_ft many complex numbers
+			Q3_fft_HL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q3_fft for size_ft many complex numbers
+			fftIn_L = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));
+			fftIn_H = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));
+			fftOut_L = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));
+			fftOut_H = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));
+			fftOut_LL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftOut for size_ft many complex numbers
+			fftIn_LL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftIn for size_ft many complex numbers
+			fftOut_HH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftOut for size_ft many complex numbers
+			fftIn_HH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftIn for size_ft many complex numbers
+			fftOut_LH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftOut for size_ft many complex numbers
+			fftIn_LH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftIn for size_ft many complex numbers
+			fftOut_HL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftOut for size_ft many complex numbers
+			fftIn_HL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftIn for size_ft many complex numbers
+		}
  
 		if(LinearLandau)																			// only do this is LinearLandau is true, for using Q(f,M)
 		{
@@ -485,29 +512,35 @@ int main()
 		scale3 = pow(scale, 3.0);																	// set scale3 to scale^3
 
 		//INITIALISE VELOCITY AND FOURIER DOMAINS:
-//        L_v = Lv;//sqrt(0.5*(double)N*PI); 															// set L_v to Lv
+        L_v = Lv;//sqrt(0.5*(double)N*PI); 															// set L_v to Lv
 		L_eta = 0.5*(double)(N-1)*PI/L_v;					// BUG: N-1?							// set L_eta to (N-1)*Pi/(2*L_v)
 		h_v = 2.0*L_v/(double)(N-1);						// BUG: N-1?// set h_v to 2*L_v/(N-1)
         h_eta = 2.0*L_eta/(double)(N);						// BUG: N?								// set h_eta to 2*L_eta/N
 
         // MULTI-SPECIES:
-        L_eta_L = 0.5*(double)(N-1)*PI/L_v_L;
-        L_eta_H = 0.5*(double)(N-1)*PI/L_v_H;
-        h_v_L = 2.0*L_v_L/(double)(N-1);
-        h_v_H = 2.0*L_v_H/(double)(N-1);
-        h_eta_L = 2.0*L_eta_L/(double)(N);
-        h_eta_H = 2.0*L_eta_H/(double)(N);
+    	if(DisparateMass)
+    	{
+			L_eta_L = 0.5*(double)(N-1)*PI/L_v_L;
+			L_eta_H = 0.5*(double)(N-1)*PI/L_v_H;
+			h_v_L = 2.0*L_v_L/(double)(N-1);
+			h_v_H = 2.0*L_v_H/(double)(N-1);
+			h_eta_L = 2.0*L_eta_L/(double)(N);
+			h_eta_H = 2.0*L_eta_H/(double)(N);
+    	}
 
         for(i=0;i<N;i++)																			// store the discretised velocity and Fourier space points
 		{
 			eta[i] = -L_eta + (double)i*h_eta;														// set the ith value of eta to -L_eta + i*h_eta
 			v[i] = -L_v + (double)i*h_v;															// set the ith value of v to -L_v + i*h_v
             
-            eta_L[i] = -L_eta_L + (double)i*h_eta_L;                                                        // set the ith value of eta_L to -L_eta_L + i*h_eta_L
-            v_L[i] = -L_v_L + (double)i*h_v_L;                                                             // set the ith value of v_L to -L_v_L + i*h_v_L
-            
-            eta_H[i] = -L_eta_H + (double)i*h_eta_H;                                                        // set the ith value of eta_H to -L_eta_H + i*h_eta_H
-            v_H[i] = -L_v_H + (double)i*h_v_H;                                                              // set the ith value of v_H to -L_v_H + i*h_v_H
+			if(DisparateMass)
+			{
+				eta_L[i] = -L_eta_L + (double)i*h_eta_L;                                                        // set the ith value of eta_L to -L_eta_L + i*h_eta_L
+				v_L[i] = -L_v_L + (double)i*h_v_L;                                                             // set the ith value of v_L to -L_v_L + i*h_v_L
+
+				eta_H[i] = -L_eta_H + (double)i*h_eta_H;                                                        // set the ith value of eta_H to -L_eta_H + i*h_eta_H
+				v_H[i] = -L_v_H + (double)i*h_v_H;                                                              // set the ith value of v_H to -L_v_H + i*h_v_H
+			}
 		}
 
 		trapezoidalRule(N, wtN);																	// set wtN to the weights required for a trapezoidal rule with N points
@@ -561,10 +594,15 @@ int main()
 		 */
   
 		// Directly compute the weights; not from precomputed (for small number of nodes, it's very fast)
-
-	//	generate_conv_weights(conv_weights, gamma); 														// calculate the values of the convolution weights (the matrix G_Hat(xi, omega), for xi = (xi_i, xi_j, xi_k), omega = (omega_l, omega_m, omega_n), i,j,k,l,m,n = 0,1,...,N-1) and store the values in conv_weights
 		
-        generate_conv_weights(conv_weights, conv_weights_LL, conv_weights_HH, conv_weights_LH, conv_weights_HL, conv_weights0_LH, gamma, mass_ratio);
+		if(DisparateMass)
+		{
+			generate_conv_weights(conv_weights, gamma, conv_weights_LL, conv_weights_HH, conv_weights_LH, conv_weights_HL, conv_weights0_LH, mass_ratio);
+		}
+		else
+		{
+			generate_conv_weights(conv_weights, gamma); 														// calculate the values of the convolution weights (the matrix G_Hat(xi, omega), for xi = (xi_i, xi_j, xi_k), omega = (omega_l, omega_m, omega_n), i,j,k,l,m,n = 0,1,...,N-1) and store the values in conv_weights
+		}
 
         // MULTI-SPECIES TEST:
   /*     if(myrank_mpi == 0)
@@ -599,8 +637,8 @@ int main()
 	}
 
 	char buffer_moment[100], buffer_u[100], buffer_ufull[100], buffer_flags[flag.size() + 1],
-						buffer_phi[110], buffer_E[110], buffer_marg[110], buffer_ent[110],
-						buffer_marg_L[110], buffer_marg_H[110];										// declare the arrays buffer_moment (to store the name of the file where the moments are printed), buffer_u (to store the name of the file where the solution U is printed), buffer_ufull (to store the name of the file where the solution U is printed in the TwoStream), buffer_flags (to store the flag added to the end of the filenames), buffer_phi (to store the name of the file where the values of phi are printed), buffer_marg (to store the name of the file where the marginals are printed) & buffer_ent (to store the name of the file where the entropy values are printed)
+						buffer_marg[110], buffer_marg_L[110], buffer_marg_H[110],
+						buffer_phi[110], buffer_E[110], buffer_ent[110];										// declare the arrays buffer_moment (to store the name of the file where the moments are printed), buffer_u (to store the name of the file where the solution U is printed), buffer_ufull (to store the name of the file where the solution U is printed in the TwoStream), buffer_flags (to store the flag added to the end of the filenames), buffer_phi (to store the name of the file where the values of phi are printed), buffer_marg (to store the name of the file where the marginals are printed) & buffer_ent (to store the name of the file where the entropy values are printed)
 
 	// EVERY TIME THE CODE IS RUN, CHANGE THE FLAG TO A NAME THAT IDENTIFIES THE CASE RUNNING FOR OR WHAT TIME RUN UP TO:
 	strcpy(buffer_flags, flag.c_str());																// copy the contents of flag to buffer_flags
@@ -612,12 +650,18 @@ int main()
 						nu, A_amp, k_wave, Nv, Lv, N, dt, nT, buffer_flags);							// create a .dc file name, located in the directory Data, whose name is U_ followed by the values of nu, A_amp, k_wave, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_u
 		sprintf(buffer_ufull,"Data/U2stream_nu%gA%gk%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
 						nu, A_amp, k_wave, Nv, Lv, N, dt, nT, buffer_flags);							// create a .dc file name, located in the directory Data, whose name is U2stream_ followed by the values of nu, A_amp, k_wave, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_ufull
-		sprintf(buffer_marg,"Data/Marginals_nu%gA%gk%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
-						nu, A_amp, k_wave, Nv, Lv, N, dt, nT, buffer_flags);							// create a .dc file name, located in the directory Data, whose name is Marginals_ followed by the values of nu, A_amp, k_wave, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
-		sprintf(buffer_marg_L,"Data/Marginals_L_nu%gA%gk%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
-						nu, A_amp, k_wave, Nv, Lv, N, dt, nT, buffer_flags);							// create a .dc file name, located in the directory Data, whose name is Marginals_ followed by the values of nu, A_amp, k_wave, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
-		sprintf(buffer_marg_H,"Data/Marginals_H_nu%gA%gk%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
-						nu, A_amp, k_wave, Nv, Lv, N, dt, nT, buffer_flags);							// create a .dc file name, located in the directory Data, whose name is Marginals_ followed by the values of nu, A_amp, k_wave, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
+		if(DisparateMass)
+		{
+			sprintf(buffer_marg_L,"Data/Marginals_L_nu%gA%gk%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
+							nu, A_amp, k_wave, Nv, Lv, N, dt, nT, buffer_flags);							// create a .dc file name, located in the directory Data, whose name is Marginals_ followed by the values of nu, A_amp, k_wave, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
+			sprintf(buffer_marg_H,"Data/Marginals_H_nu%gA%gk%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
+							nu, A_amp, k_wave, Nv, Lv, N, dt, nT, buffer_flags);							// create a .dc file name, located in the directory Data, whose name is Marginals_ followed by the values of nu, A_amp, k_wave, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
+		}
+		else
+		{
+			sprintf(buffer_marg,"Data/Marginals_nu%gA%gk%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
+								nu, A_amp, k_wave, Nv, Lv, N, dt, nT, buffer_flags);							// create a .dc file name, located in the directory Data, whose name is Marginals_ followed by the values of nu, A_amp, k_wave, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
+		}
 		sprintf(buffer_phi,"Data/PhiVals_nu%gA%gk%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
 						nu, A_amp, k_wave, Nv, Lv, N, dt, nT, buffer_flags);							// create a .dc file name, located in the directory Data, whose name is PhiVals_ followed by the values of nu, A_amp, k_wave, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
 		sprintf(buffer_E,"Data/FieldVals_nu%gA%gk%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
@@ -650,7 +694,10 @@ int main()
 			if(FourHump)
 			{
 				SetInit_4H_Homo(U);																			// set initial DG solution with the 4Hump IC. For the first time run t=0, use this to give init solution (otherwise, comment out)
-				SetInit_4H_Homo_Multispecies(U_L, U_H, mass_ratio);
+				if(DisparateMass)
+				{
+					SetInit_4H_Homo_Multispecies(U_L, U_H, mass_ratio);
+				}
 			}
 			else
 			{
@@ -747,7 +794,7 @@ int main()
 		fmom=fopen(buffer_moment,"w");																// set fmom to be a file with the name stored in buffer_moment and set the file access mode of fmom to w (which creates an empty file and allows it to be written to)
 		fu=fopen(buffer_u, "w");																	// set fu to be a file with the name stored in buffer_u and set the file access mode of fu to w (which creates an empty file and allows it to be written to)
 		fmarg=fopen(buffer_marg,"w");																// set fmarg to be a file with the name stored in buffer_marg and set the file access mode of fmarg to w (which creates an empty file and allows it to be written to)
-		if(Homogeneous)
+		if(DisparateMass)
 		{
 			fmarg_L=fopen(buffer_marg_L,"w");															// set fmarg to be a file with the name stored in buffer_marg and set the file access mode of fmarg to w (which creates an empty file and allows it to be written to)
 			fmarg_H=fopen(buffer_marg_H,"w");															// set fmarg to be a file with the name stored in buffer_marg and set the file access mode of fmarg to w (which creates an empty file and allows it to be written to)
@@ -822,12 +869,17 @@ int main()
 			fprintf(fufull,"\n\n");
 		}*/
 
-		PrintMarginalLoc(fmarg);																	// print the values of x & v1 that the marginal will be evaluated at in the file tagged as fmarg
-		PrintMarginal(U, fmarg);																	// print the marginal distribution for the initial condition, using the DG coefficients in U, in the file tagged as fmarg
 		// MULTI-SPECIES:
-		PrintMarginalLoc_Multispecies(fmarg_L, fmarg_H);
-		PrintMarginal_Multispecies(U_L, U_H, fmarg_L, fmarg_H);
-
+		if(DisparateMass)
+		{
+			PrintMarginalLoc_Multispecies(fmarg_L, fmarg_H);
+			PrintMarginal_Multispecies(U_L, U_H, fmarg_L, fmarg_H);
+		}
+		else
+		{
+			PrintMarginalLoc(fmarg);																	// print the values of x & v1 that the marginal will be evaluated at in the file tagged as fmarg
+			PrintMarginal(U, fmarg);																	// print the marginal distribution for the initial condition, using the DG coefficients in U, in the file tagged as fmarg
+		}
 		if(! Homogeneous)
 		{
 			PrintFieldLoc(fphi, fE);																	// print the values of x that phi & E will be evaluated at in the files tagged as fphi & fE, respectively
@@ -839,32 +891,36 @@ int main()
 	MPI_Barrier(MPI_COMM_WORLD);																	// set an MPI barrier to ensure that all processes have reached this point before continuing
 
 	// MULTI-SPECIES TEST:
-	setInit_spectral(U, f);
-	setInit_spectral_Homo_Multispecies(U_L, U_H, f_L, f_H);
-	FILE *fqhat, *ffvals;
-	fqhat=fopen("Data/qHat_TestVals.dc","w");
-	ffvals=fopen("Data/f_TestVals.dc","w");
+	if(DisparateMass)
+	{
+		setInit_spectral(U, f);
+		setInit_spectral_Homo_Multispecies(U_L, U_H, f_L, f_H);
+		FILE *fqhat, *ffvals;
+		fqhat=fopen("Data/qHat_TestVals.dc","w");
+		ffvals=fopen("Data/f_TestVals.dc","w");
 
-	ComputeQ(f[0], qHat, conv_weights);
-	// NOTE: Maybe not how qHat_LL & qHat_HH should be used, but this is a test...
-	ComputeQ(f_L[0], qHat_LL, conv_weights);
-	ComputeQ(f_H[0], qHat_HH, conv_weights);
-	ComputeQ_LH(f_L[0], f_H[0], qHat_LH, conv_weights_LH);
-    ComputeQ_HL(f_L[0], f_H[0], qHat_HL, conv_weights_HL, mass_ratio);
-    fprintf(fqhat, " l  m  n    qHat(f)     qHat(f_L)    qHat(f_H)    qHat_LH   qHat_HL \n");
-	fprintf(ffvals, " l  m  n       f           f_L          f_H   \n");
-	for(int l=0;l<N;l++){
-	  for(int m=0;m<N;m++){
-		for(int n=0;n<N;n++){
-			k = l*N*N+m*N+n;
-			fprintf(fqhat, "%2d %2d %2d %11g %11g %11g %11g %11g\n",
-								l, m, n, qHat[k][0], qHat_LL[k][0], qHat_HH[k][0], qHat_LH[k][0], qHat_HL[k][0]);
-			fprintf(ffvals, "%2d %2d %2d %11g %11g %11g \n",
-								l, m, n, f[0][k], f_L[0][k], f_H[0][k]);
+		ComputeQ(f[0], qHat, conv_weights);
+		// NOTE: Maybe not how qHat_LL & qHat_HH should be used, but this is a test...
+		ComputeQ(f_L[0], qHat_LL, conv_weights);
+		ComputeQ(f_H[0], qHat_HH, conv_weights);
+		ComputeQ_LH(f_L[0], f_H[0], qHat_LH, conv_weights_LH);
+		ComputeQ_HL(f_L[0], f_H[0], qHat_HL, conv_weights_HL, mass_ratio);
+		fprintf(fqhat, " l  m  n    qHat(f)     qHat(f_L)    qHat(f_H)    qHat_LH   qHat_HL \n");
+		fprintf(ffvals, " l  m  n       f           f_L          f_H   \n");
+		for(int l=0;l<N;l++){
+		  for(int m=0;m<N;m++){
+			for(int n=0;n<N;n++){
+				k = l*N*N+m*N+n;
+				fprintf(fqhat, "%2d %2d %2d %11g %11g %11g %11g %11g\n",
+									l, m, n, qHat[k][0], qHat_LL[k][0], qHat_HH[k][0], qHat_LH[k][0], qHat_HL[k][0]);
+				fprintf(ffvals, "%2d %2d %2d %11g %11g %11g \n",
+									l, m, n, f[0][k], f_L[0][k], f_H[0][k]);
+			}
+		  }
 		}
-	  }
+		fclose(fqhat);
+		fclose(ffvals);
 	}
-	fclose(fqhat);
 
 	MPIt1 = MPI_Wtime();																			// set MPIt1 to the current time in the MPI process
 	while(t < nT) 																					// if t < nT (i.e. not yet reached the final timestep), perform time-splitting to first advect the particle through the collisionless step and then perform one space homogeneous collisional step)
@@ -1075,9 +1131,15 @@ int main()
 	    	//if(t%400==0)fwrite(U,sizeof(double),size*6,fu);
 			if(t%20==0)		// DEGUG CHECK: PRINTING MARGINALS EVERY STEP INSTEAD OF EVERY 20
 			{
-				PrintMarginal(U, fmarg);															// print the marginal distribution, using the DG coefficients in U, in the file tagged as fmarg
 				// MULTI-SPECIES:
-				PrintMarginal_Multispecies(U_L, U_H, fmarg_L, fmarg_H);
+				if(DisparateMass)
+				{
+					PrintMarginal_Multispecies(U_L, U_H, fmarg_L, fmarg_H);
+				}
+				else
+				{
+					PrintMarginal(U, fmarg);															// print the marginal distribution, using the DG coefficients in U, in the file tagged as fmarg
+				}
 				if(! Homogeneous)
 				{
 					PrintFieldData(U, fphi, fE);														// print the values of phi & E, using the DG coefficients in U, in the files tagged as fphi & fE, respectively
@@ -1113,11 +1175,14 @@ int main()
 	if(myrank_mpi==0)																				// only the process with rank 0 will do this
 	{
 		fclose(fmom);  																				// remove the tag fmom to close the file
-		fclose(fmarg);  																			// remove the tag fmarg to close the file
-		if(Homogeneous)
+		if(DisparateMass)
 		{
 			fclose(fmarg_L);  																		// remove the tag fmarg to close the file
 			fclose(fmarg_H);  																		// remove the tag fmarg to close the file
+		}
+		else
+		{
+			fclose(fmarg);  																			// remove the tag fmarg to close the file
 		}
 		fclose(fphi);  																				// remove the tag fphi to close the file
 		fclose(fE);  																				// remove the tag fE to close the file
@@ -1140,23 +1205,25 @@ int main()
 		fftw_free(Q1_fft); fftw_free(Q2_fft); fftw_free(Q3_fft); fftw_free(fftOut); fftw_free(fftIn); // delete the dynamic memory allocated for Q1_fft, Q2_fft, Q3_fft, fftOut & fftIn
 		free(Q);free(f1);free(Q1); free(Utmp_coll);// free(f2); free(f3);//free(Q3);				// delete the dynamic memory allocated for Q, f1, Q1 & Utmp_coll
 		// MULTI-SPECIES:
-		free(v_L); free(v_H); free(eta_L); free(eta_H);
-		free(f1_L); free(f1_H);
-		fftw_free(Q1_fft_LL); fftw_free(Q1_fft_HH); fftw_free(Q1_fft_LH); fftw_free(Q1_fft_HL);
-		fftw_free(Q2_fft_LL); fftw_free(Q2_fft_HH); fftw_free(Q2_fft_LH); fftw_free(Q2_fft_HL);
-		fftw_free(Q3_fft_LL); fftw_free(Q3_fft_HH); fftw_free(Q3_fft_LH); fftw_free(Q3_fft_HL);
-		fftw_free(fftIn_L); fftw_free(fftIn_H); fftw_free(fftOut_L); fftw_free(fftOut_H);
-		fftw_free(fftIn_LL); fftw_free(fftIn_HH); fftw_free(fftOut_LL); fftw_free(fftOut_HH);
-		fftw_free(fftIn_LH); fftw_free(fftIn_HL); fftw_free(fftOut_LH); fftw_free(fftOut_HL);
-		free(f_L); free(f_H);
-	    free(conv_weights_LH); free(conv_weights_HL);
-	    fftw_free(qHat_LL); fftw_free(qHat_HH); fftw_free(qHat_LH); fftw_free(qHat_HL);
+		if(DisparateMass)
+		{
+			free(v_L); free(v_H); free(eta_L); free(eta_H);
+			free(f1_L); free(f1_H);
+			fftw_free(Q1_fft_LL); fftw_free(Q1_fft_HH); fftw_free(Q1_fft_LH); fftw_free(Q1_fft_HL);
+			fftw_free(Q2_fft_LL); fftw_free(Q2_fft_HH); fftw_free(Q2_fft_LH); fftw_free(Q2_fft_HL);
+			fftw_free(Q3_fft_LL); fftw_free(Q3_fft_HH); fftw_free(Q3_fft_LH); fftw_free(Q3_fft_HL);
+			fftw_free(fftIn_L); fftw_free(fftIn_H); fftw_free(fftOut_L); fftw_free(fftOut_H);
+			fftw_free(fftIn_LL); fftw_free(fftIn_HH); fftw_free(fftOut_LL); fftw_free(fftOut_HH);
+			fftw_free(fftIn_LH); fftw_free(fftIn_HL); fftw_free(fftOut_LH); fftw_free(fftOut_HL);
+			free(f_L); free(f_H);
+			free(conv_weights_LH); free(conv_weights_HL);
+			fftw_free(qHat_LL); fftw_free(qHat_HH); fftw_free(qHat_LH); fftw_free(qHat_HL);
+		}
 		if(FullandLinear)																			// only do this if FullandLinear is true
 		{
 			fftw_free(qHat_linear); fftw_free(Q1_fft_linear); 										// delete the dynamic memory allocated for qHat_linear & Q1_fft_linear
 			fftw_free(Q2_fft_linear); fftw_free(Q3_fft_linear); 									// delete the dynamic memory allocated for Q2_fft_linear & Q3_fft_linear
 			free(conv_weights_linear);																// delete the dynamic memory allocated for conv_weights_linear
-
 		}
 		if(LinearLandau)																			// only do this is LinearLandau is true, for using Q(f,M)
 		{
@@ -1166,7 +1233,10 @@ int main()
 	free(output_buffer_vp);																			// delete the dynamic memory allocated for output_buffer_vp
 	free(U); free(U1); free(Utmp); // free(H);														// delete the dynamic memory allocated for U, U1 & Utmp
 	// MULTI-SPECIES
-	free(U_L); free(U_H);
+	if(DisparateMass)
+	{
+		free(U_L); free(U_H);
+	}
 	if(! Homogeneous)
 	{
 		free(cp); free(intE); free(intE1); free(intE2);													// delete the dynamic memory allocated for cp, intE, intE1 & inteE2

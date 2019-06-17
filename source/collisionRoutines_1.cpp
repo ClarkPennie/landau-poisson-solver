@@ -338,7 +338,38 @@ double gHat3_linear(double eta1, double eta2, double eta3, double ki1, double ki
   	return result;	
 }
 
-void generate_conv_weights(double **conv_weights, double **conv_weights_LL, double **conv_weights_HH, double **conv_weights_LH, double **conv_weights_HL, double **conv_weights0_LH, int gamma, double epsilon)
+void generate_conv_weights(double **conv_weights, int gamma, double **conv_weights_LL, double **conv_weights_HH, double **conv_weights_LH, double **conv_weights_HL, double **conv_weights0_LH, double epsilon)
+{
+	if(DisparateMass)
+	{
+		generate_conv_weights_multi(conv_weights, gamma, conv_weights_LL, conv_weights_HH, conv_weights_LH, conv_weights_HL, conv_weights0_LH, epsilon);
+	}
+	else
+	{
+		generate_conv_weights_single(conv_weights, gamma);
+	}
+}
+
+void generate_conv_weights_single(double **conv_weights, int gamma)
+{
+  int i, j, k, l, m, n;
+   #pragma omp parallel for private(i,j,k,l,m,n) shared(conv_weights)
+  for(i=0;i<N;i++){
+    for(j=0;j<N;j++){
+      for(k=0;k<N;k++){
+	for(l=0;l<N;l++){
+	  for(m=0;m<N;m++){
+	    for(n=0;n<N;n++) {
+	     conv_weights[k + N*(j + N*i)][n + N*(m + N*l)] = gHat3(eta[i], eta[j], eta[k], eta[l], eta[m], eta[n], R_v, gamma); // in the notes, correspondingly, (i,j,k)-kxi, (l,m,n)-w
+	    }
+	  }
+	}
+      }
+    }
+  }
+}
+
+void generate_conv_weights_multi(double **conv_weights, int gamma, double **conv_weights_LL, double **conv_weights_HH, double **conv_weights_LH, double **conv_weights_HL, double **conv_weights0_LH, double epsilon)
 {
   int i, j, k, l, m, n;
    #pragma omp parallel for private(i,j,k,l,m,n) shared(conv_weights, conv_weights_LH, conv_weights_HL)
