@@ -110,6 +110,7 @@ int main()
 	// MULTI-SPECIES VARIABLES:
 	// (Note: these parallel the corresponding single-species variables above)
     double mass_ratio;                                                                              // declare mass_ratio (of light to heavy particles, epsilon)
+	double mass_L, mass_H, a_L[3], a_H[3], KiE_L, KiE_H;
 	double *U_L, *U_H;
 	double **f_L, **f_H;
     double **conv_weights_LH, **conv_weights_HL;
@@ -671,22 +672,28 @@ int main()
 		MPI_Barrier(MPI_COMM_WORLD);																// set an MPI barrier to ensure that all processes have reached this point before continuing
 	}
 
-	char buffer_moment[100], buffer_u[100], buffer_ufull[100], buffer_flags[flag.size() + 1],
-						buffer_marg[110], buffer_marg_L[110], buffer_marg_H[110],
-						buffer_phi[110], buffer_E[110], buffer_ent[110];										// declare the arrays buffer_moment (to store the name of the file where the moments are printed), buffer_u (to store the name of the file where the solution U is printed), buffer_ufull (to store the name of the file where the solution U is printed in the TwoStream), buffer_flags (to store the flag added to the end of the filenames), buffer_phi (to store the name of the file where the values of phi are printed), buffer_marg (to store the name of the file where the marginals are printed) & buffer_ent (to store the name of the file where the entropy values are printed)
+	char buffer_moment[110], buffer_moment_L[110], buffer_moment_H[110],
+				buffer_u[110], buffer_u_L[110], buffer_u_H[110],
+				buffer_ufull[110], buffer_flags[flag.size() + 1],
+				buffer_marg[110], buffer_marg_L[110], buffer_marg_H[110],
+				buffer_phi[110], buffer_E[110], buffer_ent[110];										// declare the arrays buffer_moment (to store the name of the file where the moments are printed), buffer_u (to store the name of the file where the solution U is printed), buffer_ufull (to store the name of the file where the solution U is printed in the TwoStream), buffer_flags (to store the flag added to the end of the filenames), buffer_phi (to store the name of the file where the values of phi are printed), buffer_marg (to store the name of the file where the marginals are printed) & buffer_ent (to store the name of the file where the entropy values are printed)
 
 	// EVERY TIME THE CODE IS RUN, CHANGE THE FLAG TO A NAME THAT IDENTIFIES THE CASE RUNNING FOR OR WHAT TIME RUN UP TO:
 	strcpy(buffer_flags, flag.c_str());																// copy the contents of flag to buffer_flags
 	if(Homogeneous)
 	{
-		sprintf(buffer_moment,"Data/Moments_nu%gA%gk%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
-						nu, A_amp, k_wave, Nv, Lv, N, dt, nT, buffer_flags);							// create a .dc file name, located in the directory Data, whose name is Moments_ followed by the values of nu, A_amp, k_wave, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
-		sprintf(buffer_u,"Data/U_nu%gA%gk%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
-						nu, A_amp, k_wave, Nv, Lv, N, dt, nT, buffer_flags);							// create a .dc file name, located in the directory Data, whose name is U_ followed by the values of nu, A_amp, k_wave, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_u
 		sprintf(buffer_ufull,"Data/U2stream_nu%gA%gk%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
 						nu, A_amp, k_wave, Nv, Lv, N, dt, nT, buffer_flags);							// create a .dc file name, located in the directory Data, whose name is U2stream_ followed by the values of nu, A_amp, k_wave, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_ufull
 		if(DisparateMass)
 		{
+			sprintf(buffer_moment_L,"Data/Moments_nu%gA%gk%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
+							nu, A_amp, k_wave, Nv, Lv, N, dt, nT, buffer_flags);							// create a .dc file name, located in the directory Data, whose name is Moments_ followed by the values of nu, A_amp, k_wave, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
+			sprintf(buffer_moment_H,"Data/Moments_nu%gA%gk%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
+							nu, A_amp, k_wave, Nv, Lv, N, dt, nT, buffer_flags);							// create a .dc file name, located in the directory Data, whose name is Moments_ followed by the values of nu, A_amp, k_wave, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
+			sprintf(buffer_u_L,"Data/U_nu%gA%gk%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
+							nu, A_amp, k_wave, Nv, Lv, N, dt, nT, buffer_flags);							// create a .dc file name, located in the directory Data, whose name is U_ followed by the values of nu, A_amp, k_wave, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_u
+			sprintf(buffer_u_H,"Data/U_nu%gA%gk%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
+							nu, A_amp, k_wave, Nv, Lv, N, dt, nT, buffer_flags);							// create a .dc file name, located in the directory Data, whose name is U_ followed by the values of nu, A_amp, k_wave, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_u
 			sprintf(buffer_marg_L,"Data/Marginals_L_nu%gA%gk%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
 							nu, A_amp, k_wave, Nv, Lv, N, dt, nT, buffer_flags);							// create a .dc file name, located in the directory Data, whose name is Marginals_ followed by the values of nu, A_amp, k_wave, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
 			sprintf(buffer_marg_H,"Data/Marginals_H_nu%gA%gk%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
@@ -694,6 +701,10 @@ int main()
 		}
 		else
 		{
+			sprintf(buffer_moment,"Data/Moments_nu%gA%gk%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
+							nu, A_amp, k_wave, Nv, Lv, N, dt, nT, buffer_flags);							// create a .dc file name, located in the directory Data, whose name is Moments_ followed by the values of nu, A_amp, k_wave, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
+			sprintf(buffer_u,"Data/U_nu%gA%gk%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
+							nu, A_amp, k_wave, Nv, Lv, N, dt, nT, buffer_flags);							// create a .dc file name, located in the directory Data, whose name is U_ followed by the values of nu, A_amp, k_wave, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_u
 			sprintf(buffer_marg,"Data/Marginals_nu%gA%gk%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
 								nu, A_amp, k_wave, Nv, Lv, N, dt, nT, buffer_flags);							// create a .dc file name, located in the directory Data, whose name is Marginals_ followed by the values of nu, A_amp, k_wave, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
 		}
@@ -777,7 +788,8 @@ int main()
 		}
 	}
 
-	FILE *fmom, *fu, *fufull, *fmarg, *fmarg_L, *fmarg_H, *fphi, *fE, *fent;						// declare pointers to the files fmom (which will store the moments), fu (which will store the solution U), fufull (which will store the solution U in the TwoStream case), fmarg (which will store the values of the marginals), fphi (which will store the values of the potential phi) & fent (which will store the values fo the entropy)
+	FILE *fmom, *fu, *fufull, *fmarg, *fphi, *fE, *fent,
+			*fmom_L, *fmom_H, *fu_L, *fu_H, *fmarg_L, *fmarg_H;										// declare pointers to the files fmom (which will store the moments), fu (which will store the solution U), fufull (which will store the solution U in the TwoStream case), fmarg (which will store the values of the marginals), fphi (which will store the values of the potential phi) & fent (which will store the values fo the entropy)
 
 	if(myrank_mpi==0)																				// only the process with rank 0 will do this
 	{
@@ -829,16 +841,20 @@ int main()
 
 		grvy_check_file_path(buffer_moment);														// have GRVY check if the directory Data/ exists and, if not, create it
       
-		fmom=fopen(buffer_moment,"w");																// set fmom to be a file with the name stored in buffer_moment and set the file access mode of fmom to w (which creates an empty file and allows it to be written to)
-		fu=fopen(buffer_u, "w");																	// set fu to be a file with the name stored in buffer_u and set the file access mode of fu to w (which creates an empty file and allows it to be written to)
 		if(DisparateMass)
 		{
-			fmarg_L=fopen(buffer_marg_L,"w");															// set fmarg to be a file with the name stored in buffer_marg and set the file access mode of fmarg to w (which creates an empty file and allows it to be written to)
-			fmarg_H=fopen(buffer_marg_H,"w");															// set fmarg to be a file with the name stored in buffer_marg and set the file access mode of fmarg to w (which creates an empty file and allows it to be written to)
+			fmom_L=fopen(buffer_moment_L,"w");														// set fmom to be a file with the name stored in buffer_moment and set the file access mode of fmom to w (which creates an empty file and allows it to be written to)
+			fmom_H=fopen(buffer_moment_H,"w");														// set fmom to be a file with the name stored in buffer_moment and set the file access mode of fmom to w (which creates an empty file and allows it to be written to)
+			fu_L=fopen(buffer_u_L, "w");															// set fu to be a file with the name stored in buffer_u and set the file access mode of fu to w (which creates an empty file and allows it to be written to)
+			fu_H=fopen(buffer_u_H, "w");															// set fu to be a file with the name stored in buffer_u and set the file access mode of fu to w (which creates an empty file and allows it to be written to)
+			fmarg_L=fopen(buffer_marg_L,"w");														// set fmarg to be a file with the name stored in buffer_marg and set the file access mode of fmarg to w (which creates an empty file and allows it to be written to)
+			fmarg_H=fopen(buffer_marg_H,"w");														// set fmarg to be a file with the name stored in buffer_marg and set the file access mode of fmarg to w (which creates an empty file and allows it to be written to)
 		}
 		else
 		{
-			fmarg=fopen(buffer_marg,"w");																// set fmarg to be a file with the name stored in buffer_marg and set the file access mode of fmarg to w (which creates an empty file and allows it to be written to)
+			fmom=fopen(buffer_moment,"w");															// set fmom to be a file with the name stored in buffer_moment and set the file access mode of fmom to w (which creates an empty file and allows it to be written to)
+			fu=fopen(buffer_u, "w");																// set fu to be a file with the name stored in buffer_u and set the file access mode of fu to w (which creates an empty file and allows it to be written to)
+			fmarg=fopen(buffer_marg,"w");															// set fmarg to be a file with the name stored in buffer_marg and set the file access mode of fmarg to w (which creates an empty file and allows it to be written to)
 		}
 		fphi=fopen(buffer_phi,"w");																	// set fphi to be a file with the name stored in buffer_phi and set the file access mode of fphi to w (which creates an empty file and allows it to be written to)
 		fE=fopen(buffer_E,"w");																		// set fE to be a file with the name stored in buffer_E and set the file access mode of fphi to w (which creates an empty file and allows it to be written to)
@@ -903,6 +919,28 @@ int main()
 
 			KiEratio = computeKiEratio(U, fNegVals);													// compute the ratio of the kinetic energy where f is negative to that where it is positive and store it in KiEratio
 			printf("Kinetic Energy Ratio = %g\n", KiEratio);											// print the ratio of the kinetic energy where f is negative to that where it is positive
+		}
+		else
+		{
+			computeMass_Multispecies(U_L, U_H, mass_L, mass_H);																		// set mass to the value calculated through computeMass, for the solution f(x,v,t) at the current time t, using its DG coefficients stored U
+			computeMomentum_Multispecies(U_L, U_H, a_L, a_H);																		// calculate the momentum for the solution f(x,v,t) at the current time t, using its DG coefficients stored U, and store it in a
+			computeKiE_Multispecies(U_L, U_H, KiE_L, KiE_H);																			// set KiE to the value calculated through computeKiE, for the solution f(x,v,t) at the current time t, using its DG coefficients stored U
+//			ent1 = computeEntropy(U);																	// set ent1 the value calculated through computeEntropy
+//			l_ent1 = log(fabs(ent1));																	// set l_ent1 to the log of ent1
+//			ll_ent1 = log(fabs(l_ent1));																// set ll_ent1 to the log of l_ent1
+			printf("step 0: \n");
+			printf("Light:  %14.8g  %14.8g  %14.8g  %14.8g  %14.8g \n",
+					mass_L, a_L[0], a_L[1], a_L[2], KiE_L); //, ent1);									// display in the output file that this is step 0 (so these are the initial conditions), then the mass, 3 components of momentum, kinetic energy, entropy & Strain and Guo weighted L2 norm
+			printf("Heavy:  %14.8g  %14.8g  %14.8g  %14.8g  %14.8g \n",
+					mass_H, a_H[0], a_H[1], a_H[2], KiE_H); //, ent1);									// display in the output file that this is step 0 (so these are the initial conditions), then the mass, 3 components of momentum, kinetic energy, entropy & Strain and Guo weighted L2 norm
+			fprintf(fmom_L, "%14.8g %14.8g %14.8g %14.8g %14.8g %14.8g %14.8g %14.8g \n",
+					mass_L, a_L[0], a_L[1], a_L[2], 0.0, 0.0, 0.0, KiE_L);														// in the file tagged as fmom, print the initial mass, 3 components of momentum & kinetic energy
+			fprintf(fmom_L, "%14.8g %14.8g %14.8g %14.8g %14.8g %14.8g %14.8g %14.8g \n",
+					mass_H, a_H[0], a_H[1], a_H[2], 0.0, 0.0, 0.0, KiE_H);														// in the file tagged as fmom, print the initial mass, 3 components of momentum & kinetic energy
+//			fprintf(fent, "%11.8g %11.8g %11.8g \n", ent1, l_ent1, ll_ent1);							// in the file tagged as fent, print the entropy, its log and the log of that
+//
+//			KiEratio = computeKiEratio(U, fNegVals);													// compute the ratio of the kinetic energy where f is negative to that where it is positive and store it in KiEratio
+//			printf("Kinetic Energy Ratio = %g\n", KiEratio);											// print the ratio of the kinetic energy where f is negative to that where it is positive
 		}
 
 		//fufull=fopen("Data/U_nu0.02A0.5k1.5708Nx48Lx4Nv32Lv4SpectralN24dt0.004_non_nu002_time15s.dc", "w");
@@ -1231,21 +1269,24 @@ int main()
 
 		fwrite(U,sizeof(double),size*6,fu);															// write the coefficients of the DG approximation at the end, stored in U, which is 6*size entires, each of the size of a double datatype, in the file tagged as fu
 		//PrintPhiVals(U, fphi);																	// print the values of the potential in the file tagged as filephi at the given timestep
-	
-		fclose(fu);  																				// remove the tag fu to close the file
-	}
+		}
 	MPI_Barrier(MPI_COMM_WORLD);																	// set an MPI barrier to ensure that all processes have reached this point before continuing
   
 	if(myrank_mpi==0)																				// only the process with rank 0 will do this
 	{
-		fclose(fmom);  																				// remove the tag fmom to close the file
 		if(DisparateMass)
 		{
+			fclose(fu_L);  																				// remove the tag fu to close the file
+			fclose(fu_H);  																				// remove the tag fu to close the file
+			fclose(fmom_L);  																				// remove the tag fmom to close the file
+			fclose(fmom_H);  																				// remove the tag fmom to close the file
 			fclose(fmarg_L);  																		// remove the tag fmarg to close the file
 			fclose(fmarg_H);  																		// remove the tag fmarg to close the file
 		}
 		else
 		{
+			fclose(fu);  																				// remove the tag fu to close the file
+			fclose(fmom);  																				// remove the tag fmom to close the file
 			fclose(fmarg);  																			// remove the tag fmarg to close the file
 		}
 		fclose(fphi);  																				// remove the tag fphi to close the file

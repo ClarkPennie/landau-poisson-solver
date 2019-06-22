@@ -40,6 +40,22 @@ double computeMass_Homo(double *U)
   return tmp*scalev;
 }
 
+void computeMass_Multispecies(double *U_L, double *U_H, double& m_L, double& m_H)
+{
+  int k;
+  double tmp_L=0., tmp_H=0;
+  #pragma omp parallel for shared(U_L,U_H) reduction(+:tmp_L,tmp_H)
+  for(k=0;k<size_v;k++)
+  {
+	  tmp_L += U_L[k*6+0] + U_L[k*6+5]/4.;
+	  tmp_H += U_H[k*6+0] + U_H[k*6+5]/4.;
+  }
+
+  m_L = tmp_L*scalev_L;
+  m_H = tmp_H*scalev_H;
+}
+
+
 void computeMomentum(double *U, double *a)
 {
 	if(Homogeneous)
@@ -82,6 +98,28 @@ void computeMomentum_Homo(double *U, double *a)
     tmp3 += Gridv((double)j3)*dv*U[k*6+0] + U[k*6+4]*dv*dv/12. + U[k*6+5]*Gridv((double)j3)*dv/4.;
   }
   a[0]=tmp1*dv*dv; a[1]=tmp2*dv*dv; a[2]=tmp3*dv*dv;
+}
+
+void computeMomentum_Multispecies(double *U_L, double *U_H, double *a_L, double *a_H)
+{
+  int k, j,j1,j2,j3; //k=i*Nv*Nv*Nv + (j1*Nv*Nv + j2*Nv + j3);
+  double tmp1_L=0., tmp2_L=0., tmp3_L=0.;
+  double tmp1_H=0., tmp2_H=0., tmp3_H=0.;
+  a_L[0]=0.; a_L[1]=0.; a_L[2]=0.; // the three momentum
+  a_H[0]=0.; a_H[1]=0.; a_H[2]=0.; // the three momentum
+  #pragma omp parallel for private(k,j,j1,j2,j3) shared(U_L, U_H) reduction(+:tmp1_L,tmp2_L,tmp3_L,tmp1_H,tmp2_H,tmp3_H)  //reduction directive may change the result a little bit
+  for(k=0;k<size_v;k++){
+    j=k%size_v;
+    j3=j%Nv; j2=((j-j3)%(Nv*Nv))/Nv; j1=(j-j3-j2*Nv)/(Nv*Nv);
+    tmp1_L += Gridv_L((double)j1)*dv_L*U_L[k*6+0] + U_L[k*6+2]*dv_L*dv_L/12. + U_L[k*6+5]*Gridv_L((double)j1)*dv_L/4.;
+    tmp2_L += Gridv_L((double)j2)*dv_L*U_L[k*6+0] + U_L[k*6+3]*dv_L*dv_L/12. + U_L[k*6+5]*Gridv_L((double)j2)*dv_L/4.;
+    tmp3_L += Gridv_L((double)j3)*dv_L*U_L[k*6+0] + U_L[k*6+4]*dv_L*dv_L/12. + U_L[k*6+5]*Gridv_L((double)j3)*dv_L/4.;
+    tmp1_H += Gridv_H((double)j1)*dv_H*U_H[k*6+0] + U_H[k*6+2]*dv_H*dv_H/12. + U_H[k*6+5]*Gridv_H((double)j1)*dv_H/4.;
+    tmp2_H += Gridv_H((double)j2)*dv_H*U_H[k*6+0] + U_H[k*6+3]*dv_H*dv_H/12. + U_H[k*6+5]*Gridv_H((double)j2)*dv_H/4.;
+    tmp3_H += Gridv_H((double)j3)*dv_H*U_H[k*6+0] + U_H[k*6+4]*dv_H*dv_H/12. + U_H[k*6+5]*Gridv_H((double)j3)*dv_H/4.;
+  }
+  a_L[0]=tmp1_L*dv_L*dv_L; a_L[1]=tmp2_L*dv_L*dv_L; a_L[2]=tmp3_L*dv_L*dv_L;
+  a_H[0]=tmp1_H*dv_H*dv_H; a_H[1]=tmp2_H*dv_H*dv_H; a_H[2]=tmp3_H*dv_H*dv_H;
 }
 
 double computeKiE(double *U)
@@ -128,6 +166,23 @@ double computeKiE_Homo(double *U)			// int f |v|^2 dv
   }
   tmp *= dv*dv;
   return 0.5*tmp;
+}
+
+void computeKiE_Multispecies(double *U_L, double* U_H, double& T_L, double& T_H)			// int f |v|^2 dv
+{
+  int k,j,j1,j2,j3;
+  double tmp_L=0., tp1_L=0., tmp_H=0., tp1_H=0.;
+  //#pragma omp parallel for private(k,j,j1,j2,j3,tp, tp1) shared(U) reduction(+:tmp)
+  for(k=0;k<size_v;k++){
+    j=k%size_v;
+    j3=j%Nv; j2=((j-j3)%(Nv*Nv))/Nv; j1=(j-j3-j2*Nv)/(Nv*Nv);
+    tp1_L = Gridv_L((double)j1)*Gridv_L((double)j1) + Gridv_L((double)j2)*Gridv_L((double)j2) + Gridv_L((double)j3)*Gridv_L((double)j3);
+    tmp_L += U_L[k*6+0]*(tp1_L + dv_L*dv_L/4.)*dv_L + (Gridv_L(j1)*U_L[k*6+2]+Gridv_L(j2)*U_L[k*6+3]+Gridv_L(j3)*U_L[k*6+4])*dv_L*dv_L/6. + U_L[k*6+5]*( dv_L*dv_L*dv_L*19./240. + tp1_L*dv_L/4.);
+    tp1_H = Gridv_H((double)j1)*Gridv_H((double)j1) + Gridv_H((double)j2)*Gridv_H((double)j2) + Gridv_H((double)j3)*Gridv_H((double)j3);
+    tmp_H += U_H[k*6+0]*(tp1_H + dv_H*dv_H/4.)*dv_H + (Gridv_H(j1)*U_H[k*6+2]+Gridv_H(j2)*U_H[k*6+3]+Gridv_H(j3)*U_H[k*6+4])*dv_H*dv_H/6. + U_H[k*6+5]*( dv_H*dv_H*dv_H*19./240. + tp1_H*dv_H/4.);
+  }
+  T_L = 0.5*dv_L*dv_L*tmp_L;
+  T_H = 0.5*dv_H*dv_H*tmp_H;
 }
 
 double computeKiEratio(double *U, int *NegVals)

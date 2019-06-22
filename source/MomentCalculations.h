@@ -29,17 +29,23 @@ double computeMass_Inhomo(double *U);
 
 double computeMass_Homo(double *U);
 
+void computeMass_Multispecies(double *U_L, double *U_H, double& m_L, double& m_H);
+
 void computeMomentum(double *U, double *a);
 
 void computeMomentum_Inhomo(double *U, double *a);
 
 void computeMomentum_Homo(double *U, double *a);
 
+void computeMomentum_Multispecies(double *U_L, double *U_H, double *a_L, double *a_H);
+
 double computeKiE(double *U);
 
 double computeKiE_Inhomo(double *U);
 
 double computeKiE_Homo(double *U);
+
+void computeKiE_Multispecies(double *U_L, double* U_H, double& T_L, double& T_H);
 
 double computeKiEratio(double *U, int *NegVals);
 
