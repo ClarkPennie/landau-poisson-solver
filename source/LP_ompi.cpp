@@ -70,7 +70,7 @@ fftw_complex *Q1_fft_LL, *Q1_fft_HH, *Q1_fft_LH, *Q1_fft_HL;
 fftw_complex *Q2_fft_LL, *Q2_fft_HH, *Q2_fft_LH, *Q2_fft_HL;
 fftw_complex *Q3_fft_LL, *Q3_fft_HH, *Q3_fft_LH, *Q3_fft_HL;
 fftw_complex *fftIn_L, *fftIn_H, *fftOut_L, *fftOut_H;
-fftw_complex *fftIn_LL, *fftIn_HH, *fftOut_LL, *fftOut_HH;
+//fftw_complex *fftIn_LL, *fftIn_HH, *fftOut_LL, *fftOut_HH;
 fftw_complex *fftIn_LH, *fftIn_HL, *fftOut_LH, *fftOut_HL;
 double *Utmp_coll_L, *Utmp_coll_H;
 
@@ -484,6 +484,9 @@ int main()
 			eta = (double *)malloc(N*sizeof(double));													// allocate enough space at the pointer eta to store N many double numbers
 		}
 
+		fftOut = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer fftOut for size_ft many complex numbers
+		fftIn = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex)); 							// allocate enough space at the pointer fftIn for size_ft many complex numbers
+
 		if(DisparateMass)
 		{
 			Q1_fft_LL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer Q1_fft for size_ft many complex numbers
@@ -502,24 +505,22 @@ int main()
 			fftIn_H = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));
 			fftOut_L = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));
 			fftOut_H = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));
-			fftOut_LL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftOut for size_ft many complex numbers
-			fftIn_LL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftIn for size_ft many complex numbers
-			fftOut_HH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftOut for size_ft many complex numbers
-			fftIn_HH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftIn for size_ft many complex numbers
-			fftOut_LH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftOut for size_ft many complex numbers
-			fftIn_LH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftIn for size_ft many complex numbers
-			fftOut_HL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftOut for size_ft many complex numbers
-			fftIn_HL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftIn for size_ft many complex numbers
+//			fftOut_LL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftOut for size_ft many complex numbers
+//			fftIn_LL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftIn for size_ft many complex numbers
+//			fftOut_HH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftOut for size_ft many complex numbers
+//			fftIn_HH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftIn for size_ft many complex numbers
+//			fftOut_LH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftOut for size_ft many complex numbers
+//			fftIn_LH = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftIn for size_ft many complex numbers
+//			fftOut_HL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftOut for size_ft many complex numbers
+//			fftIn_HL = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));                            // allocate enough space at the pointer fftIn for size_ft many complex numbers
 		}
 		if(!DisparateMass || DisparateMass_Check)	// If no longer needing to debug DisparateMass, just change to else
 		{
 			Q1_fft = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer Q1_fft for size_ft many complex numbers
 			Q2_fft = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer Q2_fft for size_ft many complex numbers
 			Q3_fft = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer Q3_fft for size_ft many complex numbers
-			fftOut = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex));							// allocate enough space at the pointer fftOut for size_ft many complex numbers
-			fftIn = (fftw_complex *)fftw_malloc(size_ft*sizeof(fftw_complex)); 							// allocate enough space at the pointer fftIn for size_ft many complex numbers
 		}
- 
+
 		if(LinearLandau)																			// only do this is LinearLandau is true, for using Q(f,M)
 		{
 			DFTMaxwell = (fftw_complex**)fftw_malloc(chunk_Nx*sizeof(fftw_complex*));
@@ -839,7 +840,14 @@ int main()
 			fclose(fu);																				// close the file fu
 		}
 
-		grvy_check_file_path(buffer_moment);														// have GRVY check if the directory Data/ exists and, if not, create it
+		if(DisparateMass)
+		{
+			grvy_check_file_path(buffer_moment);														// have GRVY check if the directory Data/ exists and, if not, create it
+		}
+		else
+		{
+			grvy_check_file_path(buffer_moment_L);														// have GRVY check if the directory Data/ exists and, if not, create it
+		}
       
 		if(DisparateMass)
 		{
@@ -920,6 +928,7 @@ int main()
 			KiEratio = computeKiEratio(U, fNegVals);													// compute the ratio of the kinetic energy where f is negative to that where it is positive and store it in KiEratio
 			printf("Kinetic Energy Ratio = %g\n", KiEratio);											// print the ratio of the kinetic energy where f is negative to that where it is positive
 		}
+		// MULTI-SPECIES:
 		else
 		{
 			computeMass_Multispecies(U_L, U_H, mass_L, mass_H);																		// set mass to the value calculated through computeMass, for the solution f(x,v,t) at the current time t, using its DG coefficients stored U
@@ -975,13 +984,15 @@ int main()
 	if(DisparateMass)
 	{
 		MPI_Bcast(U_L, size*6, MPI_DOUBLE, 0, MPI_COMM_WORLD);   										// send the contents of U_L, which will be 6*size entries of datatype MPI_DOUBLE, from the process with rank 0 to all processes, using the communicator MPI_COMM_WORLD
+		MPI_Barrier(MPI_COMM_WORLD);																	// set an MPI barrier to ensure that all processes have reached this point before continuing
 		MPI_Bcast(U_H, size*6, MPI_DOUBLE, 0, MPI_COMM_WORLD);   										// send the contents of U_H, which will be 6*size entries of datatype MPI_DOUBLE, from the process with rank 0 to all processes, using the communicator MPI_COMM_WORLD
+		MPI_Barrier(MPI_COMM_WORLD);																	// set an MPI barrier to ensure that all processes have reached this point before continuing
 	}
 	if(!DisparateMass || DisparateMass_Check)	// If no longer needing to debug DisparateMass, just change to else
 	{
 		MPI_Bcast(U, size*6, MPI_DOUBLE, 0, MPI_COMM_WORLD);   											// send the contents of U, which will be 6*size entries of datatype MPI_DOUBLE, from the process with rank 0 to all processes, using the communicator MPI_COMM_WORLD
+		MPI_Barrier(MPI_COMM_WORLD);																	// set an MPI barrier to ensure that all processes have reached this point before continuing
 	}
-	MPI_Barrier(MPI_COMM_WORLD);																	// set an MPI barrier to ensure that all processes have reached this point before continuing
 
 	// MULTI-SPECIES TEST:
 	if(DisparateMass_Check)
@@ -1018,15 +1029,15 @@ int main()
 	MPIt1 = MPI_Wtime();																			// set MPIt1 to the current time in the MPI process
 	while(t < nT) 																					// if t < nT (i.e. not yet reached the final timestep), perform time-splitting to first advect the particle through the collisionless step and then perform one space homogeneous collisional step)
 	{
-		if(DisparateMass)
-		{
-			if(myrank_mpi==0)
-			{
-				std::cout << "Program cannot run..." << std::endl;
-				std::cout << "Not ready for time-stepping with the Disparate Mass problem yet." << std::endl;
-			}
-			exit(1);
-		}
+//		if(DisparateMass)
+//		{
+//			if(myrank_mpi==0)
+//			{
+//				std::cout << "Program cannot run..." << std::endl;
+//				std::cout << "Not ready for time-stepping with the Disparate Mass problem yet." << std::endl;
+//			}
+//			exit(1);
+//		}
 		if(! Homogeneous)
 		{
 			RK3(U); 																					// Use RK3 to perform one timestep of the collisionless problem
@@ -1034,7 +1045,16 @@ int main()
 
 		if(nu > 0.)
 		{
-			setInit_spectral(U, f); 																// Take the coefficient of the DG solution from the advection step, and project them onto the grid used for the spectral method to perform the collision step
+			if(!DisparateMass || DisparateMass_Check)	// If no longer needing to debug DisparateMass, just change to !DisparateMass
+			{
+				setInit_spectral(U, f); 																// Take the coefficient of the DG solution from the advection step, and project them onto the grid used for the spectral method to perform the collision step
+			}
+			// MULTI-SPECIES:
+			if(DisparateMass)	// If no longer needing to debug DisparateMass, just change to else
+			{
+				setInit_spectral_Homo_Multispecies(U_L, U_H, f_L, f_H);
+			}
+
 
 			for(int l0=chunk_Nx*myrank_mpi;l0<chunk_Nx*(myrank_mpi+1) && l0<Nx;l0++) 						// divide the number of discretised space points equally over the number of MPI processes, so that each process receives a different chunk of space to work on
 			{
@@ -1046,69 +1066,69 @@ int main()
 				{
 					l = l0;
 				}
-				if(FullandLinear)																	// only do this if FullandLinear is true
+				if(!DisparateMass || DisparateMass_Check)	// If no longer needing to debug DisparateMass, just change to !DisparateMass
 				{
-					ComputeQ_FandL(f[l%chunk_Nx], qHat, conv_weights, qHat_linear, conv_weights_linear);	// using the coefficients of the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), calculate the Fourier tranform of Q(f,f) using conv_weights for the weights in the convolution in the full part of Q & conv_weights_linear in the convolution in the linear part of Q, then store the results of each Fourier transform in qHat & qHat_linear, respectively
-					conserveMoments(qHat, qHat_linear);											// perform the explicit conservation calculation
-					RK4_FandL(f[l%chunk_Nx], l, qHat, conv_weights, qHat_linear, conv_weights_linear,
-							U, Utmp_coll);															// advance to the next time step in the collisional problem using RK4 at the given space-step l, taking the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), as well as qHat, conv_weights, qHat_linear & conv_weights_linear (to allow more Fourier transforms of Q to be made), storing the output partially in U and partially in Utmp_coll
-				}
-				else																				// otherwise, if FullandLinear is false...
-				{
-					if(LinearLandau)																// only do this if LinearLandau is true, for using Q(f,M)
+					if(FullandLinear)																	// only do this if FullandLinear is true
 					{
-						ComputeQLinear(f[l%chunk_Nx], DFTMaxwell[l%chunk_Nx], qHat, conv_weights);	// using the coefficients of the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), calculate the Fourier tranform of Q(f,M) using conv_weights1 & conv_weights2 for the weights in the convolution, then store the results of the Fourier transform in qHat
-						conserveMoments(qHat);														// perform the explicit conservation calculation
-						RK4Linear(f[l%chunk_Nx], DFTMaxwell[l%chunk_Nx], l, qHat, conv_weights, U, Utmp_coll);		// advance to the next time step in the collisional problem using RK4 at the given space-step l, taking the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), as well as qHat, conv_weights1 & conv_weights2 (to allow more Fourier transforms of Q to be made), storing the output partially in U and partially in Utmp_coll
+						ComputeQ_FandL(f[l%chunk_Nx], qHat, conv_weights, qHat_linear, conv_weights_linear);	// using the coefficients of the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), calculate the Fourier tranform of Q(f,f) using conv_weights for the weights in the convolution in the full part of Q & conv_weights_linear in the convolution in the linear part of Q, then store the results of each Fourier transform in qHat & qHat_linear, respectively
+						conserveMoments(qHat, qHat_linear);											// perform the explicit conservation calculation
+						RK4_FandL(f[l%chunk_Nx], l, qHat, conv_weights, qHat_linear, conv_weights_linear,
+								U, Utmp_coll);															// advance to the next time step in the collisional problem using RK4 at the given space-step l, taking the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), as well as qHat, conv_weights, qHat_linear & conv_weights_linear (to allow more Fourier transforms of Q to be made), storing the output partially in U and partially in Utmp_coll
 					}
-					else																			// otherwise, if FullandLinear is false...
+					else																				// otherwise, if FullandLinear is false...
 					{
-						ComputeQ(f[l%chunk_Nx], qHat, conv_weights);								// using the coefficients of the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), calculate the Fourier tranform of Q(f,f) using conv_weights for the weights in the convolution, then store the results of the Fourier transform in qHat
-						conserveMoments(qHat);														// perform the explicit conservation calculation
-						RK4(f[l%chunk_Nx], l, qHat, conv_weights, U, Utmp_coll);					// advance to the next time step in the collisional problem using RK4 at the given space-step l, taking the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), as well as qHat & conv_weights (to allow more Fourier transforms of Q to be made), storing the output partially in U and partially in Utmp_coll
-					}
-	/*				//DEBUG CHECK:
-					double qHat_real, qHat_imag;
-					for(int j1=0;j1<N;j1++)
-					{
-						for(int j2=0;j2<N;j2++)
+						if(LinearLandau)																// only do this if LinearLandau is true, for using Q(f,M)
 						{
-							for(int j3=0;j3<N;j3++)
+							ComputeQLinear(f[l%chunk_Nx], DFTMaxwell[l%chunk_Nx], qHat, conv_weights);	// using the coefficients of the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), calculate the Fourier tranform of Q(f,M) using conv_weights1 & conv_weights2 for the weights in the convolution, then store the results of the Fourier transform in qHat
+							conserveMoments(qHat);														// perform the explicit conservation calculation
+							RK4Linear(f[l%chunk_Nx], DFTMaxwell[l%chunk_Nx], l, qHat, conv_weights, U, Utmp_coll);		// advance to the next time step in the collisional problem using RK4 at the given space-step l, taking the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), as well as qHat, conv_weights1 & conv_weights2 (to allow more Fourier transforms of Q to be made), storing the output partially in U and partially in Utmp_coll
+						}
+						else																			// otherwise, if FullandLinear is false...
+						{
+							ComputeQ(f[l%chunk_Nx], qHat, conv_weights);								// using the coefficients of the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), calculate the Fourier tranform of Q(f,f) using conv_weights for the weights in the convolution, then store the results of the Fourier transform in qHat
+							conserveMoments(qHat);														// perform the explicit conservation calculation
+							RK4(f[l%chunk_Nx], l, qHat, conv_weights, U, Utmp_coll);					// advance to the next time step in the collisional problem using RK4 at the given space-step l, taking the current solution stored in f (but only for the chunk of space being taken care of by the current MPI process), as well as qHat & conv_weights (to allow more Fourier transforms of Q to be made), storing the output partially in U and partially in Utmp_coll
+						}
+		/*				//DEBUG CHECK:
+						double qHat_real, qHat_imag;
+						for(int j1=0;j1<N;j1++)
+						{
+							for(int j2=0;j2<N;j2++)
 							{
-								qHat_real = qHat[k][0];
-								qHat_imag = qHat[k][1];
-								k = j1*N*N + j2*N + j3;
-								printf("l = %d: k = %d, qHat(%d,%d,%d) = %g + %g i \n", l, k , j1, j2, j3, qHat_real, qHat_imag);
+								for(int j3=0;j3<N;j3++)
+								{
+									qHat_real = qHat[k][0];
+									qHat_imag = qHat[k][1];
+									k = j1*N*N + j2*N + j3;
+									printf("l = %d: k = %d, qHat(%d,%d,%d) = %g + %g i \n", l, k , j1, j2, j3, qHat_real, qHat_imag);
+								}
 							}
 						}
+						*/
 					}
-					*/
+				}
+				// MULTI-SPECIES:
+				if(DisparateMass)	// If no longer needing to debug DisparateMass, just change to else
+				{
+					ComputeQ(f_L[0], qHat_LL, conv_weights_LL, "L");
+					ComputeQ(f_H[0], qHat_HH, conv_weights_HH, "H");
+					ComputeQ_LH(f_L[0], f_H[0], qHat_LH, conv_weights_LH);
+					ComputeQ_HL(f_L[0], f_H[0], qHat_HL, conv_weights_HL, mass_ratio);
+					Euler_Homo(qHat_LL, qHat_HH, qHat_LH, qHat_HL, U_L, U_H, Utmp_coll_L, Utmp_coll_H, mass_ratio);
 				}
 			}
 
 			MPI_Barrier(MPI_COMM_WORLD);															// set an MPI barrier to ensure that all processes have reached this point before continuing
-			if(myrank_mpi == 0) 																	// only the process with rank 0 will do this
+			if(!DisparateMass || DisparateMass_Check)	// If no longer needing to debug DisparateMass, just change to !DisparateMass
 			{
-				// TRANSFER CONTENTS OF THE dU (Utmp_coll) THAT HAVE BEEN COMPUTED INTO U1 (U):
-				if(Homogeneous)
+				if(myrank_mpi == 0) 																	// only the process with rank 0 will do this
 				{
-					for(k=0;k<chunksize_dg;k++)															// cycle through all size_v (= Nv^3) many velocity-steps (which will exist for each space-step)
+					// TRANSFER CONTENTS OF THE dU (Utmp_coll) THAT HAVE BEEN COMPUTED INTO U1 (U):
+					if(Homogeneous)
 					{
-						k_v = k;																	// set k_v to be the value associated with the k-th velocity-step for the l-th space-step
-						U[k_v*6+0] = Utmp_coll[k_v*5];												// set the 6*k_v-th entry of U to the 5*k_v-th entry of Utmp_coll
-						U[k_v*6+5] = Utmp_coll[k_v*5+4]; 											// set the (6*k_v + 5)-th entry of U to the (5*k_v + 4)-th entry of Utmp_coll
-						U[k_v*6+2] = Utmp_coll[k_v*5+1];  											// set the (6*k_v + 2)-th entry of U to the (5*k_v + 1)-th entry of Utmp_coll
-						U[k_v*6+3] = Utmp_coll[k_v*5+2];	 										// set the (6*k_v + 3)-th entry of U to the (5*k_v + 2)-th entry of Utmp_coll
-						U[k_v*6+4] = Utmp_coll[k_v*5+3];											// set the (6*k_v + 4)-th entry of U to the (5*k_v + 3)-th entry of Utmp_coll
-					}
-				}
-				else
-				{
-					for(l=0;l<chunk_Nx;l++) 															// cycle through all space-steps stored in the first chunk of the space interval (which is stored on the process with rank 0)
-					{
-						for(k=0;k<size_v;k++)															// cycle through all size_v (= Nv^3) many velocity-steps (which will exist for each space-step)
+						for(k=0;k<chunksize_dg;k++)															// cycle through all size_v (= Nv^3) many velocity-steps (which will exist for each space-step)
 						{
-							k_v = l*size_v + k;															// set k_v to be the value associated with the k-th velocity-step for the l-th space-step
+							k_v = k;																	// set k_v to be the value associated with the k-th velocity-step for the l-th space-step
 							U[k_v*6+0] = Utmp_coll[k_v*5];												// set the 6*k_v-th entry of U to the 5*k_v-th entry of Utmp_coll
 							U[k_v*6+5] = Utmp_coll[k_v*5+4]; 											// set the (6*k_v + 5)-th entry of U to the (5*k_v + 4)-th entry of Utmp_coll
 							U[k_v*6+2] = Utmp_coll[k_v*5+1];  											// set the (6*k_v + 2)-th entry of U to the (5*k_v + 1)-th entry of Utmp_coll
@@ -1116,11 +1136,101 @@ int main()
 							U[k_v*6+4] = Utmp_coll[k_v*5+3];											// set the (6*k_v + 4)-th entry of U to the (5*k_v + 3)-th entry of Utmp_coll
 						}
 					}
+					else
+					{
+						for(l=0;l<chunk_Nx;l++) 															// cycle through all space-steps stored in the first chunk of the space interval (which is stored on the process with rank 0)
+						{
+							for(k=0;k<size_v;k++)															// cycle through all size_v (= Nv^3) many velocity-steps (which will exist for each space-step)
+							{
+								k_v = l*size_v + k;															// set k_v to be the value associated with the k-th velocity-step for the l-th space-step
+								U[k_v*6+0] = Utmp_coll[k_v*5];												// set the 6*k_v-th entry of U to the 5*k_v-th entry of Utmp_coll
+								U[k_v*6+5] = Utmp_coll[k_v*5+4]; 											// set the (6*k_v + 5)-th entry of U to the (5*k_v + 4)-th entry of Utmp_coll
+								U[k_v*6+2] = Utmp_coll[k_v*5+1];  											// set the (6*k_v + 2)-th entry of U to the (5*k_v + 1)-th entry of Utmp_coll
+								U[k_v*6+3] = Utmp_coll[k_v*5+2];	 										// set the (6*k_v + 3)-th entry of U to the (5*k_v + 2)-th entry of Utmp_coll
+								U[k_v*6+4] = Utmp_coll[k_v*5+3];											// set the (6*k_v + 4)-th entry of U to the (5*k_v + 3)-th entry of Utmp_coll
+							}
+						}
+					}
+					// RECEIVE FROM ALL OTHER PROCESSES CONSECUTIVELY TO ENSURE THE WEIGHTS ARE STORED IN THE FILE U CONSECUTIVELY:
+					for(i=1;i<nprocs_Nx;i++)															// store the DG coefficients of the current solution in U that were calculated by the remaining processes (with ranks i = 1, 2, ..., nprocs_Nx-1) for their corresponding chunk of space
+					{
+						if(Homogeneous)
+						{
+							MPI_Recv(output_buffer, chunksize_dg*5, MPI_DOUBLE, i, i,
+									MPI_COMM_WORLD, &status);											 	// receive a message of 5*chunk_Nx_size_v entries of datatype MPI_DOUBLE from the process with rank i (storing the i-th space chunk of U, containing the DG coefficients calculate on the processor with corresponding rank), storing the data in output_buffer, with tag i in the communicator MPI_COMM_WORLD, storing the status of the receive in status
+							for(int k_loc=0;k_loc<chunksize_dg;k_loc++)													// cycle through all size_v (= Nv^3) many velocity-steps (which will exist for each space-step)
+							{
+								k_v = chunksize_dg*i + k_loc; 															// set k_v to be the value associated with the k-th velocity-step for the (chunk_Nx*i + l)-th space-step (which is the l-th space-step in the current chunk)
+								// Store contents of the receive buffer in the correct portion of U to add this part of the solution
+								U[k_v*6+0] = output_buffer[k_loc*5];								// set the 6*k_v-th entry of U to the 5*k_local-th entry of Utmp_coll
+								U[k_v*6+5] = output_buffer[k_loc*5+4];							// set the (6*k_v + 5)-th entry of U to the (5*k_local + 4)-th entry of Utmp_coll
+								U[k_v*6+2] = output_buffer[k_loc*5+1];  							// set the (6*k_v + 2)-th entry of U to the (5*k_local + 1)-th entry of Utmp_coll
+								U[k_v*6+3] = output_buffer[k_loc*5+2];	 						// set the (6*k_v + 3)-th entry of U to the (5*k_local + 2)-th entry of Utmp_coll
+								U[k_v*6+4] = output_buffer[k_loc*5+3];							// set the (6*k_v + 4)-th entry of U to the (5*k_local + 3)-th entry of Utmp_coll
+							}
+						}
+						else
+						{
+							MPI_Recv(output_buffer, chunk_Nx*size_v*5, MPI_DOUBLE, i, i,
+									MPI_COMM_WORLD, &status);											 	// receive a message of 5*chunk_Nx_size_v entries of datatype MPI_DOUBLE from the process with rank i (storing the i-th space chunk of U, containing the DG coefficients calculate on the processor with corresponding rank), storing the data in output_buffer, with tag i in the communicator MPI_COMM_WORLD, storing the status of the receive in status
+							for(l=0;l<chunk_Nx;l++)															// cycle through all space-steps stored in the chunk of the space interval dealt with by the i-th process
+							{
+								if((chunk_Nx*i+l)<Nx)														// ensure that the space-step being dealt with exists
+								{
+									for(k=0;k<size_v;k++)													// cycle through all size_v (= Nv^3) many velocity-steps (which will exist for each space-step)
+									{
+										k_v = (chunk_Nx*i+l)*size_v + k; 									// set k_v to be the value associated with the k-th velocity-step for the (chunk_Nx*i + l)-th space-step (which is the l-th space-step in the current chunk)
+										k_local = l*size_v + k;												// set k_local to be the value associated with the k-th veolcity-step for the l-th local space step (which is the current one, as indicated in the previous line)
+
+										// STORE CONTENTS OF THE RECEIVE BUFFER IN THE CORRECT PORTION OF U TO ADD THIS PART OF THE SOLUTION:
+										U[k_v*6+0] = output_buffer[k_local*5];								// set the 6*k_v-th entry of U to the 5*k_local-th entry of Utmp_coll
+										U[k_v*6+5] = output_buffer[k_local*5+4];							// set the (6*k_v + 5)-th entry of U to the (5*k_local + 4)-th entry of Utmp_coll
+										U[k_v*6+2] = output_buffer[k_local*5+1];  							// set the (6*k_v + 2)-th entry of U to the (5*k_local + 1)-th entry of Utmp_coll
+										U[k_v*6+3] = output_buffer[k_local*5+2];	 						// set the (6*k_v + 3)-th entry of U to the (5*k_local + 2)-th entry of Utmp_coll
+										U[k_v*6+4] = output_buffer[k_local*5+3];							// set the (6*k_v + 4)-th entry of U to the (5*k_local + 3)-th entry of Utmp_coll
+									}
+								}
+							}
+						}
+					}
 				}
-				// RECEIVE FROM ALL OTHER PROCESSES CONSECUTIVELY TO ENSURE THE WEIGHTS ARE STORED IN THE FILE U CONSECUTIVELY:
-				for(i=1;i<nprocs_Nx;i++)															// store the DG coefficients of the current solution in U that were calculated by the remaining processes (with ranks i = 1, 2, ..., nprocs_Nx-1) for their corresponding chunk of space
+				else 																					// the remaining processes, with rank 1, 2, ..., nprocs_Nx-1 will do this
 				{
-					if(Homogeneous)
+					if(myrank_mpi<nprocs_Nx)
+					{
+						if(Homogeneous)
+						{
+							MPI_Send(Utmp_coll, chunksize_dg*5, MPI_DOUBLE, 0, myrank_mpi,
+									MPI_COMM_WORLD);														// send the contents of Utmp_coll, which will be 5*chunk_Nx*size_v entries of datatype MPI_DOUBLE, to the process with rank 0, tagged with the rank of the current process, via the MPI_COMM_WORLD communicator
+						}
+						else
+						{
+							MPI_Send(Utmp_coll, chunk_Nx*size_v*5, MPI_DOUBLE, 0, myrank_mpi,
+									MPI_COMM_WORLD);														// send the contents of Utmp_coll, which will be 5*chunk_Nx*size_v entries of datatype MPI_DOUBLE, to the process with rank 0, tagged with the rank of the current process, via the MPI_COMM_WORLD communicator
+						}
+					}
+				}
+				MPI_Bcast(U, size*6, MPI_DOUBLE, 0, MPI_COMM_WORLD);    								// send the contents of U, from the process with rank 0, which contains 6*size entries of datatype MPI_DOUBLE, to all processes via the communicator MPI_COMM_WORLD (so that all processes have the coefficients of the DG approximation to f at the current time-step for the start of the next calculation)
+				MPI_Barrier(MPI_COMM_WORLD);
+			}
+			// MULTI-SPECIES:
+			if(DisparateMass)	// If no longer needing to debug DisparateMass, just change to else
+			{
+				// Light species:
+				if(myrank_mpi == 0) 																	// only the process with rank 0 will do this
+				{
+					// TRANSFER CONTENTS OF THE dU (Utmp_coll) THAT HAVE BEEN COMPUTED INTO U1 (U):
+					for(k=0;k<chunksize_dg;k++)															// cycle through all size_v (= Nv^3) many velocity-steps (which will exist for each space-step)
+					{
+						k_v = k;																	// set k_v to be the value associated with the k-th velocity-step for the l-th space-step
+						U_L[k_v*6+0] = Utmp_coll_L[k_v*5];												// set the 6*k_v-th entry of U to the 5*k_v-th entry of Utmp_coll
+						U_L[k_v*6+5] = Utmp_coll_L[k_v*5+4]; 											// set the (6*k_v + 5)-th entry of U to the (5*k_v + 4)-th entry of Utmp_coll
+						U_L[k_v*6+2] = Utmp_coll_L[k_v*5+1];  											// set the (6*k_v + 2)-th entry of U to the (5*k_v + 1)-th entry of Utmp_coll
+						U_L[k_v*6+3] = Utmp_coll_L[k_v*5+2];	 										// set the (6*k_v + 3)-th entry of U to the (5*k_v + 2)-th entry of Utmp_coll
+						U_L[k_v*6+4] = Utmp_coll_L[k_v*5+3];											// set the (6*k_v + 4)-th entry of U to the (5*k_v + 3)-th entry of Utmp_coll
+					}
+					// RECEIVE FROM ALL OTHER PROCESSES CONSECUTIVELY TO ENSURE THE WEIGHTS ARE STORED IN THE FILE U CONSECUTIVELY:
+					for(i=1;i<nprocs_Nx;i++)															// store the DG coefficients of the current solution in U that were calculated by the remaining processes (with ranks i = 1, 2, ..., nprocs_Nx-1) for their corresponding chunk of space
 					{
 						MPI_Recv(output_buffer, chunksize_dg*5, MPI_DOUBLE, i, i,
 								MPI_COMM_WORLD, &status);											 	// receive a message of 5*chunk_Nx_size_v entries of datatype MPI_DOUBLE from the process with rank i (storing the i-th space chunk of U, containing the DG coefficients calculate on the processor with corresponding rank), storing the data in output_buffer, with tag i in the communicator MPI_COMM_WORLD, storing the status of the receive in status
@@ -1128,107 +1238,141 @@ int main()
 						{
 							k_v = chunksize_dg*i + k_loc; 															// set k_v to be the value associated with the k-th velocity-step for the (chunk_Nx*i + l)-th space-step (which is the l-th space-step in the current chunk)
 							// Store contents of the receive buffer in the correct portion of U to add this part of the solution
-							U[k_v*6+0] = output_buffer[k_loc*5];								// set the 6*k_v-th entry of U to the 5*k_local-th entry of Utmp_coll
-							U[k_v*6+5] = output_buffer[k_loc*5+4];							// set the (6*k_v + 5)-th entry of U to the (5*k_local + 4)-th entry of Utmp_coll
-							U[k_v*6+2] = output_buffer[k_loc*5+1];  							// set the (6*k_v + 2)-th entry of U to the (5*k_local + 1)-th entry of Utmp_coll
-							U[k_v*6+3] = output_buffer[k_loc*5+2];	 						// set the (6*k_v + 3)-th entry of U to the (5*k_local + 2)-th entry of Utmp_coll
-							U[k_v*6+4] = output_buffer[k_loc*5+3];							// set the (6*k_v + 4)-th entry of U to the (5*k_local + 3)-th entry of Utmp_coll
-						}
-					}
-					else
-					{
-						MPI_Recv(output_buffer, chunk_Nx*size_v*5, MPI_DOUBLE, i, i,
-								MPI_COMM_WORLD, &status);											 	// receive a message of 5*chunk_Nx_size_v entries of datatype MPI_DOUBLE from the process with rank i (storing the i-th space chunk of U, containing the DG coefficients calculate on the processor with corresponding rank), storing the data in output_buffer, with tag i in the communicator MPI_COMM_WORLD, storing the status of the receive in status
-						for(l=0;l<chunk_Nx;l++)															// cycle through all space-steps stored in the chunk of the space interval dealt with by the i-th process
-						{
-							if((chunk_Nx*i+l)<Nx)														// ensure that the space-step being dealt with exists
-							{
-								for(k=0;k<size_v;k++)													// cycle through all size_v (= Nv^3) many velocity-steps (which will exist for each space-step)
-								{
-									k_v = (chunk_Nx*i+l)*size_v + k; 									// set k_v to be the value associated with the k-th velocity-step for the (chunk_Nx*i + l)-th space-step (which is the l-th space-step in the current chunk)
-									k_local = l*size_v + k;												// set k_local to be the value associated with the k-th veolcity-step for the l-th local space step (which is the current one, as indicated in the previous line)
-
-									// STORE CONTENTS OF THE RECEIVE BUFFER IN THE CORRECT PORTION OF U TO ADD THIS PART OF THE SOLUTION:
-									U[k_v*6+0] = output_buffer[k_local*5];								// set the 6*k_v-th entry of U to the 5*k_local-th entry of Utmp_coll
-									U[k_v*6+5] = output_buffer[k_local*5+4];							// set the (6*k_v + 5)-th entry of U to the (5*k_local + 4)-th entry of Utmp_coll
-									U[k_v*6+2] = output_buffer[k_local*5+1];  							// set the (6*k_v + 2)-th entry of U to the (5*k_local + 1)-th entry of Utmp_coll
-									U[k_v*6+3] = output_buffer[k_local*5+2];	 						// set the (6*k_v + 3)-th entry of U to the (5*k_local + 2)-th entry of Utmp_coll
-									U[k_v*6+4] = output_buffer[k_local*5+3];							// set the (6*k_v + 4)-th entry of U to the (5*k_local + 3)-th entry of Utmp_coll
-								}
-							}
+							U_L[k_v*6+0] = output_buffer[k_loc*5];								// set the 6*k_v-th entry of U to the 5*k_local-th entry of Utmp_coll
+							U_L[k_v*6+5] = output_buffer[k_loc*5+4];							// set the (6*k_v + 5)-th entry of U to the (5*k_local + 4)-th entry of Utmp_coll
+							U_L[k_v*6+2] = output_buffer[k_loc*5+1];  							// set the (6*k_v + 2)-th entry of U to the (5*k_local + 1)-th entry of Utmp_coll
+							U_L[k_v*6+3] = output_buffer[k_loc*5+2];	 						// set the (6*k_v + 3)-th entry of U to the (5*k_local + 2)-th entry of Utmp_coll
+							U_L[k_v*6+4] = output_buffer[k_loc*5+3];							// set the (6*k_v + 4)-th entry of U to the (5*k_local + 3)-th entry of Utmp_coll
 						}
 					}
 				}
-			}
-			else 																					// the remaining processes, with rank 1, 2, ..., nprocs_Nx-1 will do this
-			{
-				if(myrank_mpi<nprocs_Nx)
+				else 																					// the remaining processes, with rank 1, 2, ..., nprocs_Nx-1 will do this
 				{
-					if(Homogeneous)
+					if(myrank_mpi<nprocs_Nx)
 					{
-						MPI_Send(Utmp_coll, chunksize_dg*5, MPI_DOUBLE, 0, myrank_mpi,
-								MPI_COMM_WORLD);														// send the contents of Utmp_coll, which will be 5*chunk_Nx*size_v entries of datatype MPI_DOUBLE, to the process with rank 0, tagged with the rank of the current process, via the MPI_COMM_WORLD communicator
-					}
-					else
-					{
-						MPI_Send(Utmp_coll, chunk_Nx*size_v*5, MPI_DOUBLE, 0, myrank_mpi,
+						MPI_Send(Utmp_coll_L, chunksize_dg*5, MPI_DOUBLE, 0, myrank_mpi,
 								MPI_COMM_WORLD);														// send the contents of Utmp_coll, which will be 5*chunk_Nx*size_v entries of datatype MPI_DOUBLE, to the process with rank 0, tagged with the rank of the current process, via the MPI_COMM_WORLD communicator
 					}
 				}
+				MPI_Bcast(U_L, size*6, MPI_DOUBLE, 0, MPI_COMM_WORLD);    								// send the contents of U, from the process with rank 0, which contains 6*size entries of datatype MPI_DOUBLE, to all processes via the communicator MPI_COMM_WORLD (so that all processes have the coefficients of the DG approximation to f at the current time-step for the start of the next calculation)
+				MPI_Barrier(MPI_COMM_WORLD);
+				// Heavy species:
+				if(myrank_mpi == 0) 																	// only the process with rank 0 will do this
+				{
+					// TRANSFER CONTENTS OF THE dU (Utmp_coll) THAT HAVE BEEN COMPUTED INTO U1 (U):
+					for(k=0;k<chunksize_dg;k++)															// cycle through all size_v (= Nv^3) many velocity-steps (which will exist for each space-step)
+					{
+						k_v = k;																	// set k_v to be the value associated with the k-th velocity-step for the l-th space-step
+						U_H[k_v*6+0] = Utmp_coll_H[k_v*5];												// set the 6*k_v-th entry of U to the 5*k_v-th entry of Utmp_coll
+						U_H[k_v*6+5] = Utmp_coll_H[k_v*5+4]; 											// set the (6*k_v + 5)-th entry of U to the (5*k_v + 4)-th entry of Utmp_coll
+						U_H[k_v*6+2] = Utmp_coll_H[k_v*5+1];  											// set the (6*k_v + 2)-th entry of U to the (5*k_v + 1)-th entry of Utmp_coll
+						U_H[k_v*6+3] = Utmp_coll_H[k_v*5+2];	 										// set the (6*k_v + 3)-th entry of U to the (5*k_v + 2)-th entry of Utmp_coll
+						U_H[k_v*6+4] = Utmp_coll_H[k_v*5+3];											// set the (6*k_v + 4)-th entry of U to the (5*k_v + 3)-th entry of Utmp_coll
+					}
+					// RECEIVE FROM ALL OTHER PROCESSES CONSECUTIVELY TO ENSURE THE WEIGHTS ARE STORED IN THE FILE U CONSECUTIVELY:
+					for(i=1;i<nprocs_Nx;i++)															// store the DG coefficients of the current solution in U that were calculated by the remaining processes (with ranks i = 1, 2, ..., nprocs_Nx-1) for their corresponding chunk of space
+					{
+						MPI_Recv(output_buffer, chunksize_dg*5, MPI_DOUBLE, i, i,
+								MPI_COMM_WORLD, &status);											 	// receive a message of 5*chunk_Nx_size_v entries of datatype MPI_DOUBLE from the process with rank i (storing the i-th space chunk of U, containing the DG coefficients calculate on the processor with corresponding rank), storing the data in output_buffer, with tag i in the communicator MPI_COMM_WORLD, storing the status of the receive in status
+						for(int k_loc=0;k_loc<chunksize_dg;k_loc++)													// cycle through all size_v (= Nv^3) many velocity-steps (which will exist for each space-step)
+						{
+							k_v = chunksize_dg*i + k_loc; 															// set k_v to be the value associated with the k-th velocity-step for the (chunk_Nx*i + l)-th space-step (which is the l-th space-step in the current chunk)
+							// Store contents of the receive buffer in the correct portion of U to add this part of the solution
+							U_H[k_v*6+0] = output_buffer[k_loc*5];								// set the 6*k_v-th entry of U to the 5*k_local-th entry of Utmp_coll
+							U_H[k_v*6+5] = output_buffer[k_loc*5+4];							// set the (6*k_v + 5)-th entry of U to the (5*k_local + 4)-th entry of Utmp_coll
+							U_H[k_v*6+2] = output_buffer[k_loc*5+1];  							// set the (6*k_v + 2)-th entry of U to the (5*k_local + 1)-th entry of Utmp_coll
+							U_H[k_v*6+3] = output_buffer[k_loc*5+2];	 						// set the (6*k_v + 3)-th entry of U to the (5*k_local + 2)-th entry of Utmp_coll
+							U_H[k_v*6+4] = output_buffer[k_loc*5+3];							// set the (6*k_v + 4)-th entry of U to the (5*k_local + 3)-th entry of Utmp_coll
+						}
+					}
+				}
+				else 																					// the remaining processes, with rank 1, 2, ..., nprocs_Nx-1 will do this
+				{
+					if(myrank_mpi<nprocs_Nx)
+					{
+						MPI_Send(Utmp_coll_H, chunksize_dg*5, MPI_DOUBLE, 0, myrank_mpi,
+								MPI_COMM_WORLD);														// send the contents of Utmp_coll, which will be 5*chunk_Nx*size_v entries of datatype MPI_DOUBLE, to the process with rank 0, tagged with the rank of the current process, via the MPI_COMM_WORLD communicator
+					}
+				}
+				MPI_Bcast(U_H, size*6, MPI_DOUBLE, 0, MPI_COMM_WORLD);    								// send the contents of U, from the process with rank 0, which contains 6*size entries of datatype MPI_DOUBLE, to all processes via the communicator MPI_COMM_WORLD (so that all processes have the coefficients of the DG approximation to f at the current time-step for the start of the next calculation)
+				MPI_Barrier(MPI_COMM_WORLD);
 			}
-		    MPI_Bcast(U, size*6, MPI_DOUBLE, 0, MPI_COMM_WORLD);    								// send the contents of U, from the process with rank 0, which contains 6*size entries of datatype MPI_DOUBLE, to all processes via the communicator MPI_COMM_WORLD (so that all processes have the coefficients of the DG approximation to f at the current time-step for the start of the next calculation)
 		}
    
-		MPI_Barrier(MPI_COMM_WORLD);
 		if(myrank_mpi==0)																			// only the process with rank 0 will do this
 		{
-			FindNegVals(U, fNegVals, fAvgVals);																// find out in which cells the approximate solution goes negative and record it in fNegVals
+			if(!DisparateMass)
+			{
+				FindNegVals(U, fNegVals, fAvgVals);																// find out in which cells the approximate solution goes negative and record it in fNegVals
 
-			mass=computeMass(U);																	// set mass to the value calculated through computeMass, for the solution f(x,v,t) at the current time t, using its DG coefficients stored U
-			computeMomentum(U, a);																	// calculate the momentum for the solution f(x,v,t) at the current time t, using its DG coefficients stored U, and store it in a
-			KiE=computeKiE(U);																		// set KiE to the value calculated through computeKiE, for the solution f(x,v,t) at the current time t, using its DG coefficients stored U
-			if(! Homogeneous)
-			{
-				EleE=computeEleE(U);																		// set EleE to the value calculated through computeEleE, for the solution f(x,v,t) at the current time t, using its DG coefficients stored U
-				tmp = sqrt(EleE);																			// set tmp to the square root of EleE
+				mass=computeMass(U);																	// set mass to the value calculated through computeMass, for the solution f(x,v,t) at the current time t, using its DG coefficients stored U
+				computeMomentum(U, a);																	// calculate the momentum for the solution f(x,v,t) at the current time t, using its DG coefficients stored U, and store it in a
+				KiE=computeKiE(U);																		// set KiE to the value calculated through computeKiE, for the solution f(x,v,t) at the current time t, using its DG coefficients stored U
+				if(! Homogeneous)
+				{
+					EleE=computeEleE(U);																		// set EleE to the value calculated through computeEleE, for the solution f(x,v,t) at the current time t, using its DG coefficients stored U
+					tmp = sqrt(EleE);																			// set tmp to the square root of EleE
+				}
+				ent1 = computeEntropy(U);																	// set ent1 the value calculated through computeEntropy
+				l_ent1 = log(fabs(ent1));																	// set l_ent1 to the log of ent1
+				ll_ent1 = log(fabs(l_ent1));																// set ll_ent1 to the log of l_ent1
+				if(Homogeneous)
+				{
+					printf("step %d: %11.8g  %11.8g  %11.8g  %11.8g  %11.8g %11.8g \n",
+							t+1, mass, a[0], a[1], a[2], KiE, ent1);									// display in the output file that this is step 0 (so these are the initial conditions), then the mass, 3 components of momentum, kinetic energy, entropy & Strain and Guo weighted L2 norm
+					fprintf(fmom, "%11.8g %11.8g %11.8g %11.8g %11.8g %11.8g %11.8g %11.8g \n",
+							mass, a[0], a[1], a[2], 0.0, 0.0, 0.0, KiE);														// in the file tagged as fmom, print the initial mass, 3 components of momentum & kinetic energy
+				}
+				else
+				{
+					printf("step %d: %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g %11.8g %11.8g \n",
+							t+1, mass, a[0], a[1], a[2], KiE, EleE, tmp, log(tmp), KiE+EleE, ent1);			// display in the output file that this is step t+1, then the mass, 3 components of momentum, kinetic energy, electric energy, sqrt(electric energy), log(sqrt(electric energy)), total energy & entropy
+					fprintf(fmom, "%11.8g %11.8g %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g \n",
+							mass, a[0], a[1], a[2], KiE, EleE, tmp, log(tmp), KiE+EleE);						// in the file tagged as fmom, print the initial mass, 3 components of momentum, kinetic energy, electric energy, sqrt(electric energy), log(sqrt(electric energy)) & total energy
+				}
+				fprintf(fent, "%11.8g %11.8g %11.8g \n", ent1, l_ent1, ll_ent1);						// in the file tagged as fent, print the entropy, its log and the log of that
+
+				KiEratio = computeKiEratio(U, fNegVals);												// compute the ratio of the kinetic energy where f is negative to that where it is positive and store it in KiEratio
+				printf("Kinetic Energy Ratio = %g\n", KiEratio);										// print the ratio of the kinetic energy where f is negative to that where it is positive
+
+				//fprintf(fmom, "%11.8g  %11.8g\n", EleE, log(tmp));
+				/*if(TwoStream)
+					  if(t==20 || t==50 || t==80 || t==250)
+					  {
+						  for(k=0;k<size;k++)
+						  {
+								for(l=0;l<6;l++)
+								{
+									fprintf(fufull, "%g ", U[k*6+l]);
+								}
+						  }
+						  fprintf(fufull,"\n\n");
+					  }
+				  }*/
 			}
-			ent1 = computeEntropy(U);																	// set ent1 the value calculated through computeEntropy
-			l_ent1 = log(fabs(ent1));																	// set l_ent1 to the log of ent1
-			ll_ent1 = log(fabs(l_ent1));																// set ll_ent1 to the log of l_ent1
-			if(Homogeneous)
-			{
-				printf("step %d: %11.8g  %11.8g  %11.8g  %11.8g  %11.8g %11.8g \n",
-						t+1, mass, a[0], a[1], a[2], KiE, ent1);									// display in the output file that this is step 0 (so these are the initial conditions), then the mass, 3 components of momentum, kinetic energy, entropy & Strain and Guo weighted L2 norm
-				fprintf(fmom, "%11.8g %11.8g %11.8g %11.8g %11.8g %11.8g %11.8g %11.8g \n",
-						mass, a[0], a[1], a[2], 0.0, 0.0, 0.0, KiE);														// in the file tagged as fmom, print the initial mass, 3 components of momentum & kinetic energy
-			}
+			// MULTI-SPECIES:
 			else
 			{
-				printf("step %d: %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g %11.8g %11.8g \n",
-						t+1, mass, a[0], a[1], a[2], KiE, EleE, tmp, log(tmp), KiE+EleE, ent1);			// display in the output file that this is step t+1, then the mass, 3 components of momentum, kinetic energy, electric energy, sqrt(electric energy), log(sqrt(electric energy)), total energy & entropy
-				fprintf(fmom, "%11.8g %11.8g %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g \n",
-						mass, a[0], a[1], a[2], KiE, EleE, tmp, log(tmp), KiE+EleE);						// in the file tagged as fmom, print the initial mass, 3 components of momentum, kinetic energy, electric energy, sqrt(electric energy), log(sqrt(electric energy)) & total energy
+				computeMass_Multispecies(U_L, U_H, mass_L, mass_H);																		// set mass to the value calculated through computeMass, for the solution f(x,v,t) at the current time t, using its DG coefficients stored U
+				computeMomentum_Multispecies(U_L, U_H, a_L, a_H);																		// calculate the momentum for the solution f(x,v,t) at the current time t, using its DG coefficients stored U, and store it in a
+				computeKiE_Multispecies(U_L, U_H, KiE_L, KiE_H);																			// set KiE to the value calculated through computeKiE, for the solution f(x,v,t) at the current time t, using its DG coefficients stored U
+	//			ent1 = computeEntropy(U);																	// set ent1 the value calculated through computeEntropy
+	//			l_ent1 = log(fabs(ent1));																	// set l_ent1 to the log of ent1
+	//			ll_ent1 = log(fabs(l_ent1));																// set ll_ent1 to the log of l_ent1
+				printf("step %d: \n", t+1);
+				printf("Light:  %14.8g  %14.8g  %14.8g  %14.8g  %14.8g \n",
+						mass_L, a_L[0], a_L[1], a_L[2], KiE_L); //, ent1);									// display in the output file that this is step 0 (so these are the initial conditions), then the mass, 3 components of momentum, kinetic energy, entropy & Strain and Guo weighted L2 norm
+				printf("Heavy:  %14.8g  %14.8g  %14.8g  %14.8g  %14.8g \n",
+						mass_H, a_H[0], a_H[1], a_H[2], KiE_H); //, ent1);									// display in the output file that this is step 0 (so these are the initial conditions), then the mass, 3 components of momentum, kinetic energy, entropy & Strain and Guo weighted L2 norm
+				fprintf(fmom_L, "%14.8g %14.8g %14.8g %14.8g %14.8g %14.8g %14.8g %14.8g \n",
+						mass_L, a_L[0], a_L[1], a_L[2], 0.0, 0.0, 0.0, KiE_L);														// in the file tagged as fmom, print the initial mass, 3 components of momentum & kinetic energy
+				fprintf(fmom_L, "%14.8g %14.8g %14.8g %14.8g %14.8g %14.8g %14.8g %14.8g \n",
+						mass_H, a_H[0], a_H[1], a_H[2], 0.0, 0.0, 0.0, KiE_H);														// in the file tagged as fmom, print the initial mass, 3 components of momentum & kinetic energy
+	//			fprintf(fent, "%11.8g %11.8g %11.8g \n", ent1, l_ent1, ll_ent1);							// in the file tagged as fent, print the entropy, its log and the log of that
+	//
+	//			KiEratio = computeKiEratio(U, fNegVals);													// compute the ratio of the kinetic energy where f is negative to that where it is positive and store it in KiEratio
+	//			printf("Kinetic Energy Ratio = %g\n", KiEratio);											// print the ratio of the kinetic energy where f is negative to that where it is positive
 			}
-			fprintf(fent, "%11.8g %11.8g %11.8g \n", ent1, l_ent1, ll_ent1);						// in the file tagged as fent, print the entropy, its log and the log of that
-
-			KiEratio = computeKiEratio(U, fNegVals);												// compute the ratio of the kinetic energy where f is negative to that where it is positive and store it in KiEratio
-			printf("Kinetic Energy Ratio = %g\n", KiEratio);										// print the ratio of the kinetic energy where f is negative to that where it is positive
-
-			//fprintf(fmom, "%11.8g  %11.8g\n", EleE, log(tmp));
-			/*if(TwoStream)
-				  if(t==20 || t==50 || t==80 || t==250)
-				  {
-					  for(k=0;k<size;k++)
-					  {
-							for(l=0;l<6;l++)
-							{
-								fprintf(fufull, "%g ", U[k*6+l]);
-							}
-					  }
-					  fprintf(fufull,"\n\n");
-				  }
-			  }*/
-      
 
 	    	//if(t%400==0)fwrite(U,sizeof(double),size*6,fu);
 			if(t%20==0)		// DEGUG CHECK: PRINTING MARGINALS EVERY STEP INSTEAD OF EVERY 20
@@ -1267,7 +1411,16 @@ int main()
 		std::cout << std::endl;
 		std::cout << "#----------END OF INPUT FILE DUMP AND PROGRAM---------#" << std::endl << std::endl;
 
-		fwrite(U,sizeof(double),size*6,fu);															// write the coefficients of the DG approximation at the end, stored in U, which is 6*size entires, each of the size of a double datatype, in the file tagged as fu
+		if(!DisparateMass)
+		{
+			fwrite(U,sizeof(double),size*6,fu);														// write the coefficients of the DG approximation at the end, stored in U, which is 6*size entires, each of the size of a double datatype, in the file tagged as fu
+		}
+		// MULTI-SPECIES:
+		else
+		{
+			fwrite(U_L,sizeof(double),size*6,fu_L);													// write the coefficients of the DG approximation at the end, stored in U, which is 6*size entires, each of the size of a double datatype, in the file tagged as fu
+			fwrite(U_H,sizeof(double),size*6,fu_H);													// write the coefficients of the DG approximation at the end, stored in U, which is 6*size entires, each of the size of a double datatype, in the file tagged as fu
+		}
 		//PrintPhiVals(U, fphi);																	// print the values of the potential in the file tagged as filephi at the given timestep
 		}
 	MPI_Barrier(MPI_COMM_WORLD);																	// set an MPI barrier to ensure that all processes have reached this point before continuing
@@ -1307,6 +1460,7 @@ int main()
 		free(output_buffer); 																		// delete the dynamic memory allocated for output_buffer
 		fftw_free(temp); 																			// delete the dynamic memory allocated for temp
 		free(Q); free(Q1); free(Utmp_coll);															// delete the dynamic memory allocated for Q, Q1 & Utmp_coll
+		fftw_free(fftOut); fftw_free(fftIn); 														// delete the dynamic memory allocated for fftOut & fftIn
 		// MULTI-SPECIES:
 		if(DisparateMass)
 		{
@@ -1319,7 +1473,7 @@ int main()
 			fftw_free(Q2_fft_LL); fftw_free(Q2_fft_HH); fftw_free(Q2_fft_LH); fftw_free(Q2_fft_HL);
 			fftw_free(Q3_fft_LL); fftw_free(Q3_fft_HH); fftw_free(Q3_fft_LH); fftw_free(Q3_fft_HL);
 			fftw_free(fftIn_L); fftw_free(fftIn_H); fftw_free(fftOut_L); fftw_free(fftOut_H);
-			fftw_free(fftIn_LL); fftw_free(fftIn_HH); fftw_free(fftOut_LL); fftw_free(fftOut_HH);
+//			fftw_free(fftIn_LL); fftw_free(fftIn_HH); fftw_free(fftOut_LL); fftw_free(fftOut_HH);
 			fftw_free(fftIn_LH); fftw_free(fftIn_HL); fftw_free(fftOut_LH); fftw_free(fftOut_HL);
 			fftw_free(qHat_LL); fftw_free(qHat_HH); fftw_free(qHat_LH); fftw_free(qHat_HL);
 		}
@@ -1329,7 +1483,7 @@ int main()
 			free(f); free(conv_weights);			 											// delete the dynamic memory allocated for f & conv_weights
 			fftw_free(qHat);																	// delete the dynamic memory allocated for qhat
 			free(conv_weights1); free(conv_weights2); 													// delete the dynamic memory allocated for conv_weights1 & conv_weights2
-			fftw_free(Q1_fft); fftw_free(Q2_fft); fftw_free(Q3_fft); fftw_free(fftOut); fftw_free(fftIn); // delete the dynamic memory allocated for Q1_fft, Q2_fft, Q3_fft, fftOut & fftIn
+			fftw_free(Q1_fft); fftw_free(Q2_fft); fftw_free(Q3_fft);								 // delete the dynamic memory allocated for Q1_fft, Q2_fft & Q3_fft
 			free(f1);																			// delete the dynamic memory allocated for f1
 		}
 		if(FullandLinear)																			// only do this if FullandLinear is true

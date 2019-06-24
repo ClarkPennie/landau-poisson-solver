@@ -63,11 +63,11 @@ void generate_conv_weights_linear(double **conv_weights_linear);
 
 void generate_conv_weights2(double **conv_weights, int id);
 
-void fft3D(fftw_complex *in, fftw_complex *out);
+void fft3D(fftw_complex *in, fftw_complex *out, char const *species = "N");
 
 void ifft3D(fftw_complex *in, fftw_complex *out);
 
-void FS(fftw_complex *in, fftw_complex *out);
+void FS(fftw_complex *in, fftw_complex *out, char const *species = "N");
 
 #ifdef MPI_parallelcollision
 void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights);
@@ -83,7 +83,7 @@ void ProjectedNodeValue(fftw_complex *qHat, double *Q_incremental);
 
 void ComputeQ_FandL(double *f, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear);
 
-void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights);
+void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights, char const *species = "N");
 
 void ComputeQ_LH(double *f_L, double *f_H, fftw_complex *qHat, double **conv_weights_LH);
 

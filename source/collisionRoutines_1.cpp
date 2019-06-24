@@ -439,40 +439,71 @@ function fft3D
 --------------
 Computes the fourier transform of in, and adjusts the coefficients based on our v, eta
 */
-void fft3D(fftw_complex *in, fftw_complex *out)
+void fft3D(fftw_complex *in, fftw_complex *out, char const* species)
 {
-  int i, j, k, index;
-  double sum;
-  
-  //shift the 'v' terms in the exponential to reflect our velocity domain
-  for(i=0;i<N;i++)
-    for(j=0;j<N;j++)
-      for(k=0;k<N;k++)
+	int i, j, k, index;
+	double sum;
+
+	//shift the 'v' terms in the exponential to reflect our velocity domain
+	for(i=0;i<N;i++)
 	{
-
-	  index = k + N*(j + N*i);
-	  sum = ((double)i + (double)j + (double)k)*L_eta*h_v;
-
-	  //h_v correspond to the velocity space scaling - ensures that the FFT is properly scaled since fftw does no scaling at all
-	  temp[index][0] = scale3*h_v*h_v*h_v*wtN[i]*wtN[j]*wtN[k]*(cos(sum)*in[index][0] - sin(sum)*in[index][1]);
-	  temp[index][1] = scale3*h_v*h_v*h_v*wtN[i]*wtN[j]*wtN[k]*(cos(sum)*in[index][1] + sin(sum)*in[index][0]);
+		for(j=0;j<N;j++)
+		{
+			for(k=0;k<N;k++)
+			{
+				//h_v correspond to the velocity space scaling - ensures that the FFT is properly scaled since fftw does no scaling at all
+				index = k + N*(j + N*i);
+				if(strcmp(species, "L") == 0)
+				{
+					sum = ((double)i + (double)j + (double)k)*L_eta_L*h_v_L;
+					temp[index][0] = scale3*h_v_L*h_v_L*h_v_L*wtN[i]*wtN[j]*wtN[k]*(cos(sum)*in[index][0] - sin(sum)*in[index][1]);
+					temp[index][1] = scale3*h_v_L*h_v_L*h_v_L*wtN[i]*wtN[j]*wtN[k]*(cos(sum)*in[index][1] + sin(sum)*in[index][0]);
+				}
+				else if(strcmp(species, "H") == 0)
+				{
+					sum = ((double)i + (double)j + (double)k)*L_eta_H*h_v_H;
+					temp[index][0] = scale3*h_v_H*h_v_H*h_v_H*wtN[i]*wtN[j]*wtN[k]*(cos(sum)*in[index][0] - sin(sum)*in[index][1]);
+					temp[index][1] = scale3*h_v_H*h_v_H*h_v_H*wtN[i]*wtN[j]*wtN[k]*(cos(sum)*in[index][1] + sin(sum)*in[index][0]);
+				}
+				else
+				{
+					sum = ((double)i + (double)j + (double)k)*L_eta*h_v;
+					temp[index][0] = scale3*h_v*h_v*h_v*wtN[i]*wtN[j]*wtN[k]*(cos(sum)*in[index][0] - sin(sum)*in[index][1]);
+					temp[index][1] = scale3*h_v*h_v*h_v*wtN[i]*wtN[j]*wtN[k]*(cos(sum)*in[index][1] + sin(sum)*in[index][0]);
+				}
+			}
+		}
 	}
-  //computes fft
-  fftw_execute(p_forward);
-  //fftwnd_threads_one(nThreads, p_forward, temp, NULL); /*FFTW Library*/
+	//computes fft
+	fftw_execute(p_forward);
+	//fftwnd_threads_one(nThreads, p_forward, temp, NULL); /*FFTW Library*/
 
-  //shifts the 'eta' terms to reflect our fourier domain
-  for(i=0;i<N;i++)
-    for(j=0;j<N;j++)
-      for(k=0;k<N;k++)
+	//shifts the 'eta' terms to reflect our fourier domain
+	for(i=0;i<N;i++)
 	{
-	  index = k + N*(j + N*i);
-	  sum = L_v*(eta[i] + eta[j] + eta[k]);
-	  
-	  out[index][0] = ( cos(sum)*temp[index][0] - sin(sum)*temp[index][1]);
-	  out[index][1] = ( cos(sum)*temp[index][1] + sin(sum)*temp[index][0]);
+		for(j=0;j<N;j++)
+		{
+			for(k=0;k<N;k++)
+			{
+				index = k + N*(j + N*i);
+				if(strcmp(species, "L") == 0)
+				{
+					sum = L_v_L*(eta_L[i] + eta_L[j] + eta_L[k]);
+				}
+				else if(strcmp(species, "H") == 0)
+				{
+					sum = L_v_H*(eta_H[i] + eta_H[j] + eta_H[k]);
+				}
+				else
+				{
+					sum = L_v*(eta[i] + eta[j] + eta[k]);
+				}
+
+				out[index][0] = ( cos(sum)*temp[index][0] - sin(sum)*temp[index][1]);
+				out[index][1] = ( cos(sum)*temp[index][1] + sin(sum)*temp[index][0]);
+			}
+		}
 	}
-  
 }
 
 /*$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$*/
@@ -517,7 +548,7 @@ void ifft3D(fftw_complex *in, fftw_complex *out)
   
 }
 
-void FS(fftw_complex *in, fftw_complex *out) // compute the Fourier series approximation of f (out), through fhat (in)
+void FS(fftw_complex *in, fftw_complex *out, char const* species) // compute the Fourier series approximation of f (out), through fhat (in)
 {
   int i, j, k, index;
   double sum;//= pow((double)N, -3.0);
@@ -527,7 +558,18 @@ void FS(fftw_complex *in, fftw_complex *out) // compute the Fourier series appro
     for(j=0;j<N;j++){
       for(k=0;k<N;k++){
 	  index = k + N*(j + N*i);
-	  sum = -( ( (double)i + (double)j + (double)k )*L_v*h_eta );
+		if(strcmp(species, "L") == 0)
+		{
+			sum = -( ( (double)i + (double)j + (double)k )*L_v_L*h_eta_L );
+		}
+		else if(strcmp(species, "H") == 0)
+		{
+			sum = -( ( (double)i + (double)j + (double)k )*L_v_H*h_eta_H );
+		}
+		else
+		{
+			sum = -( ( (double)i + (double)j + (double)k )*L_v*h_eta );
+		}
 	  
 	  //h_eta ensures FFT is scaled correctly, since fftw does no scaling at all
 	  temp[index][0] = (cos(sum)*in[index][0] - sin(sum)*in[index][1]);
@@ -544,10 +586,24 @@ void FS(fftw_complex *in, fftw_complex *out) // compute the Fourier series appro
     for(j=0;j<N;j++){
       for(k=0;k<N;k++){
 	  index = k + N*(j + N*i);
-	  sum = -( L_eta*(v[i] + v[j] + v[k])  );
-	  
-	  out[index][0] = (cos(sum)*temp[index][0] - sin(sum)*temp[index][1])/scaleL/scale3;
-	  out[index][1] = (cos(sum)*temp[index][1] + sin(sum)*temp[index][0])/scaleL/scale3;
+		if(strcmp(species, "L") == 0)
+		{
+			sum = -( L_eta_L*(v_L[i] + v_L[j] + v_L[k])  );
+			out[index][0] = (cos(sum)*temp[index][0] - sin(sum)*temp[index][1])/scaleL_L/scale3;
+			out[index][1] = (cos(sum)*temp[index][1] + sin(sum)*temp[index][0])/scaleL_L/scale3;
+		}
+		else if(strcmp(species, "H") == 0)
+		{
+			sum = -( L_eta_H*(v_H[i] + v_H[j] + v_H[k])  );
+			out[index][0] = (cos(sum)*temp[index][0] - sin(sum)*temp[index][1])/scaleL_H/scale3;
+			out[index][1] = (cos(sum)*temp[index][1] + sin(sum)*temp[index][0])/scaleL_H/scale3;
+		}
+		else
+		{
+			sum = -( L_eta*(v[i] + v[j] + v[k])  );
+			out[index][0] = (cos(sum)*temp[index][0] - sin(sum)*temp[index][1])/scaleL/scale3;
+			out[index][1] = (cos(sum)*temp[index][1] + sin(sum)*temp[index][0])/scaleL/scale3;
+		}
       }
     }
   }
@@ -1160,12 +1216,25 @@ void ComputeQ_FandL(double *f, fftw_complex *qHat, double **conv_weights, fftw_c
 
 }
 
-void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights)
+void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights, char const *species)
 {
 	int i, j, k, l, m, n, x, y, z;												// declare (i,j,k) (the indices for a given value of given ki = ki_(i,j,k)), (l,m,n) (counters for the quadrature to calculate the integral w.r.t. eta in the evaluation of qHat and so also represent the indices of a given eta = eta_(l,m,n)) & (x,y,z) (the indices for the value of a subtraction in the calculation, namely eta_(x,y,z) = ki_(i,j,k) - eta_(l,m,n))
 	int start_i, start_j, start_k, end_i, end_j, end_k;							// declare start_i, start_j & start_k (the indices for the values of the lower bounds of integration in computation of the convolution, corresponding to the lowest point where both functions are non-zero, in each velocity direction) and end_i, end_j & end_k (the indices for the values of the upper bounds of integration in computation of the convolution, corresponding to the highest point where both functions are non-zero, in each velocity direction)
 	double tempD, tmp0, tmp1;													// declare tempD (the value of the convolution weight at a given ki & eta), tmp0 (which will become the real part of qHat) & tmp1 (which will become the imaginary part of qHat)
-	double prefactor = h_eta*h_eta*h_eta; 										// declare prefactor (the value of h_eta^3, as no scale3 in Fourier space) and set its value
+	double prefactor;					 										// declare prefactor (the value of h_eta^3, as no scale3 in Fourier space) and set its value
+
+	if(strcmp(species, "L") == 0)
+	{
+		prefactor = h_eta_L*h_eta_L*h_eta_L;
+	}
+	else if(strcmp(species, "H") == 0)
+	{
+		prefactor = h_eta_H*h_eta_H*h_eta_H;
+	}
+	else
+	{
+		prefactor = h_eta*h_eta*h_eta;
+	}
 
     for(i=0;i<size_ft;i++)                                                        // initialise the input of the FFT
     {
@@ -1173,7 +1242,7 @@ void ComputeQ(double *f, fftw_complex *qHat, double **conv_weights)
         fftIn[i][1] = 0.;                                                        // set the imaginary part to zero
     }
     
-    fft3D(fftIn, fftOut);                                                        // perform the FFT of fftIn and store the result in fftOut
+    fft3D(fftIn, fftOut, species);                                                        // perform the FFT of fftIn and store the result in fftOut
 
 
 #pragma omp parallel for schedule(dynamic) private(i,j,k,l,m,n,x,y,z,start_i,start_j,start_k,end_i,end_j,end_k,tempD) shared(qHat, fftOut, conv_weights) reduction(+:tmp0, tmp1)
@@ -1262,8 +1331,8 @@ void ComputeQ_LH(double *f_L, double *f_H, fftw_complex *qHat, double **conv_wei
         fftIn_H[i][1] = 0.;
     }
     
-       fft3D(fftIn_L, fftOut_L);                                                        // perform the FFT of fftIn and store the result in fftOut
-       fft3D(fftIn_H, fftOut_H);
+       fft3D(fftIn_L, fftOut_L, "L");                                                        // perform the FFT of fftIn and store the result in fftOut
+       fft3D(fftIn_H, fftOut_H, "H");
     
 #pragma omp parallel for schedule(dynamic) private(i,j,k,l,m,n,x,y,z,start_i,start_j,start_k,end_i,end_j,end_k,tempD_LH) shared(qHat, fftOut_H, fftOut_L, conv_weights_LH) reduction(+:tmp0, tmp1)
     for(i=0;i<N;i++)                                                             // loop through all points in the ki_1
@@ -1353,8 +1422,8 @@ void ComputeQ0_LH(double *f_L, double *f_H, fftw_complex *qHat, double **conv_we
         fftIn_H[i][1] = 0.;
     }
     
-    fft3D(fftIn_L, fftOut_L);                                                        // perform the FFT of fftIn and store the result in fftOut
-    fft3D(fftIn_H, fftOut_H);
+    fft3D(fftIn_L, fftOut_L, "L");                                                        // perform the FFT of fftIn and store the result in fftOut
+    fft3D(fftIn_H, fftOut_H, "H");
     
     computeMass_H = computeMass(f_H);      // compute the mass of f_H
     
@@ -1410,8 +1479,8 @@ void ComputeQ_HL(double *f_L, double *f_H, fftw_complex *qHat, double **conv_wei
         fftIn_H[i][1] = 0.;
     }
     
-    fft3D(fftIn_L, fftOut_L);                                                    // perform the FFT of fftIn and store the result in fftOut
-    fft3D(fftIn_H, fftOut_H);                                                   // perform the FFT of fftIn and store the result in fftOut
+    fft3D(fftIn_L, fftOut_L, "L");                                                    // perform the FFT of fftIn and store the result in fftOut
+    fft3D(fftIn_H, fftOut_H, "H");                                                   // perform the FFT of fftIn and store the result in fftOut
     
 #pragma omp parallel for schedule(dynamic) private(i,j,k,l,m,n,x,y,z,start_i,start_j,start_k,end_i,end_j,end_k,tempD_HL) shared(qHat, fftOut_L, fftOut_H, conv_weights_HL) reduction(+:tmp0, tmp1)
     for(i=0;i<N;i++)                                                             // loop through all points in the ki_1
@@ -1962,39 +2031,39 @@ void RK4_Homo_H(double *f_L, double *f_H, fftw_complex *qHat_HH, fftw_complex *q
     int i,j,k, j1, j2, j3, k_v, k_eta, kk, k_loc;
     double Q_re, Q_im, tp0, tp2, tp3,tp4,tp5, tmp0=0., tmp2=0., tmp3=0., tmp4=0.,tmp5=0., tem;
     
-    FS(qHat_HH, fftOut_HH);                                                                     // set fftOut to the Fourier series representation of qHat (i.e. the IFFT of qHat)
-    FS(qHat_HL, fftOut_HL);
+    FS(qHat_HL, fftOut_L, "L");
+    FS(qHat_HH, fftOut_H, "H");                                                                     // set fftOut to the Fourier series representation of qHat (i.e. the IFFT of qHat)
     
 	#pragma omp parallel for private(i) shared(Q,fftOut,f1_H,f_H)
     for(i=0;i<size_ft;i++)
     {
-        Q[i] = fftOut_HH[i][0] + fftOut_HL[i][0];                                                          // this is Q(Fn, Fn) so that Kn^1 = dt*Q(Fn, Fn) = dt*Q[i]
+        Q[i] = fftOut_H[i][0] + fftOut_L[i][0];                                                          // this is Q(Fn, Fn) so that Kn^1 = dt*Q(Fn, Fn) = dt*Q[i]
         f1_H[i] = f_H[i] + dt*Q[i]/epsilon;
     }
     
     ComputeQ(f1_H, Q1_fft_HH, conv_weights);
     ComputeQ_HL(f1_L, f1_H, Q1_fft_HL, conv_weights_HL, epsilon);                                                   // calculate the Fourier tranform of Q(f1,f1) using conv_weights for the weights in the convolution, then store the results of the Fourier transform in Q1_fft
     
-    FS(Q1_fft_HH, fftOut_HH);
-    FS(Q1_fft_HL, fftOut_HL);
+    FS(Q1_fft_HH, fftOut_H);
+    FS(Q1_fft_HL, fftOut_L);
     
 	#pragma omp parallel for private(i) shared(Q,Q1,fftOut,f1_H,f_H)
     for(i=0;i<size_ft;i++)                                                                // calculate the second step of RK4
     {
-        Q1[i] = fftOut_HH[i][0] + fftOut_HL[i][0];
+        Q1[i] = fftOut_H[i][0] + fftOut_L[i][0];
         f1_H[i] = f_H[i] + 0.5*dt*Q[i]/epsilon + 0.5*dt*Q1[i]/epsilon;
     }
     
     ComputeQ(f1_H, Q2_fft_HH, conv_weights);
     ComputeQ_HL(f1_L, f1_H, Q2_fft_HL, conv_weights_HL, epsilon);
     
-    FS(Q2_fft_HH, fftOut_HH);
-    FS(Q2_fft_HL, fftOut_HL);
+    FS(Q2_fft_HH, fftOut_H);
+    FS(Q2_fft_HL, fftOut_L);
     
 	#pragma omp parallel for private(i) shared(Q,Q1,fftOut,f1_H,f_H)
     for(i=0;i<size_ft;i++)                                                                // calculate the third step of RK4
     {
-        Q1[i] = fftOut_HH[i][0] + fftOut_HL[i][0];
+        Q1[i] = fftOut_H[i][0] + fftOut_L[i][0];
         f1_H[i] = f_H[i] + 0.5*Q[i]/epsilon + 0.5*Q1[i]/epsilon;
     }
     
