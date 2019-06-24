@@ -830,8 +830,8 @@ void IntModes_L(int k1, int k2,  int k3, int j1, int j2, int j3, double *result)
     /////////////////////////////////////////////////////////////////////////////////////////////////////
     
     if(eta_L[k1] != 0.){
-        tmp1_re = ((v1_r*sin(eta_L[k1]*v1_r) - v1_l*sin(eta_L[k1]*v1_l))/eta_L[k1] + (cos(eta_L[k1]*v1_r) - cos(eta_L[k1]*v1_l))/eta_L[k1]/eta_L[k1] -v1*tem1_re)/dv;
-        tmp1_im = ((sin(eta_L[k1]*v1_r) - sin(eta_L[k1]*v1_l))/eta_L[k1]/eta_L[k1] + (v1_l*cos(eta_L[k1]*v1_l) - v1_r*cos(eta_L[k1]*v1_r))/eta_L[k1] -v1*tem1_im)/dv;
+        tmp1_re = ((v1_r*sin(eta_L[k1]*v1_r) - v1_l*sin(eta_L[k1]*v1_l))/eta_L[k1] + (cos(eta_L[k1]*v1_r) - cos(eta_L[k1]*v1_l))/eta_L[k1]/eta_L[k1] -v1*tem1_re)/dv_L;
+        tmp1_im = ((sin(eta_L[k1]*v1_r) - sin(eta_L[k1]*v1_l))/eta_L[k1]/eta_L[k1] + (v1_l*cos(eta_L[k1]*v1_l) - v1_r*cos(eta_L[k1]*v1_r))/eta_L[k1] -v1*tem1_im)/dv_L;
     }
     else
     {
@@ -986,8 +986,8 @@ void IntModes_H(int k1, int k2,  int k3, int j1, int j2, int j3, double *result)
     /////////////////////////////////////////////////////////////////////////////////////////////////////
     
     if(eta_H[k1] != 0.){
-        tmp1_re = ((v1_r*sin(eta_H[k1]*v1_r) - v1_l*sin(eta_H[k1]*v1_l))/eta_H[k1] + (cos(eta_H[k1]*v1_r) - cos(eta_H[k1]*v1_l))/eta_H[k1]/eta_H[k1] -v1*tem1_re)/dv;
-        tmp1_im = ((sin(eta_H[k1]*v1_r) - sin(eta_H[k1]*v1_l))/eta_H[k1]/eta_H[k1] + (v1_l*cos(eta_H[k1]*v1_l) - v1_r*cos(eta_H[k1]*v1_r))/eta_H[k1] -v1*tem1_im)/dv;
+        tmp1_re = ((v1_r*sin(eta_H[k1]*v1_r) - v1_l*sin(eta_H[k1]*v1_l))/eta_H[k1] + (cos(eta_H[k1]*v1_r) - cos(eta_H[k1]*v1_l))/eta_H[k1]/eta_H[k1] -v1*tem1_re)/dv_L;
+        tmp1_im = ((sin(eta_H[k1]*v1_r) - sin(eta_H[k1]*v1_l))/eta_H[k1]/eta_H[k1] + (v1_l*cos(eta_H[k1]*v1_l) - v1_r*cos(eta_H[k1]*v1_r))/eta_H[k1] -v1*tem1_im)/dv_L;
     }
     else
     {

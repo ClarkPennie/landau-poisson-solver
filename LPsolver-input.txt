@@ -90,7 +90,7 @@ T_R      = 0.4                  # Temperature at right wall (if using Dirichlet 
 [DisparateMass]
 
 DM_Check        = False         # Check solution against single species results
-mass_ratio 	= 0.1		# Mass ratio epsilon between species
+mass_ratio 	= 1		# Mass ratio epsilon between species
 
 #--------------------------------------------
 # Name of file from previous run to pick up
