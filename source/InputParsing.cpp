@@ -314,7 +314,7 @@ void ReadDisparateMass(GRVY_Input_Class& iparse)												// Function to read 
 
 	// Check if Homogeneous has been set and, if not, exit the program
 	// because the code cannot yet handle the inhomogeneous setting:
-	if(!Homogeneous)	// Eventually, the DisparateMass problem should run in the space inhomogeneous setting too!
+	if(!Homogeneous && DisparateMass)	// Eventually, the DisparateMass problem should run in the space inhomogeneous setting too!
 	{
 		if(myrank_mpi==0)
 		{
