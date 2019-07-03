@@ -31,7 +31,7 @@ double f_2Gauss(double v1, double v2, double v3);
 
 double Mw(double v1, double v2, double v3, double T);
 
-double Mw_x(double x);
+double Mw_x(double x, double T);
 
 double f_2H(double x);
 

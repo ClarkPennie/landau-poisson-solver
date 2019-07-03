@@ -47,10 +47,10 @@ double Mw(double v1, double v2, double v3, double T)															// function t
 	return retn;																								// return the result
 }
 
-double Mw_x(double x)																							// function to return a Maxwellian in x-space
+double Mw_x(double x, double T)																					// function to return a Maxwellian in x-space
 {
-	double r2, T, retn;																							// declare r2 (the squared magnitude of the given x), T (the temperature) and retn (the value of the Maxwellian evaluated at (v1,v2,v3) to be returned)
-	T=0.4; 																										// set T to 0.9 (when testing the nonlinear damping, T was chosen too small that the "effective grid" is  not fine enough)
+	double r2, retn;																							// declare r2 (the squared magnitude of the given x), T (the temperature) and retn (the value of the Maxwellian evaluated at (v1,v2,v3) to be returned)
+//	T=0.4; 																										// set T to 0.9 (when testing the nonlinear damping, T was chosen too small that the "effective grid" is  not fine enough)
 	r2=x*x;																										// calculate r2 for the given x
 	retn = exp(-r2/(2*T))/(sqrt(2*T*PI));																		// calculate the value of the Maxwellian at the given point x
 	return retn;																								// return the result
@@ -60,7 +60,7 @@ double f_2H(double x)																							// function to calculate the value o
 {
 	double r2, MW, retn;																						// declare r2 (the squared magnitude of the given x), MW (the value of the Maxwellian evaluated at x) and retn (the value of f_DH(x))
 	r2 = (x-Lx/2)*(x-Lx/2);																						// calculate r2 for the given x
-	MW = Mw_x(x-Lx/2);																							// calculate the Maxwellian in x-space evaluated at the given x
+	MW = Mw_x(x-Lx/2, 0.4);																						// calculate the Maxwellian in x-space evaluated at the given x
 	retn = sin(r2/Lx)*sin(r2/Lx)*MW/0.0145254;																	// calculate the value of f_DH(x)
 	return retn;																								// return the result
 }
@@ -211,7 +211,7 @@ void SetInit_4H(double *U, double T0, double C)																							// functio
     					tmpx0 = 0.; tmpx1 = 0.;																		// initialise tmpx0 & tmpx1 at 0 for a new quadrature integral to calculate int_Ii f_DH(x)*phi_(6k+l)(x) dx, for l = 0, 1
     					for(m = 0; m < nt; m++)																		// loop through the quadrature sum
     					{
-    						tpx = wt[m]*Mw_x(Gridx((double) i)+0.5*dx*vt[m] - Lx/2 + C*pow(-1,((int)(p/2))));	// calculate w_m*Mw_x(x-Lx/2+(-1)^floor(p/2)), a Maxwellian shifted to center at x = Lx/2 - (-1)^floor(p/2), which appears in both quadrature integral approximations
+    						tpx = wt[m]*Mw_x(Gridx((double) i)+0.5*dx*vt[m] - Lx/2 + C*pow(-1,((int)(p/2))), T0);	// calculate w_m*Mw_x(x-Lx/2+(-1)^floor(p/2)), a Maxwellian shifted to center at x = Lx/2 - (-1)^floor(p/2), which appears in both quadrature integral approximations
     						tmpx0 += tpx;																			// add tpx to tmpx0 (for the integral int_Ii f_DH(x) dx)
     						tmpx1 += tpx*0.5*vt[m];																	// add tpx*x_m/2 to tmpx1 (for the integral int_Ii f_DH(x)*phi_(6k+1)(x) dx)
     					}
@@ -348,7 +348,7 @@ void SetInit_2H(double *U, double T0, double C)																							// functio
     					tmpx0 = 0.; tmpx1 = 0.;																		// initialise tmpx0 & tmpx1 at 0 for a new quadrature integral to calculate int_Ii f_DH(x)*phi_(6k+l)(x) dx, for l = 0, 1
     					for(m = 0; m < nt; m++)																		// loop through the quadrature sum
     					{
-    						tpx = wt[m]*Mw_x(Gridx((double) i)+0.5*dx*vt[m] - Lx/2 + C*pow(-1,p));	// calculate w_m*Mw_x(x-Lx/2+(-1)^floor(p/2)), a Maxwellian shifted to center at x = Lx/2 - (-1)^floor(p/2), which appears in both quadrature integral approximations
+    						tpx = wt[m]*Mw_x(Gridx((double) i)+0.5*dx*vt[m] - Lx/2 + C*pow(-1,p), T0);	// calculate w_m*Mw_x(x-Lx/2+(-1)^floor(p/2)), a Maxwellian shifted to center at x = Lx/2 - (-1)^floor(p/2), which appears in both quadrature integral approximations
     						tmpx0 += tpx;																			// add tpx to tmpx0 (for the integral int_Ii f_DH(x) dx)
     						tmpx1 += tpx*0.5*vt[m];																	// add tpx*x_m/2 to tmpx1 (for the integral int_Ii f_DH(x)*phi_(6k+1)(x) dx)
     					}
