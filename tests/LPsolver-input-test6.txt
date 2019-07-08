@@ -1,0 +1,93 @@
+# ------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# LPsolver-input.txt
+# 
+# Text file containing input variables to be read by GRVY in the Landau-
+# Poisson solver code.
+#
+# ------------------------------------------------------------------------------
+
+#--------------------------------------------
+# Global input variable definitions
+#--------------------------------------------
+
+flag     = Test6
+
+nT       = 5 	                # Number of time-steps
+Nx       = 16  	                # Number of space cells
+Nv       = 16	                # Number of velocity cells in each direction
+N        = 8 	                # Number of Fourier modes
+nu       = 0.05                 # Value of (Knudsen number)^{-1}
+dt       = 0.001                # Size of each time-step
+
+gamma    = 0                    # Value of gamma in collision kernel
+#--------------------------------------------
+# Boolean options to determine problem
+#--------------------------------------------
+
+# Options for initial conditions (choose one):
+Damping          = False        # Landau Damping ICs
+TwoStream        = False        # Two Stream ICs
+FourHump         = True         # Four Hump ICs
+TwoHump          = False        # Two Hump ICs
+Doping           = False        # Non-uniform doping ICs
+
+# Choose if running for the first time or a subsequent run:
+First            = True         # Running for the first time with ICs
+Second           = False        # Picking up from a previous run
+
+# Choose if running the space homogeneous version:
+Homogeneous      = True         # Run for the space homogeneous setting
+
+# Choose how the collisions are being modelled:
+FullandLinear    = False        # Include electron-ion collisions
+LinearLandau     = False        # Run with Linear Landau operator Q(f,M)
+MassConsOnly     = False        # Run with only conservation of mass
+
+#--------------------------------------------
+# Parameters associated with certain ICs
+#--------------------------------------------
+
+[Damping]
+
+IC_name  = 'Landau Damping'	# Name of problem associated to ICs
+A_amp    = 0.2                  # Amplitude of the perturbation
+k_wave   = 0.5			# Frequency of the perturbation
+Lv       = 5.25                 # Width of domain in v-space
+
+[TwoStream]
+
+IC_name  = 'Two Stream'         # Name of problem associated to ICs
+A_amp    = 0.5                  # Amplitude of the perturbation
+Lv       = 5.25                 # Width of domain in v-space
+Lx       = 4.                   # Width of domain in x-space
+
+[FourHump]
+
+IC_name  = 'Four Hump'          # Name of problem associated to ICs
+Lv       = 0.09                 # Width of domain in v-space
+T_hump   = 0.00025	        # Variance of each of the four humps
+shift    = 0.02	          	# Shift from zero of each of the four humps
+
+[TwoHump]
+
+IC_name  = 'Two Hump'           # Name of problem associated to ICs
+Lv       = 5.25                 # Width of domain in v-space
+
+[Doping]
+
+IC_name  = 'Non-uniform Doping' # Name of problem associated to ICs
+Lv       = 5.25                 # Width of domain in v-space
+NL       = 0.001                # Value of background density in lower regions
+NH       = 1                    # Value of background density in higher regions
+eps      = 0.1                 # Value of dielectric constant
+T_L      = 0.4                  # Temperature at left wall (if using Dirichlet BCs)
+T_R      = 0.4                  # Temperature at right wall (if using Dirichlet BCs)
+
+#--------------------------------------------
+# Name of file from previous run to pick up
+#--------------------------------------------
+
+[Second]
+
+Name = U_nu0.05A0.2k0.5Nx8Lx12.5664Nv8Lv5.25SpectralN8dt0.01nT2_GRVY_Tests.dc
