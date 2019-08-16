@@ -45,7 +45,8 @@ extern void ReadNoField(GRVY_Input_Class& iparse);
 
 extern void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 								int& Nx, int& Nv, int& N, double& nu, double& dt, double& A_amp,
-								double& k_wave, double& Lv, double& Lx, double& T_hump, double& shift, double& T_0);
+								double& k_wave, double& Lv, double& Lx, double& T_hump, double& shift,
+								double& T_0, double& rho_0);
 
 extern void ReadDopingParameters(GRVY_Input_Class& iparse, double& NL, double& NH,
 								double& T_L, double& T_R, double& eps);

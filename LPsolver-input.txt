@@ -11,7 +11,7 @@
 # Global input variable definitions
 #--------------------------------------------
 
-flag     = 2H_Test
+flag     = NewMass_Test
 
 nT       = 0 	                # Number of time-steps
 Nx       = 24  	                # Number of space cells
@@ -27,10 +27,10 @@ gamma    = -3                   # Value of gamma in collision kernel
 #--------------------------------------------
 
 # Options for initial conditions (choose one):
-Damping          = False        # Landau Damping ICs
+Damping          = True         # Landau Damping ICs
 TwoStream        = False        # Two Stream ICs
 FourHump         = False        # Four Hump ICs
-TwoHump          = True         # Two Hump ICs
+TwoHump          = False        # Two Hump ICs
 TwoHump_sin      = False        # Two Hump ICs from sin^2 perturbation
 Doping           = False        # Non-uniform doping ICs
 
@@ -42,7 +42,7 @@ Second           = False        # Picking up from a previous run
 Homogeneous      = False        # Run for the space homogeneous setting
 
 # Choose if running with a self-consistent field or not:
-NoField          = True         # Run without a field
+NoField          = False        # Run without a field
 
 # Choose how the collisions are being modelled:
 FullandLinear    = False        # Include electron-ion collisions
@@ -59,6 +59,7 @@ IC_name  = 'Landau Damping'	# Name of problem associated to ICs
 A_amp    = 0.2                  # Amplitude of the perturbation
 k_wave   = 0.5			# Frequency of the perturbation
 T_0      = 1.2                  # Variance of Maxwellian to be perturbed
+rho_0    = 0.1                  # Mass of the Maxwellian used in v-space
 Lv       = 5.25                 # Width of domain in v-space
 
 [TwoStream]
