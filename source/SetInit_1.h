@@ -35,7 +35,7 @@ double Mw_x(double x, double T);
 
 double f_2H(double x);
 
-void SetInit_LD(double *U, double T0);
+void SetInit_LD(double *U, double T0, double rho_0 = 1);
 
 void SetInit_4H(double *U, double T0, double C);
 

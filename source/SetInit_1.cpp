@@ -65,7 +65,7 @@ double f_2H(double x)																							// function to calculate the value o
 	return retn;																								// return the result
 }
 
-void SetInit_LD(double *U, double T0)																						// function to calculate the DG coefficients for the initial condition for Landau Damping
+void SetInit_LD(double *U, double T0, double rho_0)																						// function to calculate the DG coefficients for the initial condition for Landau Damping
 {
     int i, j1, j2, j3, k, m1,m2,m3,nt=5;																		// declare i (to represent cell i in x-space), j1, j2, j3 (to represent cell (j1,j2,j3) in v-space), k (the index of cell (i,j1,j2,j3) in U), m1, m2, m3 (counters for the Gaussian quadrature in 3D) & nt (the number of points in the quadrature)
     double a=A_amp, c=k_wave;																					// declare a (the amplitude of cosine wave) and set it to A_amp & c (the frequency of the cosine wave) and set it to k_wave
@@ -103,7 +103,7 @@ void SetInit_LD(double *U, double T0)																						// function to calcul
     					}
     				}
     			}
-    			tmp0 = tmp0*0.5*0.5*0.5; tmp1 = tmp1*0.5*0.5*0.5; tmp2 = tmp2*0.5*0.5*0.5; tmp3 = tmp3*0.5*0.5*0.5; tmp4 = tmp4*0.5*0.5*0.5;						// multiply tmp0, tmp1, tmp2, tmp3 & tmp4 by (1/2)^3 to represent the fact that quadrature isn't done over [-1, 1] (should also multiply by dv^3 but this cancels with 1/dv^3 later)
+    			tmp0 = rho_0*tmp0*0.5*0.5*0.5; tmp1 = rho_0*tmp1*0.5*0.5*0.5; tmp2 = rho_0*tmp2*0.5*0.5*0.5; tmp3 = rho_0*tmp3*0.5*0.5*0.5; tmp4 = rho_0*tmp4*0.5*0.5*0.5;						// multiply tmp0, tmp1, tmp2, tmp3 & tmp4 by (1/2)^3 to represent the fact that quadrature isn't done over [-1, 1] (should also multiply by dv^3 but this cancels with 1/dv^3 later)
     			for(i=0;i<Nx;i++)																																	// loop through the space cells
     			{
     				k=i*size_v + (j1*Nv*Nv + j2*Nv + j3);																											// calculate the index of cell (i,j1,j2,j3) in U
