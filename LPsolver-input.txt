@@ -27,9 +27,9 @@ gamma    = -3                   # Value of gamma in collision kernel
 #--------------------------------------------
 
 # Options for initial conditions (choose one):
-Damping          = True         # Landau Damping ICs
+Damping          = False        # Landau Damping ICs
 TwoStream        = False        # Two Stream ICs
-FourHump         = False        # Four Hump ICs
+FourHump         = True         # Four Hump ICs
 TwoHump          = False        # Two Hump ICs
 TwoHump_sin      = False        # Two Hump ICs from sin^2 perturbation
 Doping           = False        # Non-uniform doping ICs
@@ -75,6 +75,7 @@ IC_name  = 'Four Hump'          # Name of problem associated to ICs
 Lv       = 0.09                 # Width of domain in v-space
 T_hump   = 0.00025	        # Variance of each of the four humps
 shift    = 0.02	          	# Shift from zero of each of the four humps
+rho_0    = 0.1                  # Mass of the Maxwellian used in v-space
 
 [TwoHump]
 

@@ -35,7 +35,7 @@ double Gridv(double m);
 
 double Gridx(double m);
 
-void DirichletBC(vector<double>& Ub_vals, int i, int j1, int j2, int j3);
+void DirichletBC(vector<double>& Ub_vals, int i, int j1, int j2, int j3, double rho_0 = 1);
 
 double I1(double *U, int k, int l);
 

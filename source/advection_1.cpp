@@ -21,7 +21,7 @@ double Gridx(double m){ // x in [0,Lx]  (returns the x value at the mth discrete
 }
 
 //#ifdef Doping																						// only do this if Damping was defined
-void DirichletBC(vector<double>& Ub_vals, int i, int j1, int j2, int j3)
+void DirichletBC(vector<double>& Ub_vals, int i, int j1, int j2, int j3, double rho_0)
 {
     int m1,m2,m3,nt=5;																				// declare m1, m2, m3 (counters for the Gaussian quadrature in 3D) & nt (the number of points in the quadrature)
     double tp, tp0, tp5, tmp0, tmp1, tmp2, tmp3, tmp4;												// declare tp, tp0, tmp0, tmp1, tmp2, tmp3, tmp4 (temporary values while calculating the quadrature for the integral w.r.t. v)
@@ -45,7 +45,7 @@ void DirichletBC(vector<double>& Ub_vals, int i, int j1, int j2, int j3)
 		{
 			for(m3=0;m3<nt;m3++)
 			{
-				tp = wt[m1]*wt[m2]*wt[m3]*Mw(Gridv((double)j1)+0.5*dv*vt[m1], Gridv((double)j2)+0.5*dv*vt[m2], Gridv((double)j3)+0.5*dv*vt[m3], T_B);	// calculate w_m1*w_m2*w_m3*Mw(v_m1,v_m2,v_m3), which appears in all quadrature integral approximations
+				tp = wt[m1]*wt[m2]*wt[m3]*Mw(Gridv((double)j1)+0.5*dv*vt[m1], Gridv((double)j2)+0.5*dv*vt[m2], Gridv((double)j3)+0.5*dv*vt[m3], rho_0, T_B);	// calculate w_m1*w_m2*w_m3*Mw(v_m1,v_m2,v_m3), which appears in all quadrature integral approximations
 
 				tmp0 += tp;																																// add tp to tmp0 (for the integral int_Kj Mw(v)*phi_6k dv)
 				tmp1 += tp*0.5*vt[m1];																													// add tp*v_m1/2 to tmp1 (for the integral int_Kj Mw(v)*phi_(6k+2) dv)
