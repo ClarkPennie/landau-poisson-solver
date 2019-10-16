@@ -211,6 +211,75 @@ void CheckFirstOrSecond()																		// Function to verify the First or Se
 	}
 }
 
+void ReadElectronsOrIons(GRVY_Input_Class& iparse)												// Function to read the Boolean options to decide if the code is running electrons or ions
+{
+	// Check if each of Electrons or Ions have been set and print their values from the
+	// processor with rank 0 (if not, set default value to false)
+	if( iparse.Read_Var("Electrons",&Electrons,false) )
+	{
+		if(myrank_mpi==0)
+		{
+			std::cout << "--> Electrons = " << Electrons << std::endl;
+		}
+	}
+	if( iparse.Read_Var("Ions",&Ions,false) )
+	{
+		if(myrank_mpi==0)
+		{
+			std::cout << "--> Ions = " << Ions << std::endl << std::endl;
+		}
+	}
+}
+
+void CheckElectronsOrIons()																		// Function to verify the Electrons or Ions options were set correctly
+{
+	// declare species_count to check if first or second has been set
+	int species_count = 0;
+
+	// For each option Electrons or Ions, add one to species_count if it's true and print that
+	// it's true from the processor with rank 0
+	if(Electrons)
+	{
+		species_count++;
+		if(myrank_mpi==0)
+		{
+			std::cout << "This run is modelling electrons."
+						<< std::endl << std::endl;
+		}
+	}
+	if(Ions)
+	{
+		species_count++;
+		if(myrank_mpi==0)
+		{
+			std::cout << "This run is modelling ions."
+						<< std::endl << std::endl;
+		}
+	}
+	// If neither were true, set Electrons to true by default
+	if(species_count == 0)
+	{
+		Electrons = true;
+		if(myrank_mpi==0)
+		{
+			//std::cout << "--> Electrons = " << Electrons << std::endl;
+			std::cout << "This run is modelling electrons (by default, as neither were specified)."
+						<< std::endl << std::endl;
+		}
+	}
+	// Exit the program if both were true
+	if(species_count > 1)
+	{
+		if(myrank_mpi==0)
+		{
+			std::cout << "Program cannot run... Need to choose if the code is modelling electrons or ions."
+						<< std::endl;
+			std::cout << "Please set ONE of Electrons or Ions to true in LPsolver-input.txt." << std::endl;
+		}
+		exit(1);
+	}
+}
+
 void ReadGamma(GRVY_Input_Class& iparse, int& gamma)												// Function to read the Boolean options to decide if this is the first run or not
 {
 	// Check if the value of gamma has been set and print its value from the

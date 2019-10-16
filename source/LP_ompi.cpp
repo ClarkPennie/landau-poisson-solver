@@ -75,6 +75,7 @@ bool First, Second;																					// declare Boolean variables which will 
 bool LinearLandau;																					// declare a Boolean variable to determine if running with the full collision operator or linear collisions with a Maxwellian
 bool MassConsOnly;																					// declare a Boolean variable to determine if conserving all moments or all mass
 bool NoField;																						// declare a Boolean variable to turn off the field in the advection step
+bool Electrons, Ions;																				// declare Boolean variables which will determine if the electrons or ions are being modelled
 
 int main(int argc, char** argv)
 {
@@ -179,6 +180,8 @@ int main(int argc, char** argv)
 	ReadLinearLandau(iparse);																		// Read in if running full or linear Landau
 	ReadMassConsOnly(iparse);																		// Read in if running conservation of all moments or just mass
 	ReadNoField(iparse);																			// Read in if running without a field
+	ReadElectronsOrIons(iparse);																	// Read in if this run will model electrons or ions
+	CheckElectronsOrIons();																			// Check no more than one of Electrons or Ions were chosen
 
 	ReadInputParameters(iparse, flag, nT, Nx, Nv, N, nu, dt, A_amp, k_wave, Lv, Lx, 
 							T_hump, shift, T_0);	// Read in all input parameters
