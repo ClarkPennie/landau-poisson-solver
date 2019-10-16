@@ -25,6 +25,7 @@
 #include <omp.h>																					// allows all OpenMP routines to be used
 #include <fftw3.h>																					// allows the Fast Fourier Transform to be used
 #include <vector>
+#include <algorithm>
 using std::vector;
 #include <cstring>																					// allows c_str & strcpy to be used
 #ifdef HAVE_MKL
@@ -35,11 +36,16 @@ using std::vector;
 #include<grvy.h>
 #include<iostream>																					// allows cout & endl to be used (with Intel compiler)
 using namespace GRVY;
+using std::max_element;
 
 
 //************************//
 //         MACROS         //
 //************************//
+
+// CHOOSE IF MODELING ELECTRONS OR IONS:
+#define Electrons
+//#define Ions
 
 //************************//
 //   EXTERNAL VARIABLES   //
@@ -56,11 +62,15 @@ extern double dv, dx; 																				// declare dv (the velocity stepsize) 
 extern double L_v, R_v, L_eta;																		// declare L_v (for -Lv < v < Lv in the collision problem) and set it to Lv, R_v (for v in B_(R_v) in the collision problem) and set it to Lv & L_eta (for Fourier space, -L_eta < eta < L_eta)
 extern double h_eta, h_v;																			// declare h_eta (the Fourier stepsize) & h_v (also the velocity stepsize but for the collision problem)
 extern double nu, dt, nthread; 																		// declare nu (1/knudson#) and set it to 0.1, dt (the timestep) and set it to 0.004 & nthread (the number of OpenMP threads)
+extern double eps;																					// declare eps (the dielectric constant in Poisson's equation: div(eps*grad(Phi)) = R(x,t))
 
 extern double NL, NH;																				// declare NL & NH (the density of ions in the middle of the well, the Lower value, and the edges, the higher value, respectively)
 extern int a_i, b_i;																				// declare a_i & b_i (the indices such that ND(x) = NL, for x_{a_i+1/2}< x <= x_{b_i-1/2}, and ND(x) = NH otherwise)
 extern double T_L, T_R;																				// declare T_L & T_R (the temperatures at the left & right edges of space if periodic BCs are used, respectively)
 extern double eps;																					// declare eps (the dielectric constant in Poisson's equation: div(eps*grad(Phi)) = R(x,t))
+
+//extern vector<double> nu;																			// declare the vector nu (to hold the value of 1/Knudsen on each cell)
+extern double nu_max;																				// declare nu_max (maximum of 1/knudson#)
 
 extern double *v, *eta;																				// declare v (the velocity variable) & eta (the Fourier space variable)
 extern double *wtN;																					// declare wtN (the trapezoidal rule weights to be used)

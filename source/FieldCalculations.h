@@ -73,6 +73,12 @@ double Int_E2nd_Normal(double *U, int i);
 
 double DopingProfile(int i);
 
+void PrintDoping();
+
+double EpsilonValue(int i);
+
+void PrintEpsilon();
+
 double computePhi_x_0_Doping(double *U);
 
 double computePhi_x_0_Doping(double *U);

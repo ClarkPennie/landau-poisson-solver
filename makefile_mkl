@@ -5,7 +5,7 @@ OBJDIR:=$(DIR)/build
 SRCDIR:=$(DIR)/source
 
 # Files
-EXEC :=  LPsolver_nu005_QLinear_BCTempsEqual_eps10^-1.out 
+EXEC :=  LPsolver_nu005_QLinear_IonSimulationTwelfthWide.out
 SRC  :=  $(wildcard $(SRCDIR)/*.cpp) 
 OBJ  :=  $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SRC))
 

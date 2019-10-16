@@ -23,6 +23,10 @@
 //   FUNCTION PROTOTYPES  //
 //************************//
 
+void SetupKnudsen(vector<double>& nu_vals);
+
+void PrintKnudsen(vector<double>& nu_vals);
+
 double S1hat(double ki1,double ki2,double ki3);
 
 double S233hat(double ki1, double ki2, double ki3);

@@ -67,7 +67,36 @@ void DirichletBC(vector<double>& Ub_vals, int i, int j1, int j2, int j3)
 	Ub_vals[3] = ND*tmp2*12;																															// calculate the coefficient U[6k+3] = 12*b_(6k+3) = 12*(int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_(6k+3)(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
 	Ub_vals[4] = ND*tmp3*12;																															// calculate the coefficient U[6k+4] = 12*b_(6k+4) = 12*(int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_(6k+4)(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
 }
-//#endif	/* Doping*/
+
+void ChargeNeutralityBC(vector<double>& Ub_vals, double* U_vals, int i, int k)
+{
+	double ND;																																			// declare ND (the value of the doping profile at the given x)
+	double density;																																		// declare density (the value of int_{K_j} f(x,v) dv on this cell)
+
+	ND = DopingProfile(i);																			// set ND to the value of the doping profile at the given edge																												// set ND to the value of the doping profile at ix
+	if(i==0)
+	{
+		density = rho_x(0, U_vals, i);
+	}
+	else if(i==Nx-1)
+	{
+		density = rho_x(Lx, U_vals, i);
+	}
+	else
+	{
+		printf("This is not a boundary point in the DG calculation.");
+		exit(0);
+	}
+
+//	printf("i = %d, ND = %g, density = %g: \n", i, ND, density); // DEBUG TEST
+	for(int l=0; l<6; l++)
+	{
+		Ub_vals[l] = ND*U_vals[6*k + l]/density;
+//		printf("U[6*%d + %d] = %g; U_BC = %g \n", k, l, U_vals[6*k+l], Ub_vals[l]); // DEBUG TEST
+	}
+
+
+}
 
 double I1(double *U, int k, int l) // Calculate the first integral in H_(i,j), namely \int v1*f*phi_x dxdv
 {
@@ -99,7 +128,12 @@ double I2(double *U, int k, int l) // Calculate the fourth integral in H_(i,j), 
   else if(l==5) result = U[k*6+2]*dv*dv*intE[i]/6.; 
   else result = 0.;
   
+  #ifdef Electrons
   return result;
+  #endif	// Electrons
+  #ifdef Ions
+  return -result;
+  #endif	// Ions
 }
 
 double I3(double *U, int k, int l)
@@ -186,6 +220,7 @@ double I3_Doping(double *U, int k, int l) 																	// Calculate the diff
 
 double I3_Normal(double *U, int k, int l) 																	// Calculate the difference of the second and third integrals in H_(i,j), namely \int_j v1*gh*phi dv at interface x=x_i+1/2 - \int_j v1*gh*phi dv at interface x=x_i-1/2
 {
+	vector<double> Ul(6), Ur(6);                                                                            // declare Ul & Ur (the coefficients from U on the left and rig    ht edge of the current space cell, respectively)
 	double result, ur, ul;																					// declare result (the result of the integral to be returned), ur (used in the evaluation of gh^+/- on the right space cell edge) & ul (used in the evaluation of gh^+/- on the left space cell edge)
 	int i, j1, j2, j3, iil, iir, kkl, kkr; 																	// declare i (the space cell coordinate), j1, j2, j3 (the coordinates of the velocity cell), iil (the cell from which the flux is flowing on the left of cell i in space), iir (the cell from which the flux is flowing on the right of cell i in space), kkl (the global index of the cell with coordinate (iil, j1, j2, j3)) & kkr (the global index of the cell with coordinate (iir, j1, j2, j3))
 	int j_mod = k%size_v;																					// declare and calculate j_mod (the remainder when k is divided by size_v = Nv^3 - used to help determine the values of i, j1, j2 & j3 from the value of k)
@@ -197,20 +232,72 @@ double I3_Normal(double *U, int k, int l) 																	// Calculate the diff
 	if(j1<Nv/2)																								// do this if j1 < Nv/2 (so that the velocity in the v1 direction is negative)
 	{
 		iir=i+1; iil=i; 																					// set iir to the value of i+1 and iil to the value of i (as here the flow of information is from right to left so that gh^+ must be used at the cell edges)
-		if(iir==Nx)iir=0; //periodic bc																		// if iir = Nx (the maximum value that can be obtained, since i = 0,1,...,Nx-1) and so this cell is at the right boundary, requiring information from the non-existent cell with space index Nx, since there are periodic boundary conditions, set iir = 0 and use the cell with space index 0 (i.e. the cell at the left boundary)
-		kkr=iir*size_v + j_mod; 																			// calculate the value of kkr for this value of iir
-		kkl=k;																								// set kkl to k (since iil = i)
-		ur = -U[kkr*6+1]; 																					// set ur to the negative of the coefficient of the basis function with shape l which is non-zero in the cell with global index kkr (which corresponds to the evaluation of gh^+ at the right boundary and -ve since v_1 < 0 in here)
-		ul = -U[kkl*6+1];																					// set ul to the negative of the coefficient of the basis function with shape l which is non-zero in the cell with global index kkl	(which corresponds to the evaluation of gh^+ at the left boundary and -ve since phi < 0 here)
+
+		if(Doping)	// Should define new Boolean variable ChargeNeutralityBC (also may make Doping test fail)
+		{
+			if(iir==Nx)																							// if iir=Nx, then information is coming from the right boundary, so set Ur to the coefficients for the Dirichlet BC at the right
+			{
+	//			DirichletBC(Ur, Nx-1, j1, j2, j3);																// set the coefficients at the right of the cell with coordinates (Nx-1, j1, j2, j3), stored in Ur, to correspond to the Dirichlet BCs
+				ChargeNeutralityBC(Ur, U, Nx-1, k);																// set the coefficients at the right of the cell with index k (with space index Nx-1), stored in Ur, to correspond to the charge neutrality BCs
+			}
+			else																								// otherwise, the coefficients in Ur come from the current approximate solution U
+			{
+				for(int p = 0; p < 6; p++)
+				{
+					Ur[p] = U[6*kkr + p];
+				}
+			}
+			for(int p = 0; p < 6; p++)																			// as information is coming from the right here, the coefficients in Ul will always come from the current approximate solution U
+			{
+				Ul[p] = U[6*kkl + p];
+			}
+
+			ur = -Ur[1]; 																						// set ur to the negative of the coefficient of the basis function with shape l which is non-zero in the cell with global index kkr (which corresponds to the evaluation of gh^+ at the right boundary and -ve since v_1 < 0 in here)
+			ul = -Ul[1];																						// set ul to the negative of the coefficient of the basis function with shape l which is non-zero in the cell with global index kkl	(which corresponds to the evaluation of gh^+ at the left boundary and -ve since phi < 0 here)
+		}
+		else
+		{
+			if(iir==Nx)iir=0; //periodic bc																		// if iir = Nx (the maximum value that can be obtained, since i = 0,1,...,Nx-1) and so this cell is at the right boundary, requiring information from the non-existent cell with space index Nx, since there are periodic boundary conditions, set iir = 0 and use the cell with space index 0 (i.e. the cell at the left boundary)
+			kkr=iir*size_v + j_mod; 																			// calculate the value of kkr for this value of iir
+			kkl=k;																								// set kkl to k (since iil = i)
+			ur = -U[kkr*6+1]; 																					// set ur to the negative of the coefficient of the basis function with shape l which is non-zero in the cell with global index kkr (which corresponds to the evaluation of gh^+ at the right boundary and -ve since v_1 < 0 in here)
+			ul = -U[kkl*6+1];																					// set ul to the negative of the coefficient of the basis function with shape l which is non-zero in the cell with global index kkl	(which corresponds to the evaluation of gh^+ at the left boundary and -ve since phi < 0 here)
+		}
 	}
 	else																									// do this if j1 >= Nv/2 (so that the velocity in the v1 direction is non-negative)
 	{
 		iir=i; iil=i-1;																						// set iir to the value of i and iil to the value of i-1 (as here the flow of information is from left to right so that gh^- must be used at the cell edges)
-		if(iil==-1)iil=Nx-1; // periodic bc																	// if iil = -1 (the minimum value that can be obtained, since i = 0,1,...,Nx-1) and so this cell is at the left boundary, requiring information from the non-existent cell with space index -1, since there are periodic boundary conditions, set iil = Nx-1 and use the cell with space index Nx-1 (i.e. the cell at the right boundary)
-		kkr=k; 																								// set kkr to k (since iir = i)
-		kkl=iil*size_v + j_mod; 																			// calculate the value of kkl for this value of iil
-		ur = U[kkr*6+1];																					// set ur to the value of the coefficient of the basis function with shape l which is non-zero in the cell with global index kkr (which corresponds to the evaluation of gh^- at the right boundary and +ve since v_1 >= 0 in here)
-		ul = U[kkl*6+1];																					// set ul to the value of the coefficient of the basis function with shape l which is non-zero in the cell with global index kkl (which corresponds to the evalutaion of gh^- at the left boundary and +ve since v_r >= 0 in here)
+
+		if(Doping)	// Should define new Boolean variable ChargeNeutralityBC (also may make Doping test fail)
+		{
+			if(iil==-1)																							// if iil=-1, then information is coming from the left boundary, so set Ul to the coefficients for the Dirichlet BC at the left
+			{
+	//			DirichletBC(Ul, 0, k);																			// set the coefficients at the right of the cell with coordinates (Nx-1, j1, j2, j3), stored in Ur, to correspond to the Dirichlet BCs
+				ChargeNeutralityBC(Ul, U, 0, k);																// set the coefficients at the left of the cell with index k (with space index 0), stored in Ul, to correspond to the charge neutrality BCs
+			}
+			else																								// otherwise, the coefficients in Ul come from the current approximate solution U
+			{
+				for(int p = 0; p < 6; p++)
+				{
+					Ul[p] = U[6*kkl + p];
+				}
+			}
+			for(int p = 0; p < 6; p++)																			// as information is coming from the right here, the coefficients in Ul will always come from the current approximate solution U
+			{
+				Ur[p] = U[6*kkr + p];
+			}
+
+			ur = Ur[1]; 																						// set ur to the negative of the coefficient of the basis function with shape l which is non-zero in the cell with global index kkr (which corresponds to the evaluation of gh^+ at the right boundary and -ve since v_1 < 0 in here)
+			ul = Ul[1];																						// set ul to the negative of the coefficient of the basis function with shape l which is non-zero in the cell with global index kkl	(which corresponds to the evaluation of gh^+ at the left boundary and -ve since phi < 0 here)
+		}
+		else
+		{
+			if(iil==-1)iil=Nx-1; // periodic bc																	// if iil = -1 (the minimum value that can be obtained, since i = 0,1,...,Nx-1) and so this cell is at the left boundary, requiring information from the non-existent cell with space index -1, since there are periodic boundary conditions, set iil = Nx-1 and use the cell with space index Nx-1 (i.e. the cell at the right boundary)
+			kkr=k; 																								// set kkr to k (since iir = i)
+			kkl=iil*size_v + j_mod; 																			// calculate the value of kkl for this value of iil
+			ur = U[kkr*6+1];																					// set ur to the value of the coefficient of the basis function with shape l which is non-zero in the cell with global index kkr (which corresponds to the evaluation of gh^- at the right boundary and +ve since v_1 >= 0 in here)
+			ul = U[kkl*6+1];																					// set ul to the value of the coefficient of the basis function with shape l which is non-zero in the cell with global index kkl (which corresponds to the evalutaion of gh^- at the left boundary and +ve since v_r >= 0 in here)			
+		}
 	}
   
 	if(l==0)result = dv*dv*dv*( (U[kkr*6+0]+0.5*ur - U[kkl*6+0]-0.5*ul)*Gridv((double)j1) + (U[kkr*6+2]-U[kkl*6+2])*dv/12. + (U[kkr*6+5]-U[kkl*6+5])*Gridv((double)j1)/4.);					// calculate \int_j v1*gh*phi dv at interface x=x_i+1/2 - \int_j v1*gh*phi dv at interface x=x_i-1/2 for the basis function with shape 0 (i.e. constant) which is non-zero in the cell with global index k
@@ -237,19 +324,39 @@ double I5(double *U, int k, int l) 	// Calculate the difference of the fifth and
   
 	if(intE[i]>0)																					// do this if the average direction of the field E over the space cell i is positive
 	{
+		#ifdef Electrons
 		j1r=j1+1;  j1l=j1;																			// set j1r to the value of j1+1 and j1l to the value of j1 (as here the the average flow of the field is from left to right so that gh^- must be used at the cell edges, as information flows against the field)
 		kkr=i*size_v + (j1r*Nv*Nv + j2*Nv + j3);													// calculate the value of kkr for this value of j1r
 		kkl=k; 																						// set kkl to k (since j1l = j1)
 		if(j1r<Nv)ur = -U[kkr*6+2];																	// if j1r is not Nv (so that this cell is not receiving information from the right boundary), set ur to the negative of the coefficient of the basis function with shape 2 which is non-zero in the cell with global index kkr (which corresponds to the evaluation of gh^- at the right boundary and -ve since the field is negative here?) - note that if the cell was receiving information from the right boundary then gh^- = 0 here so ur is not needed
 		ul = -U[kkl*6+2];																			// set ul to the negative of the coefficient of the basis function with shape 2 which is non-zero in the cell with global index kkl (which corresponds to the evaluation of gh^- at the right boundary and -ve since phi < 0 here)
-	}
-	else																							// do this if the average direction of the field E over the space cell i is non-positive
-	{
+		#endif	// Electrons
+
+		#ifdef Ions
 		j1r=j1; j1l=j1-1;																			// set j1r to the value of j1 and j1l to the value of j1-1 (as here the the average flow of the field is from right to left so that gh^+ must be used at the cell edges, as information flows against the field)
 		kkr=k;																						// set kkr to k (since j1r = j1)
 		kkl=i*size_v + (j1l*Nv*Nv + j2*Nv + j3);													// calculate the value of kkl for this value of j1l
 		ur = U[kkr*6+2];																			// set ur to the the coefficient of the basis function with shape 2 which is non-zero in the cell with global index kkr (which corresponds to the evaluation of gh^+ at the left boundary and +ve since phi > 0 here)
 		if(j1l>-1)ul = U[kkl*6+2];																	// if j1l is not -1 (so that this cell is not receiving information from the left boundary), set ul to the coefficient of the basis function with shape 2 which is non-zero in the cell with global index kkl (which corresponds to the evaluation of gh^+ at the left boundary and +ve since phi < 0 here and being subtracted?) - note that if the cell was receiving information from the left boundary then gh^+ = 0 here so ul is not needed
+		#endif	// Ions
+	}
+	else																							// do this if the average direction of the field E over the space cell i is non-positive
+	{
+		#ifdef Electrons
+		j1r=j1; j1l=j1-1;																			// set j1r to the value of j1 and j1l to the value of j1-1 (as here the the average flow of the field is from right to left so that gh^+ must be used at the cell edges, as information flows against the field)
+		kkr=k;																						// set kkr to k (since j1r = j1)
+		kkl=i*size_v + (j1l*Nv*Nv + j2*Nv + j3);													// calculate the value of kkl for this value of j1l
+		ur = U[kkr*6+2];																			// set ur to the the coefficient of the basis function with shape 2 which is non-zero in the cell with global index kkr (which corresponds to the evaluation of gh^+ at the left boundary and +ve since phi > 0 here)
+		if(j1l>-1)ul = U[kkl*6+2];																	// if j1l is not -1 (so that this cell is not receiving information from the left boundary), set ul to the coefficient of the basis function with shape 2 which is non-zero in the cell with global index kkl (which corresponds to the evaluation of gh^+ at the left boundary and +ve since phi < 0 here and being subtracted?) - note that if the cell was receiving information from the left boundary then gh^+ = 0 here so ul is not needed
+		#endif	// Electrons
+
+		#ifdef Ions
+		j1r=j1+1;  j1l=j1;																			// set j1r to the value of j1+1 and j1l to the value of j1 (as here the the average flow of the field is from left to right so that gh^- must be used at the cell edges, as information flows against the field)
+		kkr=i*size_v + (j1r*Nv*Nv + j2*Nv + j3);													// calculate the value of kkr for this value of j1r
+		kkl=k; 																						// set kkl to k (since j1l = j1)
+		if(j1r<Nv)ur = -U[kkr*6+2];																	// if j1r is not Nv (so that this cell is not receiving information from the right boundary), set ur to the negative of the coefficient of the basis function with shape 2 which is non-zero in the cell with global index kkr (which corresponds to the evaluation of gh^- at the right boundary and -ve since the field is negative here?) - note that if the cell was receiving information from the right boundary then gh^- = 0 here so ur is not needed
+		ul = -U[kkl*6+2];																			// set ul to the negative of the coefficient of the basis function with shape 2 which is non-zero in the cell with global index kkl (which corresponds to the evaluation of gh^- at the right boundary and -ve since phi < 0 here)
+		#endif	// Ions
 	}
 
 	if(l==0)																						// calculate \int_i E*f*phi dx at interface v1==v_j+1/2 - \int_i E*f*phi dx at interface v1==v_j-1/2 for the basis function with shape 0 (i.e. constant) which is non-zero in the cell with global index k
@@ -289,7 +396,12 @@ double I5(double *U, int k, int l) 	// Calculate the difference of the fifth and
 		else if(j1l>-1)result=-dv*dv*( ((U[kkl*6+0] + 0.5*ul)*5./12. + U[kkl*6+5]*133./720.)*intE[i] + U[kkl*6+1]*intE1[i]*5./12. );													// this is the value at the cell at the right boundary in v1 (so that the integral over the right edge is zero)
 	}
 
-  	return result;
+	#ifdef Electrons
+	return result;
+	#endif	// Electrons
+	#ifdef Ions
+	return -result;
+	#endif	// Ions
 }
 
 /*
@@ -429,6 +541,7 @@ void RK3(double *U) // RK3 for f_t = H(f)
 		tp4=I1(U1,k,4)-I2(U1,k,4)-I3(U1,k,4)+I5(U1,k,4);
 		tp5=I1(U1,k,5)-I2(U1,k,5)-I3(U1,k,5)+I5(U1,k,5);
 	}
+    
     //H[k_local][0] = (19*tp[0]/4. - 15*tp[5])/dx/scalev;
     //H[k_local][5] = (60*tp[5] - 15*tp[0])/dx/scalev;	
     H[0] = (19*tp0/4. - 15*tp5)/dx/scalev;
@@ -495,7 +608,7 @@ void RK3(double *U) // RK3 for f_t = H(f)
 		tp4=I1(U1,k,4)-I2(U1,k,4)-I3(U1,k,4)+I5(U1,k,4);
 		tp5=I1(U1,k,5)-I2(U1,k,5)-I3(U1,k,5)+I5(U1,k,5);
 	}
-
+ 
     H[0] = (19*tp0/4. - 15*tp5)/dx/scalev;
     H[5] = (60*tp5 - 15*tp0)/dx/scalev;	
     //for(l=1;l<5;l++)H[l] = tp[l]*12./dx/scalev;;//H[k_local][l] = tp[l]*12./dx/scalev;

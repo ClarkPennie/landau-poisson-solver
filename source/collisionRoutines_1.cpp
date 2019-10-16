@@ -15,6 +15,43 @@ extern fftw_complex *temp;
 double IntM[10];																					// declare an array IntM to hold 10 double variables
 #pragma omp threadprivate(IntM)																		// start the OpenMP parallel construct to start the threads which will run in parallel, passing IntM to each thread as private variables which will have their contents deleted when the threads finish (doesn't seem to be doing anything since no {} afterwards???)
 
+void SetupKnudsen(vector<double>& nu_vals)
+{
+	for(int i=0; i<Nx/8; i++)
+	{
+		nu_vals[i] = 0.05;
+	}
+	/*
+	for(int i=Nx/3; i<2*Nx/3; i++)
+	{
+		nu_vals[i] = 0.0875 - (i-Nx/3)*0.0125;
+	}
+	*/
+	for(int i=Nx/8; i<Nx; i++)
+	{
+		nu_vals[i] = 0.05;
+	}
+
+	/*
+	for(int i=0; i<Nx; i++)
+	{
+		nu_vals[i] = 0.05;
+	}
+	*/
+
+	nu_max = *max_element(nu_vals.begin(), nu_vals.end());
+}
+
+void PrintKnudsen(vector<double>& nu_vals)
+{
+	printf("Collision Frequency: ");
+	for(int i=0; i<Nx; i++)
+	{
+		printf("nu[%d] = %g, ", i, nu_vals[i]);
+	}
+	printf("nu_max = %g.\n", nu_max);
+}
+
 double S1hat(double ki1,double ki2,double ki3)
 {
   if(ki1==0. && ki2==0. && ki3==0.) return sqrt(1./(2*PI))*R_v*R_v;
@@ -561,6 +598,7 @@ void IntModes(int k1, int k2,  int k3, int j1, int j2, int j3, double *result) /
 
 }
 
+/*
 void ProjectedNodeValue(fftw_complex *qHat, double *Q_incremental) // incremental of node values, projected from qHat to DG mesh
 {
     int m1,m2,m3,i,j,k,j1,j2,j3, kk,k_v,k_ft, k_eta;
@@ -600,7 +638,8 @@ void ProjectedNodeValue(fftw_complex *qHat, double *Q_incremental) // incrementa
 	
 	Q_incremental[k_ft] = u0 + u2*(v[m1]-Gridv((double)j1))/dv + u3*(v[m2]-Gridv((double)j2))/dv + u4*(v[m3]-Gridv((double)j3))/dv + u5*( ((v[m1]-Gridv((double)j1))/dv)*((v[m1]-Gridv((double)j1))/dv) + ((v[m2]-Gridv((double)j2))/dv)*((v[m2]-Gridv((double)j2))/dv) + ((v[m3]-Gridv((double)j3))/dv)*((v[m3]-Gridv((double)j3))/dv) ); 
     }
-}	
+}
+*/
 
 void ComputeQ_FandL(double *f, fftw_complex *qHat, double **conv_weights, fftw_complex *qHat_linear, double **conv_weights_linear)
 {
@@ -801,6 +840,7 @@ void RK4_FandL_Inhomo(double *f, int l, fftw_complex *qHat, double **conv_weight
 {
 int i,j,k, j1, j2, j3, k_v, k_eta, kk, l_local;  
   double Q_re, Q_im, tp0, tp2, tp3,tp4,tp5, tmp0=0., tmp2=0., tmp3=0., tmp4=0.,tmp5=0., tem;
+  double nu_val = nu;	// temp without nu vector
 
   l_local = l%chunk_Nx;
   
@@ -814,7 +854,7 @@ int i,j,k, j1, j2, j3, k_v, k_eta, kk, l_local;
   #pragma omp parallel for private(i) shared(Q,fftOut,f1,f)
   for(i=0;i<size_ft;i++){    
     Q[i] = fftOut[i][0];
-    f1[i] = f[i] + dt*Q[i]*nu; //BUG: this evolution (only on node values) is not consistent with our conservation routine, which preserves the exact moments of the {1,v,|v|^{2}} approximations
+    f1[i] = f[i] + dt*Q[i]*nu_val; //BUG: this evolution (only on node values) is not consistent with our conservation routine, which preserves the exact moments of the {1,v,|v|^{2}} approximations
   }
 
   ComputeQ_FandL(f1, Q1_fft, conv_weights, Q1_fft_linear, conv_weights_linear);
@@ -831,7 +871,7 @@ int i,j,k, j1, j2, j3, k_v, k_eta, kk, l_local;
   #pragma omp parallel for private(i) shared(Q,Q1,fftOut,f1,f)
   for(i=0;i<size_ft;i++){ 	
     Q1[i] = fftOut[i][0];	   
-    f1[i] = f[i] +  0.5*dt*Q[i]*nu + 0.5*dt*Q1[i]*nu;
+    f1[i] = f[i] +  0.5*dt*Q[i]*nu_val + 0.5*dt*Q1[i]*nu_val;
   }
  
   ComputeQ_FandL(f1, Q2_fft, conv_weights, Q2_fft_linear, conv_weights_linear);
@@ -847,7 +887,7 @@ int i,j,k, j1, j2, j3, k_v, k_eta, kk, l_local;
   #pragma omp parallel for private(i) shared(Q,Q1,fftOut,f1,f)
   for(i=0;i<size_ft;i++){	
     Q1[i] = fftOut[i][0];	 
-    f1[i] = f[i] + 0.5*dt*Q[i]*nu + 0.5*dt*Q1[i]*nu;
+    f1[i] = f[i] + 0.5*dt*Q[i]*nu_val + 0.5*dt*Q1[i]*nu_val;
   }
 
   ComputeQ_FandL(f1, Q3_fft, conv_weights, Q3_fft_linear, conv_weights_linear);
@@ -869,8 +909,8 @@ int i,j,k, j1, j2, j3, k_v, k_eta, kk, l_local;
 
 		  IntModes(i,j,k,j1,j2,j3,IntM); //the global IntM must be declared as threadprivate; BUG: forgot to uncomment this and thus IntM=0 !!
 		  
-		  Q_re = nu*(0.5*qHat[k_eta][0] + (Q1_fft[k_eta][0]+Q2_fft[k_eta][0]+Q3_fft[k_eta][0])/6.);
-		  Q_im = nu*(0.5*qHat[k_eta][1] + (Q1_fft[k_eta][1]+Q2_fft[k_eta][1]+Q3_fft[k_eta][1])/6.);
+		  Q_re = nu_val*(0.5*qHat[k_eta][0] + (Q1_fft[k_eta][0]+Q2_fft[k_eta][0]+Q3_fft[k_eta][0])/6.);
+		  Q_im = nu_val*(0.5*qHat[k_eta][1] + (Q1_fft[k_eta][1]+Q2_fft[k_eta][1]+Q3_fft[k_eta][1])/6.);
 		  
 		  //tem = scale3*wtN[i]*wtN[j]*wtN[k]*h_eta*h_eta*h_eta;
 		  tp0 += IntM[0]*Q_re - IntM[1]*Q_im;
@@ -1088,6 +1128,7 @@ void RK4_Homo(double *f, fftw_complex *qHat, double **conv_weights, double *U, d
 {
   int i,j,k, j1, j2, j3, k_v, k_eta, kk, k_loc;
   double Q_re, Q_im, tp0, tp2, tp3,tp4,tp5, tmp0=0., tmp2=0., tmp3=0., tmp4=0.,tmp5=0., tem;
+  double nu_val = nu;	// temp without nu vector
 
   FS(qHat, fftOut); 																	// set fftOut to the Fourier series representation of qHat (i.e. the IFFT of qHat)
   //ifft3D(qHat, fftOut);
@@ -1095,7 +1136,7 @@ void RK4_Homo(double *f, fftw_complex *qHat, double **conv_weights, double *U, d
   for(i=0;i<size_ft;i++)																// calculate the first step of RK4
   {
     Q[i] = fftOut[i][0];																// this is Q(Fn, Fn) so that Kn^1 = dt*Q(Fn, Fn) = dt*Q[i]
-    f1[i] = f[i] + dt*Q[i]*nu; 															// this is Fn + Kn^1(*nu...?) BUG: this evolution (only on node values) is not consistent with our conservation routine, which preserves the exact moments of the {1,v,|v|^{2}} approximations
+    f1[i] = f[i] + dt*Q[i]*nu_val; 															// this is Fn + Kn^1(*nu...?) BUG: this evolution (only on node values) is not consistent with our conservation routine, which preserves the exact moments of the {1,v,|v|^{2}} approximations
   }
 
   ComputeQ(f1, Q1_fft, conv_weights);													// calculate the Fourier tranform of Q(f1,f1) using conv_weights for the weights in the convolution, then store the results of the Fourier transform in Q1_fft
@@ -1107,7 +1148,7 @@ void RK4_Homo(double *f, fftw_complex *qHat, double **conv_weights, double *U, d
   for(i=0;i<size_ft;i++)																// calculate the second step of RK4
   {
     Q1[i] = fftOut[i][0];
-    f1[i] = f[i] +  0.5*dt*Q[i]*nu + 0.5*dt*Q1[i]*nu;
+    f1[i] = f[i] +  0.5*dt*Q[i]*nu_val + 0.5*dt*Q1[i]*nu_val;
   }
 
   ComputeQ(f1, Q2_fft, conv_weights); //collides
@@ -1119,7 +1160,7 @@ void RK4_Homo(double *f, fftw_complex *qHat, double **conv_weights, double *U, d
   for(i=0;i<size_ft;i++)																// calculate the third step of RK4
   {
     Q1[i] = fftOut[i][0];
-    f1[i] = f[i] + 0.5*Q[i]*nu + 0.5*Q1[i]*nu;
+    f1[i] = f[i] + 0.5*Q[i]*nu_val + 0.5*Q1[i]*nu_val;
   }
 
   ComputeQ(f1, Q3_fft, conv_weights); //collides
@@ -1137,8 +1178,8 @@ void RK4_Homo(double *f, fftw_complex *qHat, double **conv_weights, double *U, d
 
 		  IntModes(i,j,k,j1,j2,j3,IntM); //the global IntM must be declared as threadprivate; BUG: forgot to uncomment this and thus IntM=0 !!
 
-		  Q_re = nu*(0.5*qHat[k_eta][0] + (Q1_fft[k_eta][0]+Q2_fft[k_eta][0]+Q3_fft[k_eta][0])/6.);
-		  Q_im = nu*(0.5*qHat[k_eta][1] + (Q1_fft[k_eta][1]+Q2_fft[k_eta][1]+Q3_fft[k_eta][1])/6.);
+		  Q_re = nu_val*(0.5*qHat[k_eta][0] + (Q1_fft[k_eta][0]+Q2_fft[k_eta][0]+Q3_fft[k_eta][0])/6.);
+		  Q_im = nu_val*(0.5*qHat[k_eta][1] + (Q1_fft[k_eta][1]+Q2_fft[k_eta][1]+Q3_fft[k_eta][1])/6.);
 
 		  //tem = scale3*wtN[i]*wtN[j]*wtN[k]*h_eta*h_eta*h_eta;
 		  tp0 += IntM[0]*Q_re - IntM[1]*Q_im;
@@ -1353,4 +1394,3 @@ void RK4Linear(double *f, fftw_complex *MaxwellHat, int l, fftw_complex *qHat, d
     dU[(l_local*size_v + kt)*5+3] = tp4;
   }
 }
-

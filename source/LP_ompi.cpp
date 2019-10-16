@@ -39,6 +39,9 @@ int a_i, b_i;																						// declare a_i & b_i (the indices such that N
 double T_L, T_R;																					// declare T_L & T_R (the temperatures at the left & right edges of space if periodic BCs are used, respectively)
 double eps;																							// declare eps (the dielectric constant in Poisson's equation: div(eps*grad(Phi)) = R(x,t))
 
+//vector<double> nu(Nx);																				// declare the vector nu (to hold the value of 1/Knudsen on each cell)
+double nu_max;																						// declare nu_max (maximum of 1/knudson#)
+
 double *v, *eta;																					// declare v (the velocity variable) & eta (the Fourier space variable)
 double *wtN;																						// declare wtN (the trapezoidal rule weights to be used)
 double scale, scale3, scaleL, scalev;																// declare scale (the 1/sqrt(2pi) factor appearing in Gaussians), scale (the 1/(sqrt(2pi))^3 factor appearing in the Maxwellian), scaleL (the volume of the velocity domain) & scalev (the volume of a discretised velocity element)
@@ -106,7 +109,7 @@ int main(int argc, char** argv)
 
 	int nthread;																					// declare nthread (the number of OpenMP threads)
 	nthread = omp_get_max_threads();																// set nthread to the value of the environment variable OMP_NUM_THREADS by calling the OpenMP function omp_get_max_threads
-
+	
 	// CHECK THE LEVEL OF THREAD SUPPORT:
 	if (provided < required)																		// only do this if the required thread support was not possible
 	{
@@ -361,7 +364,10 @@ int main(int argc, char** argv)
 		exit(1);
 	}
 
-	if(nu > 0.)
+//	SetupKnudsen(nu);
+	nu_max = nu;
+
+	if(nu_max > 0.)
 	{
 		if(MassConsOnly)																			// only do this if MassConsOnly is true and only conserving mass
 		{
@@ -884,7 +890,7 @@ int main(int argc, char** argv)
 	}
 
 	char buffer_moment[100], buffer_u[100], buffer_ufull[100], buffer_flags[flag.size() + 1],
-						buffer_phi[110], buffer_E[110], buffer_marg[110], buffer_ent[110];			// declare the arrays buffer_moment (to store the name of the file where the moments are printed), buffer_u (to store the name of the file where the solution U is printed), buffer_ufull (to store the name of the file where the solution U is printed in the TwoStream), buffer_flags (to store the flag added to the end of the filenames), buffer_phi (to store the name of the file where the values of phi are printed), buffer_marg (to store the name of the file where the marginals are printed) & buffer_ent (to store the name of the file where the entropy values are printed)
+			buffer_phi[110], buffer_E[110], buffer_marg[110], buffer_ent[110], buffer_rho[110];			// declare the arrays buffer_moment (to store the name of the file where the moments are printed), buffer_u (to store the name of the file where the solution U is printed), buffer_ufull (to store the name of the file where the solution U is printed in the TwoStream), buffer_flags (to store the flag added to the end of the filenames), buffer_phi (to store the name of the file where the values of phi are printed), buffer_marg (to store the name of the file where the marginals are printed) & buffer_ent (to store the name of the file where the entropy values are printed)
 
 	// EVERY TIME THE CODE IS RUN, CHANGE THE FLAG TO A NAME THAT IDENTIFIES THE CASE RUNNING FOR OR WHAT TIME RUN UP TO:
 	strcpy(buffer_flags, flag.c_str());																// copy the contents of flag to buffer_flags
@@ -924,6 +930,11 @@ int main(int argc, char** argv)
 		}
 		sprintf(buffer_ent,"Data/EntropyVals_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
 						nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);					// create a .dc file name, located in the directory Data, whose name is EntropyVals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
+		if(Doping)
+		{
+			sprintf(buffer_rho,"Data/RhoVals_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
+							nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);				// create a .dc file name, located in the directory Data, whose name is RhoVals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
+		}
 	}
 	
 	if(First)																						// only do this if First is True (setting initial conditions)
@@ -977,12 +988,20 @@ int main(int argc, char** argv)
 			}
 		}
 	}
-
-	FILE *fmom, *fu, *fufull, *fmarg, *fphi, *fE, *fent;											// declare pointers to the files fmom (which will store the moments), fu (which will store the solution U), fufull (which will store the solution U in the TwoStream case), fmarg (which will store the values of the marginals), fphi (which will store the values of the potential phi) & fent (which will store the values fo the entropy)
+	FILE *fmom, *fu, *fufull, *fmarg, *fphi, *fE, *fent, *frho;										// declare pointers to the files fmom (which will store the moments), fu (which will store the solution U), fufull (which will store the solution U in the TwoStream case), fmarg (which will store the values of the marginals), fphi (which will store the values of the potential phi), fent (which will store the values fo the entropy) & frho (which will store values of density in x)
 
 	if(myrank_mpi==0)																				// only the process with rank 0 will do this
 	{
 		printf("MPI info: chunk_Nx = %d, nprocs_Nx = %d\n\n", chunk_Nx, nprocs_Nx);					// print MPI related info for this run
+
+		/*
+		if(Doping)
+		{
+			PrintDoping();
+			PrintEpsilon();
+			PrintKnudsen(nu);
+		}
+		*/
 
 		if(Second)																					// only do this if Second is true (picking up data from a previous run)
 		{
@@ -1039,6 +1058,10 @@ int main(int argc, char** argv)
 			fE=fopen(buffer_E,"w");																	// set fE to be a file with the name stored in buffer_E and set the file access mode of fphi to w (which creates an empty file and allows it to be written to)
 		}
 		fent=fopen(buffer_ent,"w");																	// set fent to be a file with the name stored in buffer_ent and set the file access mode of fent to w (which creates an empty file and allows it to be written to)
+		if(Doping)
+		{
+			frho=fopen(buffer_rho,"w");																	// set frho to be a file with the name stored in buffer_rho and set the file access mode of fent to w (which creates an empty file and allows it to be written to)
+		}
 
 		FindNegVals(U, fNegVals, fAvgVals);															// find out in which cells the approximate solution goes negative and record it in fNegVals
 
@@ -1079,6 +1102,7 @@ int main(int argc, char** argv)
 		ent1 = computeEntropy(U);																	// set ent1 the value calculated through computeEntropy
 		l_ent1 = log(fabs(ent1));																	// set l_ent1 to the log of ent1
 		ll_ent1 = log(fabs(l_ent1));																// set ll_ent1 to the log of l_ent1
+	
 		if(Homogeneous || NoField)
 		{
 			printf("step 0: %11.8g  %11.8g  %11.8g  %11.8g  %11.8g %11.8g \n",
@@ -1120,6 +1144,24 @@ int main(int argc, char** argv)
 				PrintFieldData(U, fphi, fE);																// print the values of phi & E for the initial condition, using the DG coefficients in U, in the files tagged as fphi & fE, respectively
 			}
 		}
+		
+
+		if(Doping)
+		{
+			// Print the values of x that the density will be evaluated at in the file tagged frho:
+			for(int i=0; i<Nx+1; i++)
+			{
+				fprintf(frho, "%g ", i*dx);
+			}
+			fprintf(frho, "\n");
+			// Print the values of the density rho for teh initial condition, using the DG coefficients in U in the file tagged as frho:
+			for(int i=0; i<Nx; i++)
+			{
+				fprintf(frho, "%g ", rho_x(i*dx, U, i));
+			}
+			fprintf(frho, "%g ", rho_x(Lx, U, Nx-1));
+			fprintf(frho, "\n");
+		}
 	}
   
 	MPI_Bcast(U, size*6, MPI_DOUBLE, 0, MPI_COMM_WORLD);   											// send the contents of U, which will be 6*size entries of datatype MPI_DOUBLE, from the process with rank 0 to all processes, using the communicator MPI_COMM_WORLD
@@ -1133,7 +1175,7 @@ int main(int argc, char** argv)
 			RK3(U); 																					// Use RK3 to perform one timestep of the collisionless problem
 		}
 
-		if(nu > 0.)
+		if(nu_max > 0.)
 		{
 			setInit_spectral(U, f); 																// Take the coefficient of the DG solution from the advection step, and project them onto the grid used for the spectral method to perform the collision step
 
@@ -1345,6 +1387,16 @@ int main(int argc, char** argv)
 						PrintFieldData(U, fphi, fE);														// print the values of phi & E, using the DG coefficients in U, in the files tagged as fphi & fE, respectively
 					}
 				}
+				if(Doping)
+				{
+					// Print the values of the density rho, using the DG coefficients in U in the file tagged as frho:
+					for(int i=0; i<Nx; i++)
+					{
+						fprintf(frho, "%g ", rho_x(i*dx, U, i));
+					}
+					fprintf(frho, "%g ", rho_x(Lx, U, Nx-1));
+					fprintf(frho, "\n");
+				}		
 			}
 		}
 
@@ -1396,8 +1448,12 @@ int main(int argc, char** argv)
 			}
 		}
 		fclose(fent);  																				// remove the tag fent to close the file
+		if(Doping)
+		{
+			fclose(frho);																				// remove the tag frho to close the file
+		}
 	}
-	if(nu > 0.)
+	if(nu_max > 0.)
 	{
 		free(v); free(eta); free(wtN); 																// delete the dynamic memory allocated for v, eta & wtN
 		if(MassConsOnly)																			// only do this if MassConsOnly is true and only conserving mass
