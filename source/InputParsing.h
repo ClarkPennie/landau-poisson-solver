@@ -52,7 +52,7 @@ extern void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int
 								double& k_wave, double& Lv, double& Lx, double& T_hump, double& shift, double& T_0);
 
 extern void ReadDopingParameters(GRVY_Input_Class& iparse, double& NL, double& NH,
-								double& T_L, double& T_R, double& eps);
+								double& T_L, double& T_R, double& eps, double& Phi_Lx);
 
 extern void PrintError(std::string var_name);
 

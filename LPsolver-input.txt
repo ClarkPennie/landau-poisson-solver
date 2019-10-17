@@ -11,7 +11,7 @@
 # Global input variable definitions
 #--------------------------------------------
 
-flag     = 2H_Test
+flag     = Ions_Test
 
 nT       = 5 	                # Number of time-steps
 Nx       = 8  	                # Number of space cells
@@ -100,6 +100,7 @@ NH       = 1                    # Value of background density in higher regions
 eps      = 0.1                  # Value of dielectric constant
 T_L      = 0.4                  # Temperature at left wall (if using Dirichlet BCs)
 T_R      = 0.4                  # Temperature at right wall (if using Dirichlet BCs)
+Phi_Lx   = -1			# The Poisson equation boundary condition Phi(Lx)
 
 #--------------------------------------------
 # Name of file from previous run to pick up

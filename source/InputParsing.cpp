@@ -645,7 +645,7 @@ void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 }
 
 void ReadDopingParameters(GRVY_Input_Class& iparse, double& NL, double& NH,
-							double& T_L, double& T_R, double& eps)								// Function to read all parameters for a non-uniform doping profile (NL, NH, T_L, T_R, eps)
+							double& T_L, double& T_R, double& eps, double& Phi_Lx)								// Function to read all parameters for a non-uniform doping profile (NL, NH, T_L, T_R, eps)
 {
 	if(myrank_mpi==0)
 	{
@@ -682,19 +682,20 @@ void ReadDopingParameters(GRVY_Input_Class& iparse, double& NL, double& NH,
 	{
 		printf("--> %-11s = %g\n","eps",eps);
 	}
-	if( iparse.Read_Var("Doping/T_L",&T_L,0.4) )
+
+	grvy_log_setlevel(GRVY_NOLOG);
+
+	iparse.Read_Var("Doping/T_L",&T_L,0.4);
+	iparse.Read_Var("Doping/T_R",&T_R,0.4);
+	iparse.Read_Var("Doping/Phi_Lx",&Phi_Lx,1.0);
+
+	grvy_log_setlevel(GRVY_INFO);
+
+	if(myrank_mpi==0)
 	{
-		if(myrank_mpi==0)
-		{
-			printf("--> %-11s = %g\n","T_L",T_L);
-		}
-	}
-	if( iparse.Read_Var("Doping/T_R",&T_R,0.4) )
-	{
-		if(myrank_mpi==0)
-		{
-			printf("--> %-11s = %g\n","T_R",T_R);
-		}
+		printf("--> %-11s = %g\n","T_L",T_L);
+		printf("--> %-11s = %g\n","T_R",T_R);
+		printf("--> %-11s = %g\n","Phi_Lx",Phi_Lx);
 	}
 }
 

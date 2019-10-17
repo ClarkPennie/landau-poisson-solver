@@ -430,7 +430,7 @@ double computePhi_x_0_Doping(double *U) /* DIFFERENT FOR withND */														
 	double tmp=0.;
 	double a_val = (a_i+1)*dx;
 	double b_val = (b_i+1)*dx;
-	double Phi_Lx = 1;																									// declare Phi_Lx (the Dirichlet BC, Phi(t, L_x) = Phi_Lx) and set its value
+//	double Phi_Lx = 1;																									// declare Phi_Lx (the Dirichlet BC, Phi(t, L_x) = Phi_Lx) and set its value
 
 	//#pragma omp parallel for private(j,q,m,k) shared(U) reduction(+:tmp) //reduction may change the final result a little bit
 	for(j=0;j<size_v;j++){
@@ -701,7 +701,14 @@ double Int_E2nd_Doping(double *U, int i) 	/* DIFFERENT FOR withND */							// \i
 		result += (NL-NH)*b_val*dx/12.;																	// add (NL-NH)b*dx/12 to result
 	}
 
-	result = result/eps - ce*dx/12.;
+    if(Electrons)
+    {
+    	result = result/eps - ce*dx/12.;
+    }
+    if(Ions)
+    {
+    	result = -result/eps - ce*dx/12.;
+    }
 
     return result;
 }

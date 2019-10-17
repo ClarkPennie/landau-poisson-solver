@@ -38,6 +38,7 @@ double NL, NH;																						// declare NL & NH (the density of ions in t
 int a_i, b_i;																						// declare a_i & b_i (the indices such that ND(x) = NL, for x_{a_i+1/2}< x <= x_{b_i-1/2}, and ND(x) = NH otherwise)
 double T_L, T_R;																					// declare T_L & T_R (the temperatures at the left & right edges of space if periodic BCs are used, respectively)
 double eps;																							// declare eps (the dielectric constant in Poisson's equation: div(eps*grad(Phi)) = R(x,t))
+double Phi_Lx;																						// declare Phi_Lx (the B.C. value of Phi(Lx))
 
 //vector<double> nu(Nx);																				// declare the vector nu (to hold the value of 1/Knudsen on each cell)
 double nu_max;																						// declare nu_max (maximum of 1/knudson#)
@@ -188,7 +189,7 @@ int main(int argc, char** argv)
 
 	if(Doping)
 	{
-		ReadDopingParameters(iparse, NL, NH, T_L, T_R, eps);										// Read in the input parameters required for a non-uniform doping profile
+		ReadDopingParameters(iparse, NL, NH, T_L, T_R, eps, Phi_Lx);								// Read in the input parameters required for a non-uniform doping profile
 		a_i = Nx/3-1;																				// declare a_i (the index such that ND(x) = NH, for x <= x_{a_i-1/2}, & ND(x) = NL, for x > x_{a_i+1/2}) and set its value
 		b_i = 2*Nx/3-1;																				// declare b_i (the index such that ND(x) = NL, for x <= x_{b_i-1/2}, & ND(x) = NH, for x > x_{b_i+1/2}) and set its value
 		if(myrank_mpi==0)
