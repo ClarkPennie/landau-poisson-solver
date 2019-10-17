@@ -446,7 +446,14 @@ double computePhi_x_0_Doping(double *U) /* DIFFERENT FOR withND */														
 	}
 	tmp = tmp*scalev*dx*dx;
 
-	return Phi_Lx/Lx + 0.5*NH*Lx/eps + (NL-NH)*(b_val-a_val)/eps - (0.5*(NL-NH)*(b_val*b_val - a_val*a_val) + tmp)/(Lx*eps);
+	if(Electrons)
+	{
+		return Phi_Lx/Lx + 0.5*NH*Lx/eps + (NL-NH)*(b_val-a_val)/eps - (0.5*(NL-NH)*(b_val*b_val - a_val*a_val) + tmp)/(Lx*eps);
+	}
+	if(Ions)
+	{
+		return Phi_Lx/Lx - (0.5*NH*Lx/eps + (NL-NH)*(b_val-a_val)/eps - (0.5*(NL-NH)*(b_val*b_val - a_val*a_val) + tmp)/(Lx*eps));
+	}
 }
 
 double computePhi_Doping(double *U, double x, int ix)	/* DIFFERENT FOR withND */											// function to compute the potential Phi at a position x, contained in [x_(ix-1/2), x_(ix+1/2)]
@@ -517,7 +524,15 @@ double computePhi_Doping(double *U, double x, int ix)	/* DIFFERENT FOR withND */
 		retn -= (NL-NH)*b_val*(x - 0.5*b_val);															// add (NL-NH)b(x-b/2) to retn
 	}
 
-	retn = retn/eps + C_E*x;
+	if(Electrons)
+	{
+		retn = retn/eps + C_E*x;
+	}
+	if(Ions)
+	{
+		retn = -retn/eps + C_E*x;
+	}
+
 	return retn;																						// return the value of phi at x
 }
 
@@ -554,7 +569,15 @@ double computeE_Doping(double *U, double x, int ix)	/* DIFFERENT FOR withND */		
 		retn += (NL-NH)*b_val;																			// add (NL-NH)b to retn
 	}
 
-	retn = retn/eps - C_E;
+	if(Electrons)
+	{
+		retn = retn/eps - C_E;
+	}
+	if(Ions)
+    {
+		retn = -retn/eps - C_E;
+    }
+
 	return retn;																						// return the value of phi at x
 
 }
@@ -612,7 +635,15 @@ double Int_E_Doping(double *U, int i) 		/* DIFFERENT FOR withND */ 						      /
 		result += (NL-NH)*b_val*dx;																		// add (NL-NH)b*dx to result
 	}
 
-	result = result/eps - ce*dx;
+	if(Electrons)
+	{
+		result = result/eps - ce*dx;
+	}
+    if(Ions)
+    {
+    	result = -result/eps - ce*dx;
+    }
+
 	return result;
 }
 
@@ -629,7 +660,14 @@ double Int_E1st_Doping(double *U, int i) 	/* DIFFERENT FOR withND */					// \int
 	}
 	tmp = tmp*scalev;
 
-	result = (ND-tmp)*dx*dx/(12.*eps);
+	if(Electrons)
+	{
+		result = (ND-tmp)*dx*dx/(12.*eps);
+	}
+	if(Ions)
+	{
+		result = (tmp-ND)*dx*dx/(12.*eps);
+	}
 
 	return result;
 }
