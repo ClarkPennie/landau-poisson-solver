@@ -77,6 +77,7 @@ bool LinearLandau;																					// declare a Boolean variable to determin
 bool MassConsOnly;																					// declare a Boolean variable to determine if conserving all moments or all mass
 bool NoField;																						// declare a Boolean variable to turn off the field in the advection step
 bool Electrons, Ions;																				// declare Boolean variables which will determine if the electrons or ions are being modelled
+bool Pois_Dirichlet, Pois_Neutrality;																// declare Boolean variables which will determin the BCs for Poisson's equation when Doping = true
 
 int main(int argc, char** argv)
 {
@@ -197,6 +198,8 @@ int main(int argc, char** argv)
 			printf("--> %-11s = %d\n","a_i",a_i);
 			printf("--> %-11s = %d\n\n","b_i",b_i);
 		}
+		ReadPoisBCs(iparse);																	// Read in if this run will model electrons or ions
+		CheckPoisBCs();																			// Check no more than one of Electrons or Ions were chosen
 	}
 
 	size_v=Nv*Nv*Nv;																				// set size_v to Nv^3

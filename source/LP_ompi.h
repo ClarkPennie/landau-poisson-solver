@@ -101,6 +101,7 @@ extern bool LinearLandau;																			// declare a Boolean variable to det
 extern bool MassConsOnly;																			// declare a Boolean variable to determine if conserving all moments or all mass
 extern bool NoField;																				// declare a Boolean variable to turn off the field in the advection step
 extern bool Electrons, Ions;																		// declare Boolean variables which will determine if the electrons or ions are being modelled
+extern bool Pois_Dirichlet, Pois_Neutrality;														// declare Boolean variables which will determin the BCs for Poisson's equation when Doping = true
 
 //************************//
 //        INCLUDES        //

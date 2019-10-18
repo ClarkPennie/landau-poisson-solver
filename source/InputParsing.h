@@ -35,6 +35,10 @@ extern void ReadElectronsOrIons(GRVY_Input_Class& iparse);
 
 extern void CheckElectronsOrIons();
 
+extern void ReadPoisBCs(GRVY_Input_Class& iparse);
+
+extern void CheckPoisBCs();
+
 extern void ReadGamma(GRVY_Input_Class& iparse, int& gamma);
 
 extern void ReadHomogeneous(GRVY_Input_Class& iparse);

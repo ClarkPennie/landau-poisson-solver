@@ -102,6 +102,10 @@ T_L      = 0.4                  # Temperature at left wall (if using Dirichlet B
 T_R      = 0.4                  # Temperature at right wall (if using Dirichlet BCs)
 Phi_Lx   = -1			# The Poisson equation boundary condition Phi(Lx)
 
+# Choose the BCs to solve Poisson's equation with (choose one):
+Pois_Dirichlet = True           # Use Dirichlet BCs
+Pois_Neutrality = False         # Use charge neutrality BCs
+
 #--------------------------------------------
 # Name of file from previous run to pick up
 #--------------------------------------------

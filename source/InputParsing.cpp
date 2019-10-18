@@ -280,6 +280,75 @@ void CheckElectronsOrIons()																		// Function to verify the Electrons
 	}
 }
 
+void ReadPoisBCs(GRVY_Input_Class& iparse)												// Function to read the Boolean options to decide if the code is running electrons or ions
+{
+	// Check if each of Electrons or Ions have been set and print their values from the
+	// processor with rank 0 (if not, set default value to false)
+	if( iparse.Read_Var("Doping/Pois_Dirichlet",&Pois_Dirichlet,false) )
+	{
+		if(myrank_mpi==0)
+		{
+			std::cout << "--> Doping/Pois_Dirichlet = " << Pois_Dirichlet << std::endl;
+		}
+	}
+	if( iparse.Read_Var("Doping/Pois_Neutrality",&Pois_Neutrality,false) )
+	{
+		if(myrank_mpi==0)
+		{
+			std::cout << "--> Doping/Pois_Neutrality = " << Pois_Neutrality << std::endl << std::endl;
+		}
+	}
+}
+
+void CheckPoisBCs()																		// Function to verify the Electrons or Ions options were set correctly
+{
+	// declare BC_count to check if first or second has been set
+	int BC_count = 0;
+
+	// For each option of BCs, add one to BC_count if it's true and print that
+	// it's true from the processor with rank 0
+	if(Pois_Dirichlet)
+	{
+		BC_count++;
+		if(myrank_mpi==0)
+		{
+			std::cout << "Poisson's equation is being solved with Dirichlet BCs."
+						<< std::endl << std::endl;
+		}
+	}
+	if(Pois_Neutrality)
+	{
+		BC_count++;
+		if(myrank_mpi==0)
+		{
+			std::cout << "Poisson's equation is being solved with Charge Neutrality BCs."
+						<< std::endl << std::endl;
+		}
+	}
+	// If neither were true, set Pois_Netrality to true by default
+	if(BC_count == 0)
+	{
+		Pois_Neutrality = true;
+		if(myrank_mpi==0)
+		{
+			std::cout << "Poisson's equation is being solved with Charge Neutrality BCs "
+							"(by default, as neither were specified)." << std::endl << std::endl;
+		}
+	}
+	// Exit the program if both were true
+	if(BC_count > 1)
+	{
+		if(myrank_mpi==0)
+		{
+			std::cout << "Program cannot run... Need to choose the BCs for Poisson's equation."
+						<< std::endl;
+			std::cout << "Please set ONE of Doping/Pois_Dirichlet or Doping/Pois_Neutrality to true in LPsolver-input.txt."
+						<< std::endl;
+		}
+		exit(1);
+	}
+}
+
 void ReadGamma(GRVY_Input_Class& iparse, int& gamma)												// Function to read the Boolean options to decide if this is the first run or not
 {
 	// Check if the value of gamma has been set and print its value from the
