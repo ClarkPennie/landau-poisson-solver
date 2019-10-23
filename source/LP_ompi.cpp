@@ -95,6 +95,7 @@ int main(int argc, char** argv)
 	std::string IC_flag;																			// declare a string IC_flag (a reference to where the IC_name is in the input file)
 	std::string input_filename;																		// declare a string input_file_name (the name of the input file to be read from)
 	int gamma;																						// declare gamma (the power of |u| in the collision kernel))
+	int frac_denom, a_numer, b_numer;																// declare frac_denom, a_numer, b_numer (where, if there is a non uniform doping profile, the channel will be for a_numer*Lx/frac_denom < x < b_number*Lx/frac_denom)
 
 	fftw_complex *qHat, *qHat_linear;																// declare pointers to the complex numbers qHat (the DFT of Q) & qHat_linear (the DFT of the two species colission operator Q);
 	fftw_complex **DFTMaxwell;																		// declare pointer to the FFT variable DFTMaxwell (to store the FFT of the initial Maxwellian)
@@ -190,13 +191,45 @@ int main(int argc, char** argv)
 
 	if(Doping)
 	{
-		ReadDopingParameters(iparse, NL, NH, T_L, T_R, eps, Phi_Lx);								// Read in the input parameters required for a non-uniform doping profile
-		a_i = Nx/3-1;																				// declare a_i (the index such that ND(x) = NH, for x <= x_{a_i-1/2}, & ND(x) = NL, for x > x_{a_i+1/2}) and set its value
-		b_i = 2*Nx/3-1;																				// declare b_i (the index such that ND(x) = NL, for x <= x_{b_i-1/2}, & ND(x) = NH, for x > x_{b_i+1/2}) and set its value
+		ReadDopingParameters(iparse, NL, NH, T_L, T_R, eps, Phi_Lx, frac_denom, a_numer, b_numer);	// Read in the input parameters required for a non-uniform doping profile
+		// if frac_denom does not evenly divide Nx, print an error and exit
+		if(Nx%frac_denom != 0)																		// check that size_v/nprocs_mpi has no remainder
+		{
+			if(myrank_mpi==0)
+			{
+				std::cout << "Error: the channel location must fit nicely on the grid cells."
+								<< std::endl;
+				std::cout << "Please set Doping/channel_denom to a value that is a factor of Nx." << std::endl;
+			}
+			exit(0);
+		}
+		// if frac_denom does not evenly divide Nx, print an error and exit
+		if(b_numer > frac_denom)																		// check that size_v/nprocs_mpi has no remainder
+		{
+			if(myrank_mpi==0)
+			{
+				std::cout << "Error: the right edge of the channel is outside the domain."
+								<< std::endl;
+				std::cout << "Please set Doping/channel_numer_right less than or equal to Doping/channel_denom." << std::endl;
+			}
+			exit(0);
+		}
+		if(a_numer > b_numer)																		// check that size_v/nprocs_mpi has no remainder
+		{
+			if(myrank_mpi==0)
+			{
+				std::cout << "Error: the channel edges are flipped."
+								<< std::endl;
+				std::cout << "Please set Doping/channel_numer_left less than or equal to Doping/channel_numer_right." << std::endl;
+			}
+			exit(0);
+		}
+		a_i = a_numer*Nx/frac_denom - 1;																				// declare a_i (the index such that ND(x) = NH, for x <= x_{a_i-1/2}, & ND(x) = NL, for x > x_{a_i+1/2}) and set its value
+		b_i = b_numer*Nx/frac_denom - 1;																				// declare b_i (the index such that ND(x) = NL, for x <= x_{b_i-1/2}, & ND(x) = NH, for x > x_{b_i+1/2}) and set its value
 		if(myrank_mpi==0)
 		{
-			printf("--> %-11s = %d\n","a_i",a_i);
-			printf("--> %-11s = %d\n\n","b_i",b_i);
+			printf("--> %-22s = (%d/%d)*%d - 1 = %d\n","a_i",a_numer,frac_denom,Nx,a_i);
+			printf("--> %-22s = (%d/%d)*%d - 1 = %d\n\n","b_i",b_numer,frac_denom,Nx,b_i);
 		}
 		ReadPoisBCs(iparse);																	// Read in if this run will model electrons or ions
 		CheckPoisBCs();																			// Check no more than one of Electrons or Ions were chosen

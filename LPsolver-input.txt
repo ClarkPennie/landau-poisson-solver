@@ -13,8 +13,8 @@
 
 flag     = Ions_Test
 
-nT       = 5 	                # Number of time-steps
-Nx       = 8  	                # Number of space cells
+nT       = 0 	                # Number of time-steps
+Nx       = 24  	                # Number of space cells
 Nv       = 8	                # Number of velocity cells in each direction
 N        = 8 	                # Number of Fourier modes
 nu       = 0.05                 # Value of (Knudsen number)^{-1}
@@ -95,12 +95,16 @@ Lv       = 5.25                 # Width of domain in v-space
 
 IC_name  = 'Non-uniform Doping' # Name of problem associated to ICs
 Lv       = 5.25                 # Width of domain in v-space
-NL       = 0.001                # Value of background density in lower regions
-NH       = 1                    # Value of background density in higher regions
 eps      = 0.1                  # Value of dielectric constant
-T_L      = 0.4                  # Temperature at left wall (if using Dirichlet BCs)
-T_R      = 0.4                  # Temperature at right wall (if using Dirichlet BCs)
-Phi_Lx   = -1			# The Poisson equation boundary condition Phi(Lx)
+
+# Parameters for the channel width, location and magnitude:
+NL                     = 0.001  # Value of background density in lower regions
+NH                     = 1      # Value of background density in higher regions
+T_L                    = 0.4    # Temperature at left wall (if using Dirichlet BCs)
+T_R                    = 0.4    # Temperature at right wall (if using Dirichlet BCs)
+channel_denom          = 8	# Denominator for the channel fraction
+channel_numer_left     = 5	# Left edge of channel is at (numer_left/denom)*Lx
+channel_numer_right    = 6	# Right edge of channel is at (numer_right/denom)*Lx
 
 # Choose the BCs to solve Poisson's equation with (choose one):
 Pois_Dirichlet = True           # Use Dirichlet BCs

@@ -288,7 +288,7 @@ void ReadPoisBCs(GRVY_Input_Class& iparse)												// Function to read the Bo
 	{
 		if(myrank_mpi==0)
 		{
-			std::cout << "--> Doping/Pois_Dirichlet = " << Pois_Dirichlet << std::endl;
+			std::cout << "--> Doping/Pois_Dirichlet  = " << Pois_Dirichlet << std::endl;
 		}
 	}
 	if( iparse.Read_Var("Doping/Pois_Neutrality",&Pois_Neutrality,false) )
@@ -714,7 +714,8 @@ void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 }
 
 void ReadDopingParameters(GRVY_Input_Class& iparse, double& NL, double& NH,
-							double& T_L, double& T_R, double& eps, double& Phi_Lx)								// Function to read all parameters for a non-uniform doping profile (NL, NH, T_L, T_R, eps)
+							double& T_L, double& T_R, double& eps, double& Phi_Lx,
+							int& channel_denom, int& channel_numer_left, int& channel_numer_right)								// Function to read all parameters for a non-uniform doping profile
 {
 	if(myrank_mpi==0)
 	{
@@ -731,7 +732,7 @@ void ReadDopingParameters(GRVY_Input_Class& iparse, double& NL, double& NH,
 	}
 	if(myrank_mpi==0)
 	{
-		printf("--> %-11s = %g\n","NL",NL);
+		printf("--> %-22s = %g\n","NL",NL);
 	}
 	if (! iparse.Read_Var("Doping/NH",&NH) )
 	{
@@ -740,7 +741,7 @@ void ReadDopingParameters(GRVY_Input_Class& iparse, double& NL, double& NH,
 	}
 	if(myrank_mpi==0)
 	{
-		printf("--> %-11s = %g\n","NH",NH);
+		printf("--> %-22s = %g\n","NH",NH);
 	}
 	if (! iparse.Read_Var("Doping/eps",&eps) )
 	{
@@ -749,7 +750,7 @@ void ReadDopingParameters(GRVY_Input_Class& iparse, double& NL, double& NH,
 	}
 	if(myrank_mpi==0)
 	{
-		printf("--> %-11s = %g\n","eps",eps);
+		printf("--> %-22s = %g\n","eps",eps);
 	}
 
 	grvy_log_setlevel(GRVY_NOLOG);
@@ -757,14 +758,20 @@ void ReadDopingParameters(GRVY_Input_Class& iparse, double& NL, double& NH,
 	iparse.Read_Var("Doping/T_L",&T_L,0.4);
 	iparse.Read_Var("Doping/T_R",&T_R,0.4);
 	iparse.Read_Var("Doping/Phi_Lx",&Phi_Lx,1.0);
+	iparse.Read_Var("Doping/channel_denom",&channel_denom,3);
+	iparse.Read_Var("Doping/channel_numer_left",&channel_numer_left,1);
+	iparse.Read_Var("Doping/channel_numer_right",&channel_numer_right,2);
 
 	grvy_log_setlevel(GRVY_INFO);
 
 	if(myrank_mpi==0)
 	{
-		printf("--> %-11s = %g\n","T_L",T_L);
-		printf("--> %-11s = %g\n","T_R",T_R);
-		printf("--> %-11s = %g\n","Phi_Lx",Phi_Lx);
+		printf("--> %-22s = %g\n","T_L",T_L);
+		printf("--> %-22s = %g\n","T_R",T_R);
+		printf("--> %-22s = %g\n","Phi_Lx",Phi_Lx);
+		printf("--> %-22s = %d\n","channel_denom",channel_denom);
+		printf("--> %-22s = %d\n","channel_numer_left",channel_numer_left);
+		printf("--> %-22s = %d\n","channel_numer_right",channel_numer_right);
 	}
 }
 
