@@ -499,6 +499,40 @@ void ReadNoField(GRVY_Input_Class& iparse)												// Function to read the Bo
 	}
 }
 
+void ReadMeshRefinement(GRVY_Input_Class& iparse)												// Function to read the Boolean option to decide if running with single species collisions or mixed
+{
+	// Check if MeshRefinement has been set and print its value from the
+	// processor with rank 0 (if not, set default value to false):
+	iparse.Read_Var("Doping/MeshRefinement",&MeshRefinement,false);
+	if(myrank_mpi==0)
+	{
+		std::cout << "--> Doping/MeshRefinement  = " << MeshRefinement << std::endl << std::endl;
+	}
+	if(MeshRefinement)
+	{
+		if( iparse.Read_Var("Doping/Nx_loc",&Nx_loc) )
+		{
+			if(myrank_mpi==0)
+			{
+				std::cout << "--> Doping/Nx_loc  = " << Nx_loc << std::endl << std::endl;
+				std::cout << "The grid in the channel of the non-uniform doping profile will be "
+						"refined by a factor of " << Nx_loc << "." << std::endl << std::endl;
+			}
+		}
+		else
+		{
+			if(myrank_mpi==0)
+			{
+				std::cout << std::endl << "Program cannot run..." << std::endl;
+				std::cout << "The grid in the channel of the non-uniform doping profile is to be "
+						"refined but no refinement factor Nx_loc has been chosen." << std::endl;
+				std::cout << "Please set the value of 'Doping/Nx_loc' in the input file." << std::endl;
+			}
+			exit(1);
+		}
+	}
+}
+
 void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT, 
 							int& Nx, int& Nv, int& N, double& nu, double& dt, double& A_amp, 
 							double& k_wave, double& Lv, double& Lx, double& T_hump, double& shift, double& T_0)					// Function to read all input parameters (IC_flag, nT,  Nx, Nv, N, nu, dt, A_amp, k_wave, L_v & L_x)

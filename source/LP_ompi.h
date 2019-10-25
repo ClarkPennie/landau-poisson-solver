@@ -60,6 +60,7 @@ extern int a_i, b_i;																				// declare a_i & b_i (the indices such t
 extern double T_L, T_R;																				// declare T_L & T_R (the temperatures at the left & right edges of space if periodic BCs are used, respectively)
 extern double eps;																					// declare eps (the dielectric constant in Poisson's equation: div(eps*grad(Phi)) = R(x,t))
 extern double Phi_Lx;																				// declare Phi_Lx (the B.C. value of Phi(Lx))
+extern int Nx_loc;																					// declare Nx_loc (the factor to refine each space cell by in the channel)
 
 //extern vector<double> nu;																			// declare the vector nu (to hold the value of 1/Knudsen on each cell)
 extern double nu_max;																				// declare nu_max (maximum of 1/knudson#)
@@ -102,6 +103,7 @@ extern bool MassConsOnly;																			// declare a Boolean variable to det
 extern bool NoField;																				// declare a Boolean variable to turn off the field in the advection step
 extern bool Electrons, Ions;																		// declare Boolean variables which will determine if the electrons or ions are being modelled
 extern bool Pois_Dirichlet, Pois_Neutrality;														// declare Boolean variables which will determin the BCs for Poisson's equation when Doping = true
+extern bool MeshRefinement;																			// declare a Boolean variable to turn on mesh refinement in the channel of a non-uniform doping profile
 
 //************************//
 //        INCLUDES        //

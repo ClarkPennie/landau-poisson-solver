@@ -11,9 +11,9 @@
 # Global input variable definitions
 #--------------------------------------------
 
-flag     = Ions_Test
+flag     = Refinement_Test
 
-nT       = 5 	                # Number of time-steps
+nT       = 0 	                # Number of time-steps
 Nx       = 12  	                # Number of space cells
 Nv       = 8	                # Number of velocity cells in each direction
 N        = 8 	                # Number of Fourier modes
@@ -109,6 +109,10 @@ channel_numer_right    = 2	# Right edge of channel is at (numer_right/denom)*Lx
 # Choose the BCs to solve Poisson's equation with (choose one):
 Pois_Dirichlet = True           # Use Dirichlet BCs
 Pois_Neutrality = False         # Use charge neutrality BCs
+
+# Mesh refinement parameters
+MeshRefinement         = False  # Refine the mesh in the channel
+Nx_loc                 = 4      # Number of refined space cells per global cell
 
 #--------------------------------------------
 # Name of file from previous run to pick up
