@@ -13,8 +13,8 @@
 
 flag     = Ions_Test
 
-nT       = 0 	                # Number of time-steps
-Nx       = 24  	                # Number of space cells
+nT       = 5 	                # Number of time-steps
+Nx       = 12  	                # Number of space cells
 Nv       = 8	                # Number of velocity cells in each direction
 N        = 8 	                # Number of Fourier modes
 nu       = 0.05                 # Value of (Knudsen number)^{-1}
@@ -102,9 +102,9 @@ NL                     = 0.001  # Value of background density in lower regions
 NH                     = 1      # Value of background density in higher regions
 T_L                    = 0.4    # Temperature at left wall (if using Dirichlet BCs)
 T_R                    = 0.4    # Temperature at right wall (if using Dirichlet BCs)
-channel_denom          = 8	# Denominator for the channel fraction
-channel_numer_left     = 5	# Left edge of channel is at (numer_left/denom)*Lx
-channel_numer_right    = 6	# Right edge of channel is at (numer_right/denom)*Lx
+channel_denom          = 3	# Denominator for the channel fraction
+channel_numer_left     = 1	# Left edge of channel is at (numer_left/denom)*Lx
+channel_numer_right    = 2	# Right edge of channel is at (numer_right/denom)*Lx
 
 # Choose the BCs to solve Poisson's equation with (choose one):
 Pois_Dirichlet = True           # Use Dirichlet BCs
