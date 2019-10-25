@@ -40,6 +40,25 @@ double computeMass_Homo(double *U)
   return tmp*scalev;
 }
 
+double computeMass_in_x(double *U, int i, double x)
+{
+	int k, k0, k_v;
+	double phi1_val;
+	double tmp=0.;
+
+	phi1_val = (x -  Gridx((double)i))/dx;
+	k0 = i*Nv*Nv*Nv;
+
+	#pragma omp parallel for private(k_v, k) shared(U) reduction(+:tmp)
+	for(k_v=0;k_v<size_v;k_v++)
+	{
+	  k = k0 + k_v;
+	  tmp += U[k*6+0] + U[k*6+1]*phi1_val + U[k*6+5]/4.;
+	}
+
+	return tmp*scalev;
+}
+
 void computeMomentum(double *U, double *a)
 {
 	if(Homogeneous)
@@ -82,6 +101,72 @@ void computeMomentum_Homo(double *U, double *a)
     tmp3 += Gridv((double)j3)*dv*U[k*6+0] + U[k*6+4]*dv*dv/12. + U[k*6+5]*Gridv((double)j3)*dv/4.;
   }
   a[0]=tmp1*dv*dv; a[1]=tmp2*dv*dv; a[2]=tmp3*dv*dv;
+}
+
+double computeBulkVelocity_v1_in_x(double *U, int i, double x)
+{
+	int k, k0, k_v, j1, j2, j3;
+	double phi1_val, rho_val;
+	double tmp=0.;
+
+	phi1_val = (x -  Gridx((double)i))/dx;
+	k0 = i*Nv*Nv*Nv;
+
+	#pragma omp parallel for private(k_v,k,j1,j2,j3) shared(U) reduction(+:tmp)  //reduction directive may change the result a little bit
+	for(k_v=0;k_v<size_v;k_v++)
+	{
+		k = k0 + k_v;
+		j3=k_v%Nv; j2=((k_v-j3)%(Nv*Nv))/Nv; j1=(k_v-j3-j2*Nv)/(Nv*Nv);
+		tmp += Gridv((double)j1)*(U[k*6+0] + U[k*6+1]*phi1_val) + U[k*6+2]*dv/12. + U[k*6+5]*Gridv((double)j1)/4.;
+	}
+
+	rho_val = computeMass_in_x(U, i, x);
+
+	return tmp*scalev/(3.*rho_val);
+}
+
+double computeBulkVelocity_v2_in_x(double *U, int i, double x)
+{
+	int k, k0, k_v, j1, j2, j3;
+	double phi1_val, rho_val;
+	double tmp=0.;
+
+	phi1_val = (x -  Gridx((double)i))/dx;
+	k0 = i*Nv*Nv*Nv;
+
+	#pragma omp parallel for private(k_v,k,j1,j2,j3) shared(U) reduction(+:tmp)  //reduction directive may change the result a little bit
+	for(k_v=0;k_v<size_v;k_v++)
+	{
+		k = k0 + k_v;
+		j3=k_v%Nv; j2=((k_v-j3)%(Nv*Nv))/Nv; j1=(k_v-j3-j2*Nv)/(Nv*Nv);
+		tmp += Gridv((double)j2)*(U[k*6+0] + U[k*6+1]*phi1_val) + U[k*6+3]*dv/12. + U[k*6+5]*Gridv((double)j2)/4.;
+	}
+
+	rho_val = computeMass_in_x(U, i, x);
+
+	return tmp*scalev/(3.*rho_val);
+}
+
+double computeBulkVelocity_v3_in_x(double *U, int i, double x)
+{
+	int k, k0, k_v, j1, j2, j3;
+	double phi1_val, rho_val;
+	double tmp=0.;
+
+	phi1_val = (x -  Gridx((double)i))/dx;
+	k0 = i*Nv*Nv*Nv;
+
+	#pragma omp parallel for private(k_v,k,j1,j2,j3) shared(U) reduction(+:tmp)  //reduction directive may change the result a little bit
+	for(k_v=0;k_v<size_v;k_v++)
+	{
+		k = k0 + k_v;
+		j3=k_v%Nv; j2=((k_v-j3)%(Nv*Nv))/Nv; j1=(k_v-j3-j2*Nv)/(Nv*Nv);
+		tmp += Gridv((double)j3)*(U[k*6+0] + U[k*6+1]*phi1_val) + U[k*6+4]*dv/12. + U[k*6+5]*Gridv((double)j3)/4.;
+	}
+
+	rho_val = computeMass_in_x(U, i, x);
+
+	return tmp*scalev/(3.*rho_val);
 }
 
 double computeKiE(double *U)
@@ -128,6 +213,34 @@ double computeKiE_Homo(double *U)			// int f |v|^2 dv
   }
   tmp *= dv*dv;
   return 0.5*tmp;
+}
+
+double computeKiE_in_x(double *U, int i, double x)
+{
+	int k, k0, k_v, j1, j2, j3;
+	double phi1_val, rho_val, V1_val, V2_val, V3_val, V_abs_val;
+	double tmp=0., tp=0., tp1=0.;
+
+	phi1_val = (x -  Gridx((double)i))/dx;
+	k0 = i*Nv*Nv*Nv;
+  //#pragma omp parallel for private(k,i,j,j1,j2,j3,tp, tp1) shared(U) reduction(+:tmp)
+	for(k_v=0;k_v<size_v;k_v++)
+	{
+		k = k0 + k_v;
+		j3=k_v%Nv; j2=((k_v-j3)%(Nv*Nv))/Nv; j1=(k_v-j3-j2*Nv)/(Nv*Nv);
+		//tp = ( pow(Gridv(j1+0.5), 3)- pow(Gridv(j1-0.5), 3) + pow(Gridv(j2+0.5), 3)- pow(Gridv(j2-0.5), 3) + pow(Gridv(j3+0.5), 3)- pow(Gridv(j3-0.5), 3) )/3.;
+		tp1 = Gridv((double)j1)*Gridv((double)j1) + Gridv((double)j2)*Gridv((double)j2) + Gridv((double)j3)*Gridv((double)j3);
+		//tmp += U[k][0]*tp + (Gridv(j1)*U[k][2]+Gridv(j2)*U[k][3]+Gridv(j3)*U[k][4])*dv*dv/6. + U[k][5]*( dv*(dv*dv*3./80. + tp1/12.) + tp/6. );
+		tmp += (U[k*6+0] + U[k*6+1]*phi1_val)*(tp1 + dv*dv/4.) + (Gridv(j1)*U[k*6+2]+Gridv(j2)*U[k*6+3]+Gridv(j3)*U[k*6+4])*dv/6. + U[k*6+5]*( dv*dv*19./240. + tp1/4.);
+	}
+
+	rho_val = computeMass_in_x(U, i, x);
+	V1_val = computeBulkVelocity_v1_in_x(U, i, x);
+	V2_val = computeBulkVelocity_v2_in_x(U, i, x);
+	V3_val = computeBulkVelocity_v3_in_x(U, i, x);
+	V_abs_val = V1_val*V1_val + V2_val*V2_val + V3_val*V3_val;
+
+	return tmp*dv*dv*dv/(3.*rho_val) - V_abs_val/3.;
 }
 
 double computeKiEratio(double *U, int *NegVals)

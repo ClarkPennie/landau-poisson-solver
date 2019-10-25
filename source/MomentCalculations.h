@@ -29,17 +29,27 @@ double computeMass_Inhomo(double *U);
 
 double computeMass_Homo(double *U);
 
+double computeMass_in_x(double *U, int i, double x);
+
 void computeMomentum(double *U, double *a);
 
 void computeMomentum_Inhomo(double *U, double *a);
 
 void computeMomentum_Homo(double *U, double *a);
 
+double computeBulkVelocity_v1_in_x(double *U, int i, double x);
+
+double computeBulkVelocity_v2_in_x(double *U, int i, double x);
+
+double computeBulkVelocity_v3_in_x(double *U, int i, double x);
+
 double computeKiE(double *U);
 
 double computeKiE_Inhomo(double *U);
 
 double computeKiE_Homo(double *U);
+
+double computeKiE_in_x(double *U, int i, double x);
 
 double computeKiEratio(double *U, int *NegVals);
 
