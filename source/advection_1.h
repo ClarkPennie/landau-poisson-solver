@@ -35,6 +35,8 @@ double Gridv(double m);
 
 double Gridx(double m);
 
+double dx_value(int i);
+
 void DirichletBC(vector<double>& Ub_vals, int i, int j1, int j2, int j3);
 
 void ChargeNeutralityBC(vector<double>& Ub_vals, double* U_vals, int i, int k);

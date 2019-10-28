@@ -50,6 +50,25 @@ double Gridx(double m){ // x in [0,Lx]  (returns the x value at the mth discrete
 	}
 }
 
+double dx_value(int i)
+{
+	if(MeshRefinement)
+	{
+		if(i > a_i - 1 && i < a_i + Nx_loc*(b_i - a_i + 2))
+		{
+			return dx_loc;
+		}
+		else
+		{
+			return dx_global;
+		}
+	}
+	else
+	{
+		return dx;
+	}
+}
+
 //#ifdef Doping																						// only do this if Damping was defined
 void DirichletBC(vector<double>& Ub_vals, int i, int j1, int j2, int j3)
 {

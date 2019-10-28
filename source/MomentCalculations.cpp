@@ -22,12 +22,44 @@ double computeMass(double *U)
 
 double computeMass_Inhomo(double *U)
 {
+	if(MeshRefinement)
+	{
+		return computeMass_Inhomo_Refined(U);
+	}
+	else
+	{
+		return computeMass_Inhomo_Uniform(U);
+	}
+}
+
+double computeMass_Inhomo_Uniform(double *U)
+{
   int k;
   double tmp=0.;
   #pragma omp parallel for shared(U) reduction(+:tmp)
   for(k=0;k<Nx*size_v;k++) tmp += U[k*6+0] + U[k*6+5]/4.;
 
   return tmp*dx*scalev;
+}
+
+double computeMass_Inhomo_Refined(double *U)
+{
+	int i, k, k0, k_v;
+	double dx_val;
+	double tmp=0.;
+	#pragma omp parallel for private(i, k_v, k0, k, dx_val) shared(U) reduction(+:tmp)
+	for(i=0; i<Nx; i++)
+	{
+		dx_val = dx_value(i);
+		k0 = i*size_v;
+
+		for(k_v=0; k_v<size_v; k_v++)
+		{
+			k = k0 + k_v;
+			tmp += dx_val*(U[k*6+0] + U[k*6+5]/4.);
+		}
+	}
+	return tmp*scalev;
 }
 
 double computeMass_Homo(double *U)
@@ -43,10 +75,12 @@ double computeMass_Homo(double *U)
 double computeMass_in_x(double *U, int i, double x)
 {
 	int k, k0, k_v;
-	double phi1_val;
+	double dx_val, phi1_val;
 	double tmp=0.;
 
-	phi1_val = (x -  Gridx((double)i))/dx;
+	dx_val = dx_value(i);
+	phi1_val = (x -  Gridx((double)i))/dx_val;
+
 	k0 = i*Nv*Nv*Nv;
 
 	#pragma omp parallel for private(k_v, k) shared(U) reduction(+:tmp)
@@ -72,6 +106,42 @@ void computeMomentum(double *U, double *a)
 }
 
 void computeMomentum_Inhomo(double *U, double *a)
+{
+	if(MeshRefinement)
+	{
+		return computeMomentum_Inhomo_Refined(U, a);
+	}
+	else
+	{
+		return computeMomentum_Inhomo_Uniform(U, a);
+	}
+}
+
+void computeMomentum_Inhomo_Refined(double *U, double *a)
+{
+	int k, k0, k_v, i, j1,j2,j3; //k=i*Nv*Nv*Nv + (j1*Nv*Nv + j2*Nv + j3);
+	double dx_val;
+	double tmp1=0., tmp2=0., tmp3=0.;
+	a[0]=0.; a[1]=0.; a[2]=0.; // the three momentum
+	#pragma omp parallel for private(i,k,k0,k_v,j1,j2,j3,dx_val) shared(U) reduction(+:tmp1, tmp2, tmp3)  //reduction directive may change the result a little bit
+	for(i=0; i<Nx; i++)
+	{
+		dx_val = dx_value(i);
+		k0 = i*size_v;
+
+		for(k_v=0; k_v<size_v; k_v++)
+		{
+			k = k0 + k_v;
+			j3=k_v%Nv; j2=((k_v-j3)%(Nv*Nv))/Nv; j1=(k_v-j3-j2*Nv)/(Nv*Nv);
+			tmp1 += Gridv((double)j1)*dx_val*U[k*6+0] + U[k*6+2]*dx_val*dv/12. + U[k*6+5]*Gridv((double)j1)*dx_val/4.;
+			tmp2 += Gridv((double)j2)*dx_val*U[k*6+0] + U[k*6+3]*dx_val*dv/12. + U[k*6+5]*Gridv((double)j2)*dx_val/4.;
+			tmp3 += Gridv((double)j3)*dx_val*U[k*6+0] + U[k*6+4]*dx_val*dv/12. + U[k*6+5]*Gridv((double)j3)*dx_val/4.;
+		}
+	}
+	a[0]=tmp1*scalev; a[1]=tmp2*scalev; a[2]=tmp3*scalev;
+}
+
+void computeMomentum_Inhomo_Uniform(double *U, double *a)
 {
   int k, i, j,j1,j2,j3; //k=i*Nv*Nv*Nv + (j1*Nv*Nv + j2*Nv + j3);
   double tmp1=0., tmp2=0., tmp3=0.;
@@ -106,10 +176,12 @@ void computeMomentum_Homo(double *U, double *a)
 double computeBulkVelocity_v1_in_x(double *U, int i, double x)
 {
 	int k, k0, k_v, j1, j2, j3;
-	double phi1_val, rho_val;
+	double dx_val, phi1_val, rho_val;
 	double tmp=0.;
 
-	phi1_val = (x -  Gridx((double)i))/dx;
+	dx_val = dx_value(i);
+	phi1_val = (x -  Gridx((double)i))/dx_val;
+
 	k0 = i*Nv*Nv*Nv;
 
 	#pragma omp parallel for private(k_v,k,j1,j2,j3) shared(U) reduction(+:tmp)  //reduction directive may change the result a little bit
@@ -128,10 +200,12 @@ double computeBulkVelocity_v1_in_x(double *U, int i, double x)
 double computeBulkVelocity_v2_in_x(double *U, int i, double x)
 {
 	int k, k0, k_v, j1, j2, j3;
-	double phi1_val, rho_val;
+	double dx_val, phi1_val, rho_val;
 	double tmp=0.;
 
-	phi1_val = (x -  Gridx((double)i))/dx;
+	dx_val = dx_value(i);
+	phi1_val = (x -  Gridx((double)i))/dx_val;
+
 	k0 = i*Nv*Nv*Nv;
 
 	#pragma omp parallel for private(k_v,k,j1,j2,j3) shared(U) reduction(+:tmp)  //reduction directive may change the result a little bit
@@ -150,10 +224,12 @@ double computeBulkVelocity_v2_in_x(double *U, int i, double x)
 double computeBulkVelocity_v3_in_x(double *U, int i, double x)
 {
 	int k, k0, k_v, j1, j2, j3;
-	double phi1_val, rho_val;
+	double dx_val, phi1_val, rho_val;
 	double tmp=0.;
 
-	phi1_val = (x -  Gridx((double)i))/dx;
+	dx_val = dx_value(i);
+	phi1_val = (x -  Gridx((double)i))/dx_val;
+
 	k0 = i*Nv*Nv*Nv;
 
 	#pragma omp parallel for private(k_v,k,j1,j2,j3) shared(U) reduction(+:tmp)  //reduction directive may change the result a little bit
@@ -183,6 +259,18 @@ double computeKiE(double *U)
 
 double computeKiE_Inhomo(double *U)
 {
+	if(MeshRefinement)
+	{
+		return computeKiE_Inhomo_Refined(U);
+	}
+	else
+	{
+		return computeKiE_Inhomo_Uniform(U);
+	}
+}
+
+double computeKiE_Inhomo_Uniform(double *U)
+{
   int k, i, j,j1,j2,j3;
   double tmp=0., tp=0., tp1=0.;
   //#pragma omp parallel for private(k,i,j,j1,j2,j3,tp, tp1) shared(U) reduction(+:tmp)
@@ -196,6 +284,32 @@ double computeKiE_Inhomo(double *U)
   }
   tmp *= dx*dv*dv;
   return 0.5*tmp;
+}
+
+double computeKiE_Inhomo_Refined(double *U)
+{
+	int k, k0, k_v, i, j,j1,j2,j3;
+	double dx_val;
+	double tmp=0., tp=0., tp1=0.;
+	//#pragma omp parallel for private(k,i,j,j1,j2,j3,tp, tp1) shared(U) reduction(+:tmp)
+	for(i=0; i<Nx; i++)
+	{
+		dx_val = dx_value(i);
+		k0 = i*size_v;
+
+		for(k_v=0; k_v<size_v; k_v++)
+		{
+			k = k0 + k_v;
+
+			j3=k_v%Nv; j2=((k_v-j3)%(Nv*Nv))/Nv; j1=(k_v-j3-j2*Nv)/(Nv*Nv);
+			//tp = ( pow(Gridv(j1+0.5), 3)- pow(Gridv(j1-0.5), 3) + pow(Gridv(j2+0.5), 3)- pow(Gridv(j2-0.5), 3) + pow(Gridv(j3+0.5), 3)- pow(Gridv(j3-0.5), 3) )/3.;
+			tp1 = Gridv((double)j1)*Gridv((double)j1) + Gridv((double)j2)*Gridv((double)j2) + Gridv((double)j3)*Gridv((double)j3);
+			//tmp += U[k][0]*tp + (Gridv(j1)*U[k][2]+Gridv(j2)*U[k][3]+Gridv(j3)*U[k][4])*dv*dv/6. + U[k][5]*( dv*(dv*dv*3./80. + tp1/12.) + tp/6. );
+			tmp += U[k*6+0]*(tp1 + dv*dv/4.)*dx_val + (Gridv(j1)*U[k*6+2]+Gridv(j2)*U[k*6+3]+Gridv(j3)*U[k*6+4])*dx_val*dv/6. + U[k*6+5]*dx_val*(dv*dv*19./240. + tp1/4.);
+		}
+	}
+	tmp *= scalev;
+	return 0.5*tmp;
 }
 
 double computeKiE_Homo(double *U)			// int f |v|^2 dv
@@ -218,10 +332,12 @@ double computeKiE_Homo(double *U)			// int f |v|^2 dv
 double computeKiE_in_x(double *U, int i, double x)
 {
 	int k, k0, k_v, j1, j2, j3;
-	double phi1_val, rho_val, V1_val, V2_val, V3_val, V_abs_val;
+	double dx_val, phi1_val, rho_val, V1_val, V2_val, V3_val, V_abs_val;
 	double tmp=0., tp=0., tp1=0.;
 
-	phi1_val = (x -  Gridx((double)i))/dx;
+	dx_val = dx_value(i);
+	phi1_val = (x -  Gridx((double)i))/dx_val;
+
 	k0 = i*Nv*Nv*Nv;
   //#pragma omp parallel for private(k,i,j,j1,j2,j3,tp, tp1) shared(U) reduction(+:tmp)
 	for(k_v=0;k_v<size_v;k_v++)
@@ -240,7 +356,7 @@ double computeKiE_in_x(double *U, int i, double x)
 	V3_val = computeBulkVelocity_v3_in_x(U, i, x);
 	V_abs_val = V1_val*V1_val + V2_val*V2_val + V3_val*V3_val;
 
-	return tmp*dv*dv*dv/(3.*rho_val) - V_abs_val/3.;
+	return tmp*scalev/(3.*rho_val) - V_abs_val/3.;
 }
 
 double computeKiEratio(double *U, int *NegVals)
@@ -257,27 +373,32 @@ double computeKiEratio(double *U, int *NegVals)
 
 double computeKiEratio_Inhomo(double *U, int *NegVals)
 {
-	int k, i, j,j1,j2,j3;
-	double KiEpos, KiEneg;																	// declare KiEpos (the kinetic energy where f is positive all over the cells) & KiEneg (the kinetic energy where f goes negative in the cells)
+	int k, k0, k_v, i,j1,j2,j3;
+	double dx_val, KiEpos, KiEneg;																	// declare KiEpos (the kinetic energy where f is positive all over the cells) & KiEneg (the kinetic energy where f goes negative in the cells)
 	double tmp=0., tp=0., tp1=0.;
 	KiEpos = 0;
 	KiEneg = 0;
-	#pragma omp parallel for private(k,i,j,j1,j2,j3,tp, tp1) shared(U) reduction(+:KiEpos,KiEneg)
-	for(k=0;k<Nx*size_v;k++)
+	#pragma omp parallel for private(i,k,k0,k_v,j1,j2,j3,tp,tp1,dx_val) shared(U) reduction(+:KiEpos,KiEneg)
+	for(i=0; i<Nx; i++)
 	{
-		if(NegVals[k] == 0)
+		dx_val = dx_value(i);
+		k0 = i*size_v;
+
+		for(k_v=0; k_v<size_v; k_v++)
 		{
-			j=k%size_v; i=(k-j)/size_v;
-			j3=j%Nv; j2=((j-j3)%(Nv*Nv))/Nv; j1=(j-j3-j2*Nv)/(Nv*Nv);
-			tp1 = Gridv((double)j1)*Gridv((double)j1) + Gridv((double)j2)*Gridv((double)j2) + Gridv((double)j3)*Gridv((double)j3);
-			KiEpos += U[k*6+0]*(tp1 + dv*dv/4.)*dv + (Gridv(j1)*U[k*6+2]+Gridv(j2)*U[k*6+3]+Gridv(j3)*U[k*6+4])*dv*dv/6. + U[k*6+5]*( dv*dv*dv*19./240. + tp1*dv/4.);
-		}
-		else
-		{
-			j=k%size_v; i=(k-j)/size_v;
-			j3=j%Nv; j2=((j-j3)%(Nv*Nv))/Nv; j1=(j-j3-j2*Nv)/(Nv*Nv);
-			tp1 = Gridv((double)j1)*Gridv((double)j1) + Gridv((double)j2)*Gridv((double)j2) + Gridv((double)j3)*Gridv((double)j3);
-			KiEneg += U[k*6+0]*(tp1 + dv*dv/4.)*dv + (Gridv(j1)*U[k*6+2]+Gridv(j2)*U[k*6+3]+Gridv(j3)*U[k*6+4])*dv*dv/6. + U[k*6+5]*( dv*dv*dv*19./240. + tp1*dv/4.);
+			k = k0 + k_v;
+			if(NegVals[k] == 0)
+			{
+				j3=k_v%Nv; j2=((k_v-j3)%(Nv*Nv))/Nv; j1=(k_v-j3-j2*Nv)/(Nv*Nv);
+				tp1 = Gridv((double)j1)*Gridv((double)j1) + Gridv((double)j2)*Gridv((double)j2) + Gridv((double)j3)*Gridv((double)j3);
+				KiEpos += U[k*6+0]*(tp1 + dv*dv/4.)*dx_val + (Gridv(j1)*U[k*6+2]+Gridv(j2)*U[k*6+3]+Gridv(j3)*U[k*6+4])*dv*dx_val/6. + U[k*6+5]*dx_val*(dv*dv*19./240. + tp1/4.);
+			}
+			else
+			{
+				j3=k_v%Nv; j2=((k_v-j3)%(Nv*Nv))/Nv; j1=(k_v-j3-j2*Nv)/(Nv*Nv);
+				tp1 = Gridv((double)j1)*Gridv((double)j1) + Gridv((double)j2)*Gridv((double)j2) + Gridv((double)j3)*Gridv((double)j3);
+				KiEneg += U[k*6+0]*(tp1 + dv*dv/4.)*dx_val + (Gridv(j1)*U[k*6+2]+Gridv(j2)*U[k*6+3]+Gridv(j3)*U[k*6+4])*dv*dx_val/6. + U[k*6+5]*dx_val*(dv*dv*19./240. + tp1/4.);
+			}
 		}
 	}
 	return KiEneg/KiEpos;

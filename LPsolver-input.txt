@@ -102,9 +102,9 @@ NL                     = 0.001  # Value of background density in lower regions
 NH                     = 1      # Value of background density in higher regions
 T_L                    = 0.4    # Temperature at left wall (if using Dirichlet BCs)
 T_R                    = 0.4    # Temperature at right wall (if using Dirichlet BCs)
-channel_denom          = 3	# Denominator for the channel fraction
-channel_numer_left     = 1	# Left edge of channel is at (numer_left/denom)*Lx
-channel_numer_right    = 2	# Right edge of channel is at (numer_right/denom)*Lx
+channel_denom          = 6	# Denominator for the channel fraction
+channel_numer_left     = 3	# Left edge of channel is at (numer_left/denom)*Lx
+channel_numer_right    = 4	# Right edge of channel is at (numer_right/denom)*Lx
 
 # Choose the BCs to solve Poisson's equation with (choose one):
 Pois_Dirichlet = True           # Use Dirichlet BCs
