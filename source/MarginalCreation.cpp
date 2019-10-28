@@ -25,8 +25,29 @@ double f_marg_Inhomo(double *U, int i, int j1, double x, double v1)
 		for(j3=0; j3<Nv; j3++)
 		{
 			k = k0 + j2N + j3;																	// set k to i*Nv^3 + j1*Nv^2 + j2*Nv + j3
-			retn += dv*dv*U[6*k+0] + dv*dv*U[6*k+1]*x_dif/dx + dv*U[6*k+2]*v1_dif
+			if(MeshRefinement)
+			{
+				if(i < a_i)
+				{
+					retn += dv*dv*U[6*k+0] + dv*dv*U[6*k+1]*x_dif/dx_global + dv*U[6*k+2]*v1_dif
+								+ U[6*k+5]*(v1_dif*v1_dif +dv*dv/6);								// add dv*dv*U[6*k+0] + dv*dv*U[6*k+1]*x_dif/dx + dv*U[6*k+2]*v1_dif + U[6*k+5]*(v1_dif*v1_dif +dv*dv/6) for the given j2 & j3 in the sum for retn
+				}
+				else if(i < a_i + Nx_loc*(b_i - a_i + 2))
+				{
+					retn += dv*dv*U[6*k+0] + dv*dv*U[6*k+1]*x_dif/dx_loc + dv*U[6*k+2]*v1_dif
+								+ U[6*k+5]*(v1_dif*v1_dif +dv*dv/6);								// add dv*dv*U[6*k+0] + dv*dv*U[6*k+1]*x_dif/dx + dv*U[6*k+2]*v1_dif + U[6*k+5]*(v1_dif*v1_dif +dv*dv/6) for the given j2 & j3 in the sum for retn
+				}
+				else
+				{
+					retn += dv*dv*U[6*k+0] + dv*dv*U[6*k+1]*x_dif/dx_global + dv*U[6*k+2]*v1_dif
+								+ U[6*k+5]*(v1_dif*v1_dif +dv*dv/6);								// add dv*dv*U[6*k+0] + dv*dv*U[6*k+1]*x_dif/dx + dv*U[6*k+2]*v1_dif + U[6*k+5]*(v1_dif*v1_dif +dv*dv/6) for the given j2 & j3 in the sum for retn
+				}
+			}
+			else
+			{
+				retn += dv*dv*U[6*k+0] + dv*dv*U[6*k+1]*x_dif/dx + dv*U[6*k+2]*v1_dif
 							+ U[6*k+5]*(v1_dif*v1_dif +dv*dv/6);								// add dv*dv*U[6*k+0] + dv*dv*U[6*k+1]*x_dif/dx + dv*U[6*k+2]*v1_dif + U[6*k+5]*(v1_dif*v1_dif +dv*dv/6) for the given j2 & j3 in the sum for retn
+			}
 		}
 	}
 	return retn;																				// return the value of the marginal evaluated at x & v1
@@ -75,6 +96,21 @@ void PrintMarginalLoc_Inhomo(FILE *margfile)															// function to print 
 	ddv = dv/np;																				// set ddv to the velocity cell width divided by np
 	for(i=0; i<Nx; i++)
 	{
+		if(MeshRefinement)
+		{
+			if(i < a_i)
+			{
+				ddx = dx_global/4;
+			}
+			else if(i < a_i + Nx_loc*(b_i - a_i + 2))
+			{
+				ddx = dx_loc/4;
+			}
+			else
+			{
+				ddx = dx_global/4;
+			}
+		}
 		x_0 = Gridx((double)i - 0.5);															// set x_0 to the value of x at the left edge of the i-th space cell
 		for (nx=0; nx<np; nx++)
 		{
@@ -170,6 +206,21 @@ void PrintMarginal_Inhomo(double *U, FILE *margfile)													// function to 
 	ddv = dv/np;																				// set ddv to the velocity cell width divided by np
 	for(i=0; i<Nx; i++)
 	{
+		if(MeshRefinement)
+		{
+			if(i < a_i)
+			{
+				ddx = dx_global/4;
+			}
+			else if(i < a_i + Nx_loc*(b_i - a_i + 2))
+			{
+				ddx = dx_loc/4;
+			}
+			else
+			{
+				ddx = dx_global/4;
+			}
+		}
 		x_0 = Gridx((double)i - 0.5);															// set x_0 to the value of x at the left edge of the i-th space cell
 		for (nx=0; nx<np; nx++)
 		{

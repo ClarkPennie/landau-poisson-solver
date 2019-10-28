@@ -125,7 +125,7 @@ void SetInit_LD(double *U, double T0)																						// function to calcul
 void SetInit_ND(double *U)																						// function to calculate the DG coefficients for the initial condition for Landau Damping
 {
 //	if(myrank_mpi == 0){printf("Inside SetInit_ND\n");}
-    int i, j1, j2, j3, k, m1,m2,m3,nt=5;																		// declare i (to represent cell i in x-space), j1, j2, j3 (to represent cell (j1,j2,j3) in v-space), k (the index of cell (i,j1,j2,j3) in U), m1, m2, m3 (counters for the Gaussian quadrature in 3D) & nt (the number of points in the quadrature)
+    int i, i_global, j1, j2, j3, k, m1,m2,m3,nt=5;																// declare i (to represent cell i in x-space), j1, j2, j3 (to represent cell (j1,j2,j3) in v-space), k (the index of cell (i,j1,j2,j3) in U), m1, m2, m3 (counters for the Gaussian quadrature in 3D) & nt (the number of points in the quadrature)
     double a=A_amp, c=k_wave;																					// declare a (the amplitude of cosine wave) and set it to A_amp & c (the frequency of the cosine wave) and set it to k_wave
     double tp, tp0, tp5, tmp0, tmp1, tmp2, tmp3, tmp4;															// declare tp, tp0, tmp0, tmp1, tmp2, tmp3, tmp4 (temporary values while calculating the quadrature for the integral w.r.t. v)
 	double ND;																									// declare ND (the value of the doping profile at the given x)
@@ -155,20 +155,59 @@ void SetInit_ND(double *U)																						// function to calculate the DG 
     				}
     			}
     			tmp0 = tmp0*0.5*0.5*0.5; tmp1 = tmp1*0.5*0.5*0.5; tmp2 = tmp2*0.5*0.5*0.5; tmp3 = tmp3*0.5*0.5*0.5; tmp4 = tmp4*0.5*0.5*0.5;						// multiply tmp0, tmp1, tmp2, tmp3 & tmp4 by (1/2)^3 to represent the fact that quadrature isn't done over [-1, 1] (should also multiply by dv^3 but this cancels with 1/dv^3 later)
-    			for(i=0;i<Nx;i++)																																	// loop through the space cells
+    			for(i_global=0;i_global<Nx_global;i_global++)																																	// loop through the space cells
     			{
-    				ND = DopingProfile(i);																															// set ND to the value of the doping profile at ix
+    				ND = DopingProfile(i_global);																															// set ND to the value of the doping profile at ix
 //    				if(myrank_mpi == 0){printf("i = %d: ND = %g \n", i, ND);}
-    				k=i*size_v + (j1*Nv*Nv + j2*Nv + j3);																											// calculate the index of cell (i,j1,j2,j3) in U
-    				tp0 = ND*tmp0;																																	// calculate b_6k = (int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_6k(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
-    				tp5 = ND*tmp4;																																	// calculate b_(6k+5) = (int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_(6k+5)(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
-    				U[k*6+0] = 19*tp0/4. - 15*tp5;																													// calculate the coefficient U[6k]
-    				U[k*6+5] = 60*tp5 - 15*tp0;																														// calculate the coefficient U[6k+5]
+    				if(MeshRefinement && i_global > a_i - 1)
+    				{
+    					if(i_global < b_i + 2)
+    					{
+    						for(int i_loc=0; i_loc<Nx_loc; i_loc++)
+    						{
+    							i = 4*i_global - 3*a_i + i_loc;
 
-    				U[k*6+1] = 0; 																																	// calculate the coefficient U[6k+1] = 12*b_(6k+1) = 12*(int_Ii ND(x)*phi_(6k+1)(x) dx)*(int_Kj Mw(v) dv) (NOTE: int_(Omega_i) ND(x)*phi_(6k+1)(x) dx = 0 (as ND is assumed constant on each cell))
-    				U[k*6+2] = ND*tmp1*12;																															// calculate the coefficient U[6k+2] = 12*b_(6k+2) = 12*(int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_(6k+2)(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
-    				U[k*6+3] = ND*tmp2*12;																															// calculate the coefficient U[6k+3] = 12*b_(6k+3) = 12*(int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_(6k+3)(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
-    				U[k*6+4] = ND*tmp3*12;																															// calculate the coefficient U[6k+4] = 12*b_(6k+4) = 12*(int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_(6k+4)(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
+    							k=i*size_v + (j1*Nv*Nv + j2*Nv + j3);																											// calculate the index of cell (i,j1,j2,j3) in U
+    							tp0 = ND*tmp0;																																	// calculate b_6k = (int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_6k(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
+    							tp5 = ND*tmp4;																																	// calculate b_(6k+5) = (int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_(6k+5)(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
+    							U[k*6+0] = 19*tp0/4. - 15*tp5;																													// calculate the coefficient U[6k]
+    							U[k*6+5] = 60*tp5 - 15*tp0;																														// calculate the coefficient U[6k+5]
+
+    							U[k*6+1] = 0; 																																	// calculate the coefficient U[6k+1] = 12*b_(6k+1) = 12*(int_Ii ND(x)*phi_(6k+1)(x) dx)*(int_Kj Mw(v) dv) (NOTE: int_(Omega_i) ND(x)*phi_(6k+1)(x) dx = 0 (as ND is assumed constant on each cell))
+    							U[k*6+2] = ND*tmp1*12;																															// calculate the coefficient U[6k+2] = 12*b_(6k+2) = 12*(int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_(6k+2)(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
+    							U[k*6+3] = ND*tmp2*12;																															// calculate the coefficient U[6k+3] = 12*b_(6k+3) = 12*(int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_(6k+3)(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
+    							U[k*6+4] = ND*tmp3*12;																															// calculate the coefficient U[6k+4] = 12*b_(6k+4) = 12*(int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_(6k+4)(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
+    						}
+    					}
+    					else
+    					{
+    						i = i_global + 3*(b_i - a_i) + 6;
+
+    						k=i*size_v + (j1*Nv*Nv + j2*Nv + j3);																											// calculate the index of cell (i,j1,j2,j3) in U
+    						tp0 = ND*tmp0;																																	// calculate b_6k = (int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_6k(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
+    						tp5 = ND*tmp4;																																	// calculate b_(6k+5) = (int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_(6k+5)(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
+    						U[k*6+0] = 19*tp0/4. - 15*tp5;																													// calculate the coefficient U[6k]
+    						U[k*6+5] = 60*tp5 - 15*tp0;																														// calculate the coefficient U[6k+5]
+
+    						U[k*6+1] = 0; 																																	// calculate the coefficient U[6k+1] = 12*b_(6k+1) = 12*(int_Ii ND(x)*phi_(6k+1)(x) dx)*(int_Kj Mw(v) dv) (NOTE: int_(Omega_i) ND(x)*phi_(6k+1)(x) dx = 0 (as ND is assumed constant on each cell))
+    						U[k*6+2] = ND*tmp1*12;																															// calculate the coefficient U[6k+2] = 12*b_(6k+2) = 12*(int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_(6k+2)(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
+    						U[k*6+3] = ND*tmp2*12;																															// calculate the coefficient U[6k+3] = 12*b_(6k+3) = 12*(int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_(6k+3)(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
+    						U[k*6+4] = ND*tmp3*12;																															// calculate the coefficient U[6k+4] = 12*b_(6k+4) = 12*(int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_(6k+4)(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
+    					}
+    				}
+    				else
+    				{
+						k=i_global*size_v + (j1*Nv*Nv + j2*Nv + j3);																											// calculate the index of cell (i,j1,j2,j3) in U
+						tp0 = ND*tmp0;																																	// calculate b_6k = (int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_6k(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
+						tp5 = ND*tmp4;																																	// calculate b_(6k+5) = (int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_(6k+5)(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
+						U[k*6+0] = 19*tp0/4. - 15*tp5;																													// calculate the coefficient U[6k]
+						U[k*6+5] = 60*tp5 - 15*tp0;																														// calculate the coefficient U[6k+5]
+
+						U[k*6+1] = 0; 																																	// calculate the coefficient U[6k+1] = 12*b_(6k+1) = 12*(int_Ii ND(x)*phi_(6k+1)(x) dx)*(int_Kj Mw(v) dv) (NOTE: int_(Omega_i) ND(x)*phi_(6k+1)(x) dx = 0 (as ND is assumed constant on each cell))
+						U[k*6+2] = ND*tmp1*12;																															// calculate the coefficient U[6k+2] = 12*b_(6k+2) = 12*(int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_(6k+2)(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
+						U[k*6+3] = ND*tmp2*12;																															// calculate the coefficient U[6k+3] = 12*b_(6k+3) = 12*(int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_(6k+3)(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
+						U[k*6+4] = ND*tmp3*12;																															// calculate the coefficient U[6k+4] = 12*b_(6k+4) = 12*(int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_(6k+4)(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
+    				}
     			}
     		}
     	}

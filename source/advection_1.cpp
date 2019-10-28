@@ -17,7 +17,37 @@ double Gridv(double m){ //v in [-Lv,Lv]
 }
 
 double Gridx(double m){ // x in [0,Lx]  (returns the x value at the mth discrete space-step, in the middle of the cell I_m)
-	return (m+0.5)*dx;
+	if(!MeshRefinement)
+	{
+		return (m+0.5)*dx;
+	}
+	else
+	{
+		if(m < a_i)
+		{
+//			if(myrank_mpi == 0)
+//			{
+//				std::cout << "Gridx(" << m << ") = " << (m+0.5)*dx_global << std::endl;
+//			}
+			return (m+0.5)*dx_global;
+		}
+		else if(m < a_i + Nx_loc*(b_i - a_i + 2))
+		{
+//			if(myrank_mpi == 0)
+//			{
+//				std::cout << "Gridx(" << m << ") = " << a_i*dx_global + (m-a_i-1)*dx_loc << std::endl;
+//			}
+			return a_i*dx_global + (m-a_i + 0.5)*dx_loc;
+		}
+		else
+		{
+//			if(myrank_mpi == 0)
+//			{
+//				std::cout << "Gridx(" << m << ") = " << (m+Nx_global-Nx)*dx_global << std::endl;
+//			}
+			return (m+Nx_global-Nx + 0.5)*dx_global;
+		}
+	}
 }
 
 //#ifdef Doping																						// only do this if Damping was defined

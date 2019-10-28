@@ -40,6 +40,8 @@ double T_L, T_R;																					// declare T_L & T_R (the temperatures at t
 double eps;																							// declare eps (the dielectric constant in Poisson's equation: div(eps*grad(Phi)) = R(x,t))
 double Phi_Lx;																						// declare Phi_Lx (the B.C. value of Phi(Lx))
 int Nx_loc;																							// declare Nx_loc (the factor to refine each space cell by in the channel)
+int Nx_global;																						// declare Nx_global (to keep track of the global number of space cell, if Doping is True and the mesh has been refined)
+double dx_loc, dx_global;																			// declare dx_loc (space cell size in the refined cells) and dx_global (the usual space cell size without refinement)
 
 //vector<double> nu(Nx);																				// declare the vector nu (to hold the value of 1/Knudsen on each cell)
 double nu_max;																						// declare nu_max (maximum of 1/knudson#)
@@ -236,6 +238,17 @@ int main(int argc, char** argv)
 		ReadPoisBCs(iparse);																	// Read in if this run will model electrons or ions
 		CheckPoisBCs();																			// Check no more than one of Electrons or Ions were chosen
 		ReadMeshRefinement(iparse);																// Check if the mesh will be refined in the channel
+		Nx_global = Nx;
+		if(MeshRefinement)
+		{
+			int no_of_refined_cells = b_i - a_i + 2;
+			Nx = Nx_global + no_of_refined_cells*(Nx_loc - 1);
+			dx_global = Lx/Nx_global;
+			dx_loc = dx_global/Nx_loc;
+
+			printf("--> %-22s = %g\n","dx_global",dx_global);
+			printf("--> %-22s = %g\n\n","dx_loc",dx_loc);
+		}
 	}
 
 	size_v=Nv*Nv*Nv;																				// set size_v to Nv^3
@@ -249,7 +262,14 @@ int main(int argc, char** argv)
 	}
 	size_ft=N*N*N; 																					// set size_ft to N^3
 	dv=2.*Lv/Nv;																					// set dv to 2Lv/Nv
-	dx=Lx/Nx; 																						// set dx to Lx/Nx
+	if(!MeshRefinement)
+	{
+		dx=Lx/Nx; 																						// set dx to Lx/Nx
+	}
+	else
+	{
+		dx=Lx/Nx_global;
+	}
 	scalev=dv*dv*dv;																				// set scalev to dv^3
 	L_v=Lv;																							// set L_v to Lv
 	R_v=Lv;																							// set R_v to Lv
@@ -844,7 +864,7 @@ int main(int argc, char** argv)
 					}
 					exit(1);
 				}
-		}
+			}
 		}
 
 		char buffer_weights[100], loading_buffer[100];												// declare the arrays buffer_weights (to store a string which displays the values of N & L_v) & loading_buffer (...?)

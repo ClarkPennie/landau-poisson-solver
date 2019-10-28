@@ -61,6 +61,8 @@ extern double T_L, T_R;																				// declare T_L & T_R (the temperature
 extern double eps;																					// declare eps (the dielectric constant in Poisson's equation: div(eps*grad(Phi)) = R(x,t))
 extern double Phi_Lx;																				// declare Phi_Lx (the B.C. value of Phi(Lx))
 extern int Nx_loc;																					// declare Nx_loc (the factor to refine each space cell by in the channel)
+extern int Nx_global;																				// declare Nx_global (to keep track of the global number of space cell, if Doping is True and the mesh has been refined)
+extern double dx_loc, dx_global;																	// declare dx_loc (space cell size in the refined cells) and dx_global (the usual space cell size without refinement)
 
 //extern vector<double> nu;																			// declare the vector nu (to hold the value of 1/Knudsen on each cell)
 extern double nu_max;																				// declare nu_max (maximum of 1/knudson#)

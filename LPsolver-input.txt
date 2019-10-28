@@ -111,7 +111,7 @@ Pois_Dirichlet = True           # Use Dirichlet BCs
 Pois_Neutrality = False         # Use charge neutrality BCs
 
 # Mesh refinement parameters
-MeshRefinement         = False  # Refine the mesh in the channel
+MeshRefinement         = True   # Refine the mesh in the channel
 Nx_loc                 = 4      # Number of refined space cells per global cell
 
 #--------------------------------------------
