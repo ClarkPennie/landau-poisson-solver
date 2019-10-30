@@ -165,7 +165,7 @@ void SetInit_ND(double *U)																						// function to calculate the DG 
     					{
     						for(int i_loc=0; i_loc<Nx_loc; i_loc++)
     						{
-    							i = 4*i_global - 3*a_i + i_loc;
+    							i = Nx_loc*i_global - (Nx_loc - 1)*a_i + i_loc;
 
     							k=i*size_v + (j1*Nv*Nv + j2*Nv + j3);																											// calculate the index of cell (i,j1,j2,j3) in U
     							tp0 = ND*tmp0;																																	// calculate b_6k = (int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_6k(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
@@ -181,7 +181,7 @@ void SetInit_ND(double *U)																						// function to calculate the DG 
     					}
     					else
     					{
-    						i = i_global + 3*(b_i - a_i) + 6;
+    						i = i_global + (Nx_loc - 1)*(b_i - a_i + 2);
 
     						k=i*size_v + (j1*Nv*Nv + j2*Nv + j3);																											// calculate the index of cell (i,j1,j2,j3) in U
     						tp0 = ND*tmp0;																																	// calculate b_6k = (int_Ii ND(x) dx)*(int_Kj Mw(v)*phi_6k(v) dv) (NOTE: int_(Omega_i) ND(x) dx = ND(x_i)*dx (as ND is assumed constant on each cell) and then need to divide by dx for calculating the coefficient, so dx is ommited)
