@@ -13,7 +13,7 @@
 
 flag     = Refinement_Test
 
-nT       = 0 	                # Number of time-steps
+nT       = 5 	                # Number of time-steps
 Nx       = 12  	                # Number of space cells
 Nv       = 8	                # Number of velocity cells in each direction
 N        = 8 	                # Number of Fourier modes

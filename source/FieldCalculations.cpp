@@ -651,10 +651,10 @@ double computeE_Doping(double *U, double x, int ix)	/* DIFFERENT FOR withND */		
 
 	C_E = computePhi_x_0(U);
 
-	if(myrank_mpi == 0 && ix == 0 && x == 0)
-	{
-		std::cout << std::endl << "C_E = " << C_E << std::endl << std::endl;
-	}
+//	if(myrank_mpi == 0 && ix == 0 && x == 0)
+//	{
+//		std::cout << std::endl << "C_E = " << C_E << std::endl << std::endl;
+//	}
 
 
 	x_diff = x - Gridx(ix-0.5);
@@ -775,15 +775,15 @@ double Int_E_Doping(double *U, int i) 		/* DIFFERENT FOR withND */ 						      /
 		for(m=0;m<i;m++){
 			dx_val = dx_value(m);
 			k=m*size_v + j;
-			tmp += (U[k*6+0] + U[k*6+5]/4.)*dx_val*dx_val;
+			tmp += (U[k*6+0] + U[k*6+5]/4.)*dx_val;
 		}
 		dx_val = dx_value(i);
 		k=i*size_v + j;
-		tmp += 0.5*dx_val*dx_val*(U[k*6+0] + U[k*6+5]/4.) - dx_val*dx_val*U[k*6+1]/12.;
+		tmp += 0.5*dx_val*(U[k*6+0] + U[k*6+5]/4.) - dx_val*U[k*6+1]/12.;
 	}
 
 	//ce = computePhi_x_0(U);
-	result = - tmp*scalev + ND*Gridx((double)i)*dx_val;// -ce*dx;
+	result = - tmp*dx_val*scalev + ND*Gridx((double)i)*dx_val;// -ce*dx;
 
 	if(MeshRefinement)
 	{
@@ -798,12 +798,12 @@ double Int_E_Doping(double *U, int i) 		/* DIFFERENT FOR withND */ 						      /
 	if(i > channel_left)
 	{
 		double a_val = (a_i+1)*dx;																		// declare a_val and set it to the value of x at the edge of the ai-th space cell
-		result += (NH-NL)*a_val*dx;																		// add (NH-NL)a*dx to result
+		result += (NH-NL)*a_val*dx_val;																		// add (NH-NL)a*dx to result
 	}
 	if(i > channel_right)																							// if x > b then there is an extra term to add
 	{
 		double b_val = (b_i+1)*dx;																		// declare b_val and set it to the value of x at the edge of the bi-th space cell
-		result += (NL-NH)*b_val*dx;																		// add (NL-NH)b*dx to result
+		result += (NL-NH)*b_val*dx_val;																		// add (NL-NH)b*dx to result
 	}
 
 	if(Electrons)

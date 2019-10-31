@@ -445,8 +445,8 @@ void computeH(double *H, double *U)// H_k(i,j)(f, E, phi_l)
 
 void RK3(double *U) // RK3 for f_t = H(f)
 {
-  int i, k, l, k_local;
-  double tp0, tp1, tp2, tp3, tp4, tp5, H[6];//, tp0, tp5, tmp1, tmp2, tmp3, tmp5;
+  int i, k, l, k_local, k_v;
+  double tp0, tp1, tp2, tp3, tp4, tp5, dx_val, H[6];//, tp0, tp5, tmp1, tmp2, tmp3, tmp5;
  
   MPI_Status status;
   
@@ -462,6 +462,10 @@ void RK3(double *U) // RK3 for f_t = H(f)
 	  #pragma omp parallel for private(i) shared(intE2)
 	  for(i=0;i<Nx;i++){
 		intE2[i] = Int_E2nd(U,i); // BUG: Int_E2nd() require knowldege of cp
+//		if(myrank_mpi == 0)
+//		{
+//			std::cout << "intE[" << i << "] = " << intE[i] << "; intE1[" << i << "] = " << intE1[i] << "; intE2[" << i << "] = " << intE2[i] << std::endl;
+//		}
 	  }
   }
   
@@ -471,9 +475,12 @@ void RK3(double *U) // RK3 for f_t = H(f)
 	  printf("intE[%d] = %g, intE1[%d] = %g, intE2[%d] = %g. \n", i, intE[i], i, intE1[i], i, intE2[i]);
   }
    */
-  #pragma omp parallel for schedule(dynamic)  private(H,k, k_local, l, tp0, tp1, tp2, tp3, tp4, tp5) shared(U, Utmp)
+  #pragma omp parallel for schedule(dynamic)  private(H, k, k_local, k_v, i, l, dx_val, tp0, tp1, tp2, tp3, tp4, tp5) shared(U, Utmp)
   for(k=chunksize_dg*myrank_mpi;k<chunksize_dg*(myrank_mpi+1);k++){ 
     k_local = k%chunksize_dg;
+    k_v = k%size_v;
+    i = (k - k_v)/size_v;
+    dx_val = dx_value(i);
     
 	if(NoField)
 	{
@@ -496,10 +503,10 @@ void RK3(double *U) // RK3 for f_t = H(f)
 
     //H[k_local][0] = (19*tp[0]/4. - 15*tp[5])/dx/scalev;
     //H[k_local][5] = (60*tp[5] - 15*tp[0])/dx/scalev;	
-    H[0] = (19*tp0/4. - 15*tp5)/dx/scalev;
-    H[5] = (60*tp5 - 15*tp0)/dx/scalev;	
+    H[0] = (19*tp0/4. - 15*tp5)/dx_val/scalev;
+    H[5] = (60*tp5 - 15*tp0)/dx_val/scalev;
     //for(l=1;l<5;l++)H[l] = tp[l]*12./dx/scalev;;//H[k_local][l] = tp[l]*12./dx/scalev;
-    H[1] = tp1*12./dx/scalev; H[2] = tp2*12./dx/scalev; H[3] = tp3*12./dx/scalev; H[4] = tp4*12./dx/scalev;
+    H[1] = tp1*12./dx_val/scalev; H[2] = tp2*12./dx_val/scalev; H[3] = tp3*12./dx_val/scalev; H[4] = tp4*12./dx_val/scalev;
     
     for(l=0;l<6;l++) Utmp[k_local*6+l] = U[k*6+l] + dt*H[l];	
   }    
@@ -538,9 +545,12 @@ void RK3(double *U) // RK3 for f_t = H(f)
 	  }
   }
   
-  #pragma omp parallel for schedule(dynamic) private(H, k, k_local, l, tp0, tp1, tp2, tp3, tp4, tp5)  shared(U,Utmp)
+  #pragma omp parallel for schedule(dynamic) private(H, k, k_local, k_v, i, l, dx_val, tp0, tp1, tp2, tp3, tp4, tp5)  shared(U,Utmp)
   for(k=chunksize_dg*myrank_mpi;k<chunksize_dg*(myrank_mpi+1);k++){      
     k_local = k%chunksize_dg;
+    k_v = k%size_v;
+    i = (k - k_v)/size_v;
+    dx_val = dx_value(i);
     
 	if(NoField)
 	{
@@ -563,10 +573,10 @@ void RK3(double *U) // RK3 for f_t = H(f)
     
     //H[k_local][0] = (19*tp[0]/4. - 15*tp[5])/dx/scalev;
     //H[k_local][5] = (60*tp[5] - 15*tp[0])/dx/scalev;	
-    H[0] = (19*tp0/4. - 15*tp5)/dx/scalev;
-    H[5] = (60*tp5 - 15*tp0)/dx/scalev;	
+    H[0] = (19*tp0/4. - 15*tp5)/dx_val/scalev;
+    H[5] = (60*tp5 - 15*tp0)/dx_val/scalev;
     //for(l=1;l<5;l++)H[l] = tp[l]*12./dx/scalev;;//H[k_local][l] = tp[l]*12./dx/scalev;
-    H[1] = tp1*12./dx/scalev; H[2] = tp2*12./dx/scalev; H[3] = tp3*12./dx/scalev; H[4] = tp4*12./dx/scalev;
+    H[1] = tp1*12./dx_val/scalev; H[2] = tp2*12./dx_val/scalev; H[3] = tp3*12./dx_val/scalev; H[4] = tp4*12./dx_val/scalev;
     
     for(l=0;l<6;l++) Utmp[k_local*6+l] = 0.75*U[k*6+l] + 0.25*U1[k*6+l] + 0.25*dt*H[l];
   }    
@@ -605,9 +615,12 @@ void RK3(double *U) // RK3 for f_t = H(f)
 	  }
   }
   
-  #pragma omp parallel for schedule(dynamic) private(H, k, k_local, l, tp0, tp1, tp2, tp3, tp4, tp5)  shared(U,Utmp)
+  #pragma omp parallel for schedule(dynamic) private(H, k, k_local, k_v, i, l, dx_val, tp0, tp1, tp2, tp3, tp4, tp5)  shared(U,Utmp)
   for(k=chunksize_dg*myrank_mpi;k<chunksize_dg*(myrank_mpi+1);k++){      
     k_local = k%chunksize_dg;
+    k_v = k%size_v;
+    i = (k - k_v)/size_v;
+    dx_val = dx_value(i);
   
 	if(NoField)
 	{
@@ -628,10 +641,10 @@ void RK3(double *U) // RK3 for f_t = H(f)
 		tp5=I1(U1,k,5)-I2(U1,k,5)-I3(U1,k,5)+I5(U1,k,5);
 	}
  
-    H[0] = (19*tp0/4. - 15*tp5)/dx/scalev;
-    H[5] = (60*tp5 - 15*tp0)/dx/scalev;	
+    H[0] = (19*tp0/4. - 15*tp5)/dx_val/scalev;
+    H[5] = (60*tp5 - 15*tp0)/dx_val/scalev;
     //for(l=1;l<5;l++)H[l] = tp[l]*12./dx/scalev;;//H[k_local][l] = tp[l]*12./dx/scalev;
-    H[1] = tp1*12./dx/scalev; H[2] = tp2*12./dx/scalev; H[3] = tp3*12./dx/scalev; H[4] = tp4*12./dx/scalev;	
+    H[1] = tp1*12./dx_val/scalev; H[2] = tp2*12./dx_val/scalev; H[3] = tp3*12./dx_val/scalev; H[4] = tp4*12./dx_val/scalev;
 
     for(l=0;l<6;l++) Utmp[k_local*6+l] = U[k*6+l]/3. + U1[k*6+l]*2./3. + dt*H[l]*2./3.;
   }    
