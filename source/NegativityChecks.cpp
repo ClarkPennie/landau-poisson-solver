@@ -25,7 +25,7 @@ double computeCellAvg(double *U, int i, int j1, int j2, int j3)
 double computeCellAvg_Inhomo(double *U, int i, int j1, int j2, int j3)																		// function to calculate the average value of the approximate function f (with DG coefficients in U) on the cell I_i x K_(j1,j2,j3), namely (1/cell_volume)*int_(I_i x K_(j1,j2,j3)) f dxdv = (1/(dx*dv^3))*int_(I_i x K_(j1,j2,j3)) f dxdv
 {
 	int k, nx, nv1, nv2, nv3;																										// declare k (the location of the given cell in U), nx (a counter for the space cell) & nv1, nv2, nv3 (counters for the velocity cell)
-	double x_0, v1_0, v2_0, v3_0, x_val, v1_val, v2_val, v3_val, f_val, avg;														// declare x_0, v1_0, v2_0, v3_0 (to store the values in the middle of the current cell), x_val, v1_val, v2_val, v3_val (to store the x & v values to be evaluated at), f_val (to store the value of the function evaluated at the current x & v values) & avg (to store the average to be returned)
+	double x_0, v1_0, v2_0, v3_0, x_val, v1_val, v2_val, v3_val, f_val, dx_val, avg;												// declare x_0, v1_0, v2_0, v3_0 (to store the values in the middle of the current cell), x_val, v1_val, v2_val, v3_val (to store the x & v values to be evaluated at), f_val (to store the value of the function evaluated at the current x & v values) & avg (to store the average to be returned)
 	k = Nv*(Nv*(i*Nv + j1) + j2) + j3;																								// set k to i*Nv^3 + j1*Nv^2 + j2*Nv + j3
 	x_0 = Gridx((double)i);																											// set x_0 to the value of x at the center of the ith space cell
 	v1_0 = Gridv((double)j1);																										// set v1_0 to the value of v1 at the center of the j1th velocity cell in that direction
@@ -33,10 +33,19 @@ double computeCellAvg_Inhomo(double *U, int i, int j1, int j2, int j3)										
 	v3_0 = Gridv((double)j3);																										// set v3_0 to the value of v3 at the center of the j3th velocity cell in that direction
 	avg = 0;																														// set avg to 0 originally
 
+	if(MeshRefinement)
+	{
+		dx_val = dx_value(i);
+	}
+	else
+	{
+		dx_val = dx;
+	}
+
 	//#pragma omp parallel for private(nx,nv1,nv2,nv3,x_val,v1_val,v2_val,v3_val,f_val) shared(U,dv,dx,vt,wt,x_0,v1_0,v2_0,v3_0,k) reduction(+:avg)
 	for(nx=0;nx<5;nx++)																												// loop through the five quadrature points in the x direction of the cell
 	{
-		x_val = x_0 + 0.5*vt[nx]*dx;																								// set x_val to the nx-th quadrature point in the cell
+		x_val = x_0 + 0.5*vt[nx]*dx_val;																								// set x_val to the nx-th quadrature point in the cell
 		for(nv1=0;nv1<5;nv1++)																										// loop through the five quadrature points in the v1 direction of the cell
 		{
 			v1_val = v1_0 + 0.5*vt[nv1]*dv;																							// set x_val to the nv1-th quadrature point in the cell
@@ -46,7 +55,7 @@ double computeCellAvg_Inhomo(double *U, int i, int j1, int j2, int j3)										
 				for(nv3=0;nv3<5;nv3++)																								// loop through the five quadrature points in the v3 direction of the cell
 				{
 					v3_val = v3_0 + 0.5*vt[nv3]*dv;																					// set x_val to the nv3-th quadrature point in the cell
-					f_val = U[k*6+0] + U[k*6+1]*(x_val-x_0)/dx + U[k*6+2]*(v1_val-v1_0)/dv +
+					f_val = U[k*6+0] + U[k*6+1]*(x_val-x_0)/dx_val + U[k*6+2]*(v1_val-v1_0)/dv +
 							U[k*6+3]*(v2_val-v2_0)/dv + U[k*6+4]*(v3_val-v3_0)/dv +
 							U[k*6+5]*(((v1_val-v1_0)/dv)*((v1_val-v1_0)/dv)+((v2_val-v2_0)/dv)*((v2_val-v2_0)/dv)
 									+((v3_val-v3_0)/dv)*((v3_val-v3_0)/dv));														// set f_val to the evaluation of the approximation at (x_val,v1_val,v2_val,v3_val)

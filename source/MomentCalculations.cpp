@@ -436,7 +436,7 @@ double computeEleE(double *U)
 {
   int k, i, j;
   double retn, tmp1=0., tmp2=0., tmp3=0., tmp4=0., tmp5=0., tmp6=0., tmp7=0., tp1, tp2, c;
-  double ce1, cp1;
+  double ce1, cp1, dx_val;
   ce1 = computePhi_x_0(U);
 
   tmp1 = ce1*ce1*Lx;
@@ -444,20 +444,21 @@ double computeEleE(double *U)
 
   //#pragma omp parallel for private(j,k, i, tp1, tp2, cp1, c) shared(U) reduction(+:tmp4, tmp5, tmp6)
   for(i=0;i<Nx;i++){
+	dx_val = dx_value(i);
     c = Int_Int_rho(U,i);
     cp1 = computeC_rho(U,i);
-    tmp4 += dx*cp1 + c;
-    tmp5 += dx*Gridx((double)i)*cp1;
+    tmp4 += dx_val*cp1 + c;
+    tmp5 += dx_val*Gridx((double)i)*cp1;
     tp1=0.; tp2=0.;
     for(j=0;j<size_v;j++){
       k = i*size_v + j;
       tp1 += (U[k*6+0] + U[k*6+5]/4.);
       tp2 += U[k*6+1];
     }
-    tmp5 += scalev* (tp1*( (pow(Gridx(i+0.5), 3) - pow(Gridx(i-0.5), 3))/3. - Gridx(i-0.5)*Gridx((double)i)*dx ) - tp2 * dx*dx*Gridx((double)i)/12.);
+    tmp5 += scalev* (tp1*( (pow(Gridx(i+0.5), 3) - pow(Gridx(i-0.5), 3))/3. - Gridx(i-0.5)*Gridx((double)i)*dx_val ) - tp2 * dx_val*dx_val*Gridx((double)i)/12.);
 
-    tp2 *= dx/2.;
-    tmp6 +=  cp1*cp1*dx + 2*cp1*c + pow(dv, 6)* ( tp1*tp1*dx*dx*dx/3. + tp2*tp2*dx/30. - tp1*tp2*dx*dx/6.);//+ tp1*tp2*(dx*Gridx((double)i)/6. - dx*dx/4.) ); //Int_Cumulativerho_sqr(i);
+    tp2 *= dx_val/2.;
+    tmp6 +=  cp1*cp1*dx_val + 2*cp1*c + pow(dv, 6)* ( tp1*tp1*dx_val*dx_val*dx_val/3. + tp2*tp2*dx_val/30. - tp1*tp2*dx_val*dx_val/6.);//+ tp1*tp2*(dx_val*Gridx((double)i)/6. - dx_val*dx_val/4.) ); //Int_Cumulativerho_sqr(i);
   }
   retn = tmp1 + tmp2 + tmp3 + 2*ce1*tmp4 - 2*tmp5 + tmp6;
   return 0.5*retn;
