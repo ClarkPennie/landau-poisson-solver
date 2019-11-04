@@ -29,23 +29,23 @@ double f_TS(double v1, double v2, double v3);
 
 double f_2Gauss(double v1, double v2, double v3);
 
-double Mw(double v1, double v2, double v3, double T);
+double Mw(double v1, double v2, double v3, double rho, double T);
 
 double Mw_x(double x, double T);
 
 double f_2H(double x);
 
-void SetInit_LD(double *U, double T0);
+void SetInit_LD(double *U, double T0, double rho_0 = 1);
 
-void SetInit_4H(double *U, double T0, double C);
+void SetInit_4H(double *U, double T0, double C, double rho_0 = 1);
 
-void SetInit_4H_Homo(double *U, double T0, double C);
+void SetInit_4H_Homo(double *U, double T0, double C, double rho_0 = 1);
 
-void SetInit_2H(double *U, double T0, double C);
+void SetInit_2H(double *U, double T0, double C, double rho_0 = 1);
 
-void SetInit_2H_sin(double *U);
+void SetInit_2H_sin(double *U, double rho_0 = 1);
 
-void SetInit_ND(double *U);
+void SetInit_ND(double *U, double rho_0 = 1);
 
 void setInit_spectral(double *U, double **f);
 

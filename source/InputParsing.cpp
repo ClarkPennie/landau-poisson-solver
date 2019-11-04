@@ -535,7 +535,8 @@ void ReadMeshRefinement(GRVY_Input_Class& iparse)												// Function to read
 
 void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT, 
 							int& Nx, int& Nv, int& N, double& nu, double& dt, double& A_amp, 
-							double& k_wave, double& Lv, double& Lx, double& T_hump, double& shift, double& T_0)					// Function to read all input parameters (IC_flag, nT,  Nx, Nv, N, nu, dt, A_amp, k_wave, L_v & L_x)
+							double& k_wave, double& Lv, double& Lx, double& T_hump, double& shift,
+							double& T_0, double& rho_0)														// Function to read all input parameters
 {
 	// Print a header for the input parameters from the processor with rank 0:
 	if(myrank_mpi==0)
@@ -642,6 +643,7 @@ void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 		}
 		iparse.Read_Var("Damping/Lx",&Lx,2*PI/k_wave);
 		iparse.Read_Var("Damping/T_0",&T_0,1.2);
+		iparse.Read_Var("Damping/rho_0",&rho_0,1.);
 	}
 
 	// Try to read all input parameters associated to the TwoStream option 
@@ -670,6 +672,7 @@ void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 		iparse.Read_Var("FourHump/k_wave",&k_wave,0.5);
 		iparse.Read_Var("FourHump/T_hump",&T_hump,0.4);
 		iparse.Read_Var("FourHump/shift",&shift,1.);
+		iparse.Read_Var("FourHump/rho_0",&rho_0,1.);
 		if (! iparse.Read_Var("FourHump/Lv",&Lv) )
 		{
 			PrintError("FourHump/Lv");
@@ -686,6 +689,7 @@ void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 		iparse.Read_Var("TwoHump/k_wave",&k_wave,0.5);
 		iparse.Read_Var("TwoHump/T_hump",&T_hump,0.4);
 		iparse.Read_Var("TwoHump/shift",&shift,1.);
+		iparse.Read_Var("TwoHump/rho_0",&rho_0,1.);
 		if (! iparse.Read_Var("TwoHump/Lv",&Lv) )
 		{
 			PrintError("TwoHump/Lv");
@@ -700,6 +704,7 @@ void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 	{
 		iparse.Read_Var("TwoHump_sin/A_amp",&A_amp,0.);
 		iparse.Read_Var("TwoHump_sin/k_wave",&k_wave,0.5);
+		iparse.Read_Var("TwoHump_sin/rho_0",&rho_0,1.);
 		if (! iparse.Read_Var("TwoHump_sin/Lv",&Lv) )
 		{
 			PrintError("TwoHump_sin/Lv");
@@ -712,6 +717,8 @@ void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 	{
 		iparse.Read_Var("Doping/A_amp",&A_amp,0.);
 		iparse.Read_Var("Doping/k_wave",&k_wave,0.5);
+		iparse.Read_Var("Damping/T_0",&T_0,1.2);
+		iparse.Read_Var("Doping/rho_0",&rho_0,1.);
 		if (! iparse.Read_Var("Doping/Lv",&Lv) )
 		{
 			PrintError("Doping/Lv");
@@ -731,16 +738,28 @@ void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 		if(FourHump)
 		{
 			printf("--> %-11s = %g\n","T_hump",T_hump);
-			printf("--> %-11s = %g\n\n","4Hump shift",shift);
+			printf("--> %-11s = %g\n","4Hump shift",shift);
+			printf("--> %-11s = %g\n\n","rho_0",rho_0);
 		}
 		if(TwoHump)
 		{
 			printf("--> %-11s = %g\n","T_hump",T_hump);
-			printf("--> %-11s = %g\n\n","2Hump shift",shift);
+			printf("--> %-11s = %g\n","2Hump shift",shift);
+			printf("--> %-11s = %g\n\n","rho_0",rho_0);
+		}
+		if(TwoHump_sin)
+		{
+			printf("--> %-11s = %g\n\n","rho_0",rho_0);
 		}
 		if(Damping)
 		{
-			printf("--> %-11s = %g\n\n","T_0",T_0);
+			printf("--> %-11s = %g\n","T_0",T_0);
+			printf("--> %-11s = %g\n\n","rho_0",rho_0);
+		}
+		if(Doping)
+		{
+			printf("--> %-11s = %g\n","T_0",T_0);
+			printf("--> %-11s = %g\n\n","rho_0",rho_0);
 		}
 		printf("--> %-11s = %g\n","Lv",Lv);
 		printf("--> %-11s = %g\n\n","Lx",Lx);

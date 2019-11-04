@@ -39,11 +39,11 @@ double f_2Gauss(double v1, double v2, double v3)
   return retn;
 }
 
-double Mw(double v1, double v2, double v3, double T)															// function to return a Maxwellian in v-space
+double Mw(double v1, double v2, double v3, double rho, double T)												// function to return a Maxwellian in v-space
 {
 	double r2, retn;																							// declare r2 (the squared magnitude of v for the given v = (v1,v2,v3)), T (the temperature) and retn (the value of the Maxwellian evaluated at (v1,v2,v3) to be returned)
 	r2=v1*v1+v2*v2+v3*v3;																						// calculate r2 for the given (v1,v2,v3)
-	retn = exp(-r2/(2*T))/(2*PI*T*sqrt(2*T*PI));																// calculate the value of the Maxwellian at the given point (v1,v2,v3)
+	retn = rho*exp(-r2/(2*T))/(2*PI*T*sqrt(2*T*PI));															// calculate the value of the Maxwellian at the given point (v1,v2,v3)
 	return retn;																								// return the result
 }
 
@@ -65,7 +65,7 @@ double f_2H(double x)																							// function to calculate the value o
 	return retn;																								// return the result
 }
 
-void SetInit_LD(double *U, double T0)																						// function to calculate the DG coefficients for the initial condition for Landau Damping
+void SetInit_LD(double *U, double T0, double rho_0)																						// function to calculate the DG coefficients for the initial condition for Landau Damping
 {
     int i, j1, j2, j3, k, m1,m2,m3,nt=5;																		// declare i (to represent cell i in x-space), j1, j2, j3 (to represent cell (j1,j2,j3) in v-space), k (the index of cell (i,j1,j2,j3) in U), m1, m2, m3 (counters for the Gaussian quadrature in 3D) & nt (the number of points in the quadrature)
     double a=A_amp, c=k_wave;																					// declare a (the amplitude of cosine wave) and set it to A_amp & c (the frequency of the cosine wave) and set it to k_wave
@@ -87,7 +87,7 @@ void SetInit_LD(double *U, double T0)																						// function to calcul
     					{
 							if(Damping or Doping)   // NOTE: WAS #ifdef Doping (Doping or Damping)
 							{
-								tp = wt[m1]*wt[m2]*wt[m3]*Mw(Gridv((double)j1)+0.5*dv*vt[m1], Gridv((double)j2)+0.5*dv*vt[m2], Gridv((double)j3)+0.5*dv*vt[m3], T0);		// calculate w_m1*w_m2*w_m3*Mw(v_m1,v_m2,v_m3), which appears in all quadrature integral approximations
+								tp = wt[m1]*wt[m2]*wt[m3]*Mw(Gridv((double)j1)+0.5*dv*vt[m1], Gridv((double)j2)+0.5*dv*vt[m2], Gridv((double)j3)+0.5*dv*vt[m3], rho_0, T0);		// calculate w_m1*w_m2*w_m3*Mw(v_m1,v_m2,v_m3), which appears in all quadrature integral approximations
 							}
 
 							if(TwoStream)
@@ -122,7 +122,7 @@ void SetInit_LD(double *U, double T0)																						// function to calcul
 	}
 }
 
-void SetInit_ND(double *U)																						// function to calculate the DG coefficients for the initial condition for Landau Damping
+void SetInit_ND(double *U, double rho_0)																		// function to calculate the DG coefficients for the initial condition for Landau Damping
 {
 //	if(myrank_mpi == 0){printf("Inside SetInit_ND\n");}
     int i, i_global, j1, j2, j3, k, m1,m2,m3,nt=5;																// declare i (to represent cell i in x-space), j1, j2, j3 (to represent cell (j1,j2,j3) in v-space), k (the index of cell (i,j1,j2,j3) in U), m1, m2, m3 (counters for the Gaussian quadrature in 3D) & nt (the number of points in the quadrature)
@@ -144,7 +144,7 @@ void SetInit_ND(double *U)																						// function to calculate the DG 
     				{
     					for(m3=0;m3<nt;m3++)
     					{
-							tp = wt[m1]*wt[m2]*wt[m3]*Mw(Gridv((double)j1)+0.5*dv*vt[m1], Gridv((double)j2)+0.5*dv*vt[m2], Gridv((double)j3)+0.5*dv*vt[m3], T0);	// calculate w_m1*w_m2*w_m3*Mw(v_m1,v_m2,v_m3), which appears in all quadrature integral approximations
+							tp = wt[m1]*wt[m2]*wt[m3]*Mw(Gridv((double)j1)+0.5*dv*vt[m1], Gridv((double)j2)+0.5*dv*vt[m2], Gridv((double)j3)+0.5*dv*vt[m3], rho_0, T0);	// calculate w_m1*w_m2*w_m3*Mw(v_m1,v_m2,v_m3), which appears in all quadrature integral approximations
 
 							tmp0 += tp;																																// add tp to tmp0 (for the integral int_Kj Mw(v)*phi_6k dv)
 							tmp1 += tp*0.5*vt[m1];																													// add tp*v_m1/2 to tmp1 (for the integral int_Kj Mw(v)*phi_(6k+2) dv)
@@ -214,7 +214,7 @@ void SetInit_ND(double *U)																						// function to calculate the DG 
 	}
 }
 
-void SetInit_4H(double *U, double T0, double C)																							// function to calculate the DG coefficients for the initial condition with four humps, found by adding four Maxwellians
+void SetInit_4H(double *U, double T0, double C, double rho_0)																							// function to calculate the DG coefficients for the initial condition with four humps, found by adding four Maxwellians
 {
     int i, j1, j2, j3, k, m,m1,m2,m3,nt=5, p;																		// declare i (to represent cell i in x-space), j1, j2, j3 (to represent cell (j1,j2,j3) in v-space), k (the index of cell (i,j1,j2,j3) in U), m (counter for the Gaussian quadrature in x-space), m1, m2, m3 (counters for the Gaussian quadrature in v-space), nt (the number of points in the quadrature) & p (to loop through the four Maxwellians)
     double tp, tpx, tp0, tp5, tmpx0, tmpx1, tmp0, tmp1, tmp2, tmp3, tmp4;											// declare tp, tpx, tp0, tmpx0, tmpx1, tmp0, tmp1, tmp2, tmp3, tmp4 (temporary values while calculating the quadrature for the integral w.r.t. v)
@@ -234,7 +234,7 @@ void SetInit_4H(double *U, double T0, double C)																							// functio
     					{
     						for(m3=0;m3<nt;m3++)
     						{
-    							tp = wt[m1]*wt[m2]*wt[m3]*Mw(Gridv((double)j1)+0.5*dv*vt[m1] + C*pow(-1,p), Gridv((double)j2)+0.5*dv*vt[m2] + C*pow(-1,p), Gridv((double)j3)+0.5*dv*vt[m3] + C*pow(-1,p), T0);		// calculate w_m1*w_m2*w_m3*Mw(v_m1+(-1)^p,v_m2+(-1)^p,v_m3+(-1)^p), a Maxwellian shifted to center at v_j = (-1)^p, which appears in all quadrature integral approximations
+    							tp = wt[m1]*wt[m2]*wt[m3]*Mw(Gridv((double)j1)+0.5*dv*vt[m1] + C*pow(-1,p), Gridv((double)j2)+0.5*dv*vt[m2] + C*pow(-1,p), Gridv((double)j3)+0.5*dv*vt[m3] + C*pow(-1,p), rho_0, T0);		// calculate w_m1*w_m2*w_m3*Mw(v_m1+(-1)^p,v_m2+(-1)^p,v_m3+(-1)^p), a Maxwellian shifted to center at v_j = (-1)^p, which appears in all quadrature integral approximations
 
     							tmp0 += tp;																			// add tp to tmp0 (for the integral int_Kj Mw(v) dv)
     							tmp1 += tp*0.5*vt[m1];																// add tp*v_m1/2 to tmp1 (for the integral int_Kj Mw(v)*phi_(6k+2)(v) dv)
@@ -291,7 +291,7 @@ void SetInit_4H(double *U, double T0, double C)																							// functio
     }
 }
 
-void SetInit_4H_Homo(double *U, double T0, double C)																				// function to calculate the DG coefficients for the initial condition with four humps, found by adding four Maxwellians
+void SetInit_4H_Homo(double *U, double T0, double C, double rho_0)																				// function to calculate the DG coefficients for the initial condition with four humps, found by adding four Maxwellians
 {
     int j1, j2, j3, k, m1,m2,m3,nt=5, p;																// declare j1, j2, j3 (to represent cell (j1,j2,j3) in v-space), k (the index of cell (j1,j2,j3) in U), m1, m2, m3 (counters for the Gaussian quadrature in v-space), nt (the number of points in the quadrature) & p (to loop through the four Maxwellians)
     double tp, tp0, tp5, tmp0, tmp1, tmp2, tmp3, tmp4;													// declare tp, tp0, tmp0, tmp1, tmp2, tmp3, tmp4 (temporary values while calculating the quadrature for the integral w.r.t. v)
@@ -311,7 +311,7 @@ void SetInit_4H_Homo(double *U, double T0, double C)																				// funct
     					{
     						for(m3=0;m3<nt;m3++)
     						{
-    							tp = wt[m1]*wt[m2]*wt[m3]*Mw(Gridv((double)j1)+0.5*dv*vt[m1] + C*pow(-1,((int)(p/2))), Gridv((double)j2)+0.5*dv*vt[m2] + C*pow(-1,p), Gridv((double)j3)+0.5*dv*vt[m3] + C*pow(-1,p), T0);		// calculate w_m1*w_m2*w_m3*Mw(v_m1+(-1)^floor(p/2),v_m2+(-1)^p,v_m3+(-1)^p), a Maxwellian shifted to center at v_j = (-1)^p, which appears in all quadrature integral approximations
+    							tp = wt[m1]*wt[m2]*wt[m3]*Mw(Gridv((double)j1)+0.5*dv*vt[m1] + C*pow(-1,((int)(p/2))), Gridv((double)j2)+0.5*dv*vt[m2] + C*pow(-1,p), Gridv((double)j3)+0.5*dv*vt[m3] + C*pow(-1,p), rho_0, T0);		// calculate w_m1*w_m2*w_m3*Mw(v_m1+(-1)^floor(p/2),v_m2+(-1)^p,v_m3+(-1)^p), a Maxwellian shifted to center at v_j = (-1)^p, which appears in all quadrature integral approximations
 
     							tmp0 += tp;																// add tp to tmp0 (for the integral int_Kj Mw(v) dv)
     							tmp1 += tp*0.5*vt[m1];													// add tp*v_m1/2 to tmp1 (for the integral int_Kj Mw(v)*phi_(6k+2)(v) dv)
@@ -351,7 +351,7 @@ void SetInit_4H_Homo(double *U, double T0, double C)																				// funct
    }
 }
 
-void SetInit_2H(double *U, double T0, double C)																							// function to calculate the DG coefficients for the initial condition with four humps, found by adding four Maxwellians
+void SetInit_2H(double *U, double T0, double C, double rho_0)																							// function to calculate the DG coefficients for the initial condition with four humps, found by adding four Maxwellians
 {
     int i, j1, j2, j3, k, m,m1,m2,m3,nt=5, p;																		// declare i (to represent cell i in x-space), j1, j2, j3 (to represent cell (j1,j2,j3) in v-space), k (the index of cell (i,j1,j2,j3) in U), m (counter for the Gaussian quadrature in x-space), m1, m2, m3 (counters for the Gaussian quadrature in v-space), nt (the number of points in the quadrature) & p (to loop through the four Maxwellians)
     double tp, tpx, tp0, tp5, tmpx0, tmpx1, tmp0, tmp1, tmp2, tmp3, tmp4;											// declare tp, tpx, tp0, tmpx0, tmpx1, tmp0, tmp1, tmp2, tmp3, tmp4 (temporary values while calculating the quadrature for the integral w.r.t. v)
@@ -371,7 +371,7 @@ void SetInit_2H(double *U, double T0, double C)																							// functio
     					{
     						for(m3=0;m3<nt;m3++)
     						{
-    							tp = wt[m1]*wt[m2]*wt[m3]*Mw(Gridv((double)j1)+0.5*dv*vt[m1], Gridv((double)j2)+0.5*dv*vt[m2], Gridv((double)j3)+0.5*dv*vt[m3], T0);		// calculate w_m1*w_m2*w_m3*Mw(v_m1+(-1)^p,v_m2+(-1)^p,v_m3+(-1)^p), a Maxwellian shifted to center at v_j = (-1)^p, which appears in all quadrature integral approximations
+    							tp = wt[m1]*wt[m2]*wt[m3]*Mw(Gridv((double)j1)+0.5*dv*vt[m1], Gridv((double)j2)+0.5*dv*vt[m2], Gridv((double)j3)+0.5*dv*vt[m3], rho_0, T0);		// calculate w_m1*w_m2*w_m3*Mw(v_m1+(-1)^p,v_m2+(-1)^p,v_m3+(-1)^p), a Maxwellian shifted to center at v_j = (-1)^p, which appears in all quadrature integral approximations
 
     							tmp0 += tp;																			// add tp to tmp0 (for the integral int_Kj Mw(v) dv)
     							tmp1 += tp*0.5*vt[m1];																// add tp*v_m1/2 to tmp1 (for the integral int_Kj Mw(v)*phi_(6k+2)(v) dv)
@@ -428,7 +428,7 @@ void SetInit_2H(double *U, double T0, double C)																							// functio
     }
 }
 
-void SetInit_2H_sin(double *U)																							// function to calculate the DG coefficients for the initial condition with two humps
+void SetInit_2H_sin(double *U, double rho_0)																							// function to calculate the DG coefficients for the initial condition with two humps
 {
     int i, j1, j2, j3, k, m,m1,m2,m3,nt=5;																			// declare i (to represent cell i in x-space), j1, j2, j3 (to represent cell (j1,j2,j3) in v-space), k (the index of cell (i,j1,j2,j3) in U), m (counter for the Gaussian quadrature in x-space), m1, m2, m3 (counters for the Gaussian quadrature in v-space) & nt (the number of points in the quadrature)
     double tp, tpx, tp0, tp5, tmpx0, tmpx1, tmp0, tmp1, tmp2, tmp3, tmp4;											// declare tp, tpx, tp0, tmpx0, tmpx1, tmp0, tmp1, tmp2, tmp3, tmp4 (temporary values while calculating the quadrature for the integral w.r.t. v)
@@ -447,7 +447,7 @@ void SetInit_2H_sin(double *U)																							// function to calculate th
     				{
     					for(m3=0;m3<nt;m3++)
     					{
-							tp = wt[m1]*wt[m2]*wt[m3]*Mw(Gridv((double)j1)+0.5*dv*vt[m1], Gridv((double)j2)+0.5*dv*vt[m2], Gridv((double)j3)+0.5*dv*vt[m3], T0);		// calculate w_m1*w_m2*w_m3*Mw(v_m1,v_m2,v_m3), which appears in all quadrature integral approximations
+							tp = wt[m1]*wt[m2]*wt[m3]*Mw(Gridv((double)j1)+0.5*dv*vt[m1], Gridv((double)j2)+0.5*dv*vt[m2], Gridv((double)j3)+0.5*dv*vt[m3], rho_0, T0);		// calculate w_m1*w_m2*w_m3*Mw(v_m1,v_m2,v_m3), which appears in all quadrature integral approximations
 
 							tmp0 += tp;																				// add tp to tmp0 (for the integral int_Kj Mw(v) dv)
 							tmp1 += tp*0.5*vt[m1];																	// add tp*v_m1/2 to tmp1 (for the integral int_Kj Mw(v)*phi_(6k+2)(v) dv)

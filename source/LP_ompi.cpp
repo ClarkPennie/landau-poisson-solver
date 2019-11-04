@@ -100,7 +100,7 @@ int main(int argc, char** argv)
 	std::string input_filename;																		// declare a string input_file_name (the name of the input file to be read from)
 	int gamma;																						// declare gamma (the power of |u| in the collision kernel))
 	int frac_denom, a_numer, b_numer;																// declare frac_denom, a_numer, b_numer (where, if there is a non uniform doping profile, the channel will be for a_numer*Lx/frac_denom < x < b_number*Lx/frac_denom)
-
+	double rho_0;																					// declare rho_0 (the mass of any Maxwellians used in the initial condition)
 	fftw_complex *qHat, *qHat_linear;																// declare pointers to the complex numbers qHat (the DFT of Q) & qHat_linear (the DFT of the two species colission operator Q);
 	fftw_complex **DFTMaxwell;																		// declare pointer to the FFT variable DFTMaxwell (to store the FFT of the initial Maxwellian)
   
@@ -191,7 +191,7 @@ int main(int argc, char** argv)
 	CheckElectronsOrIons();																			// Check no more than one of Electrons or Ions were chosen
 
 	ReadInputParameters(iparse, flag, nT, Nx, Nv, N, nu, dt, A_amp, k_wave, Lv, Lx, 
-							T_hump, shift, T_0);	// Read in all input parameters
+							T_hump, shift, T_0, rho_0);	// Read in all input parameters
 
 	if(Doping)
 	{
@@ -1017,7 +1017,7 @@ int main(int argc, char** argv)
 		{
 			if(FourHump)
 			{
-				SetInit_4H_Homo(U, T_hump, shift);																			// set initial DG solution with the 4Hump IC. For the first time run t=0, use this to give init solution (otherwise, comment out)
+				SetInit_4H_Homo(U, T_hump, shift, rho_0);																			// set initial DG solution with the 4Hump IC. For the first time run t=0, use this to give init solution (otherwise, comment out)
 			}
 			else
 			{
@@ -1034,27 +1034,27 @@ int main(int argc, char** argv)
 		{
 			if(Damping)																					// only do this if Damping is true
 			{
-				SetInit_LD(U, T_0);																			// set initial DG solution for Landau Damping. For the first time run t=0, use this to give init solution (otherwise, comment out)
+				SetInit_LD(U, T_0, rho_0);																// set initial DG solution for Landau Damping. For the first time run t=0, use this to give init solution (otherwise, comment out)
 			}
 			if(TwoStream)																				// only do this if TwoStream is true
 			{
-				SetInit_LD(U, T_0);																			// set initial DG solution for Landau Damping. For the first time run t=0, use this to give init solution (otherwise, comment out)
+				SetInit_LD(U, T_0);																		// set initial DG solution for Landau Damping. For the first time run t=0, use this to give init solution (otherwise, comment out)
 			}
 			if(FourHump)																				// only do this if FourHump is true
 			{
-				SetInit_4H(U, T_hump, shift);															// set initial DG solution with the 4Hump IC. For the first time run t=0, use this to give init solution (otherwise, comment out)
+				SetInit_4H(U, T_hump, shift, rho_0);													// set initial DG solution with the 4Hump IC. For the first time run t=0, use this to give init solution (otherwise, comment out)
 			}
 			if(TwoHump)																					// only do this if TwoHump is true
 			{
-				SetInit_2H(U, T_hump, shift);															// set initial DG solution with the 2Hump IC. For the first time run t=0, use this to give init solution (otherwise, comment out)
+				SetInit_2H(U, T_hump, shift, rho_0);													// set initial DG solution with the 2Hump IC. For the first time run t=0, use this to give init solution (otherwise, comment out)
 			}
-			if(TwoHump_sin)																					// only do this if TwoHump is true
+			if(TwoHump_sin)																				// only do this if TwoHump is true
 			{
-				SetInit_2H_sin(U);																		// set initial DG solution with the 2Hump IC, using sin perturbation. For the first time run t=0, use this to give init solution (otherwise, comment out)
+				SetInit_2H_sin(U, rho_0);																// set initial DG solution with the 2Hump IC, using sin perturbation. For the first time run t=0, use this to give init solution (otherwise, comment out)
 			}
 			if(Doping)																					// only do this if Damping was defined
 			{
-				SetInit_ND(U);																			// set initial DG solution appropriate for the non-constant doping profile. For the first time run t=0, use this to give init solution (otherwise, comment out)
+				SetInit_ND(U, rho_0);																	// set initial DG solution appropriate for the non-constant doping profile. For the first time run t=0, use this to give init solution (otherwise, comment out)
 			}
 			if(LinearLandau)																			// only do this is LinearLandau is true, for using Q(f,M)
 			{
