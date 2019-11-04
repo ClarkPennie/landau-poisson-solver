@@ -245,9 +245,11 @@ int main(int argc, char** argv)
 			Nx = Nx_global + no_of_refined_cells*(Nx_loc - 1);
 			dx_global = Lx/Nx_global;
 			dx_loc = dx_global/Nx_loc;
-
-			printf("--> %-22s = %g\n","dx_global",dx_global);
-			printf("--> %-22s = %g\n\n","dx_loc",dx_loc);
+   	 		if(myrank_mpi==0)
+			{
+				printf("--> %-22s = %g\n","dx_global",dx_global);
+				printf("--> %-22s = %g\n\n","dx_loc",dx_loc);
+			}
 		}
 	}
 
