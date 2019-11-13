@@ -53,12 +53,15 @@ extern double dv, dx; 																				// declare dv (the velocity stepsize) 
 extern double L_v, R_v, L_eta;																		// declare L_v (for -Lv < v < Lv in the collision problem) and set it to Lv, R_v (for v in B_(R_v) in the collision problem) and set it to Lv & L_eta (for Fourier space, -L_eta < eta < L_eta)
 extern double h_eta, h_v;																			// declare h_eta (the Fourier stepsize) & h_v (also the velocity stepsize but for the collision problem)
 extern double nu, dt, nthread; 																		// declare nu (1/knudson#) and set it to 0.1, dt (the timestep) and set it to 0.004 & nthread (the number of OpenMP threads)
-extern double eps;																					// declare eps (the dielectric constant in Poisson's equation: div(eps*grad(Phi)) = R(x,t))
+extern double eps_fixed;																			// declare eps_fixed (the dielectric constant in Poisson's equation: div(eps*grad(Phi)) = R(x,t))
 
 extern double NL, NH;																				// declare NL & NH (the density of ions in the middle of the well, the Lower value, and the edges, the higher value, respectively)
 extern int a_i, b_i;																				// declare a_i & b_i (the indices such that ND(x) = NL, for x_{a_i+1/2}< x <= x_{b_i-1/2}, and ND(x) = NH otherwise)
 extern double T_L, T_R;																				// declare T_L & T_R (the temperatures at the left & right edges of space if periodic BCs are used, respectively)
-extern double eps;																					// declare eps (the dielectric constant in Poisson's equation: div(eps*grad(Phi)) = R(x,t))
+extern double eps_fixed;																			// declare eps_fixed (the dielectric constant in Poisson's equation: div(eps*grad(Phi)) = R(x,t))
+extern double eps_left;																				// declare eps_left (the value of the dielectric constant eps on the left of the channel if VariableEpsilon is true)
+extern double eps_center;																			// declare eps_center (the value of the dielectric constant eps in the center of the channel if VariableEpsilon is true)
+extern double eps_right;																			// declare eps_right (the value of the dielectric constant eps on the right of the channel if VariableEpsilon is true)
 extern double Phi_Lx;																				// declare Phi_Lx (the B.C. value of Phi(Lx))
 extern int Nx_loc;																					// declare Nx_loc (the factor to refine each space cell by in the channel)
 extern int Nx_global;																				// declare Nx_global (to keep track of the global number of space cell, if Doping is True and the mesh has been refined)
@@ -105,6 +108,7 @@ extern bool MassConsOnly;																			// declare a Boolean variable to det
 extern bool NoField;																				// declare a Boolean variable to turn off the field in the advection step
 extern bool Electrons, Ions;																		// declare Boolean variables which will determine if the electrons or ions are being modelled
 extern bool Pois_Dirichlet, Pois_Neutrality;														// declare Boolean variables which will determin the BCs for Poisson's equation when Doping = true
+extern bool VariableEpsilon;																				// declare a Boolean variable to turn on mesh refinement in the channel of a non-uniform doping profile
 extern bool MeshRefinement;																			// declare a Boolean variable to turn on mesh refinement in the channel of a non-uniform doping profile
 
 //************************//

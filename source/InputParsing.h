@@ -59,7 +59,7 @@ extern void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int
 								double& T_0, double& rho_0);
 
 extern void ReadDopingParameters(GRVY_Input_Class& iparse, double& NL, double& NH,
-								double& T_L, double& T_R, double& eps, double& Phi_Lx,
+								double& T_L, double& T_R, double& Phi_Lx,
 								int& channel_denom, int& channel_numer_left, int& channel_numer_right);
 
 extern void PrintError(std::string var_name);

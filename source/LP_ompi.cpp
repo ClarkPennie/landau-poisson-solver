@@ -37,7 +37,10 @@ double nu, dt; 																						// declare nu (1/knudson#), dt (the timeste
 double NL, NH;																						// declare NL & NH (the density of ions in the middle of the well, the Lower value, and the edges, the higher value, respectively)
 int a_i, b_i;																						// declare a_i & b_i (the indices such that ND(x) = NL, for x_{a_i+1/2}< x <= x_{b_i-1/2}, and ND(x) = NH otherwise)
 double T_L, T_R;																					// declare T_L & T_R (the temperatures at the left & right edges of space if periodic BCs are used, respectively)
-double eps;																							// declare eps (the dielectric constant in Poisson's equation: div(eps*grad(Phi)) = R(x,t))
+double eps_fixed;																					// declare eps_fixed (the dielectric constant in Poisson's equation: div(eps*grad(Phi)) = R(x,t))
+double eps_left;																					// declare eps_left (the value of the dielectric constant eps on the left of the channel if VariableEpsilon is true)
+double eps_center;																					// declare eps_center (the value of the dielectric constant eps in the center of the channel if VariableEpsilon is true)
+double eps_right;																					// declare eps_right (the value of the dielectric constant eps on the right of the channel if VariableEpsilon is true)
 double Phi_Lx;																						// declare Phi_Lx (the B.C. value of Phi(Lx))
 int Nx_loc;																							// declare Nx_loc (the factor to refine each space cell by in the channel)
 int Nx_global;																						// declare Nx_global (to keep track of the global number of space cell, if Doping is True and the mesh has been refined)
@@ -81,6 +84,7 @@ bool MassConsOnly;																					// declare a Boolean variable to determin
 bool NoField;																						// declare a Boolean variable to turn off the field in the advection step
 bool Electrons, Ions;																				// declare Boolean variables which will determine if the electrons or ions are being modelled
 bool Pois_Dirichlet, Pois_Neutrality;																// declare Boolean variables which will determin the BCs for Poisson's equation when Doping = true
+bool VariableEpsilon;																				// declare a Boolean variable to turn on mesh refinement in the channel of a non-uniform doping profile
 bool MeshRefinement;																				// declare a Boolean variable to turn on mesh refinement in the channel of a non-uniform doping profile
 
 int main(int argc, char** argv)
@@ -195,7 +199,7 @@ int main(int argc, char** argv)
 
 	if(Doping)
 	{
-		ReadDopingParameters(iparse, NL, NH, T_L, T_R, eps, Phi_Lx, frac_denom, a_numer, b_numer);	// Read in the input parameters required for a non-uniform doping profile
+		ReadDopingParameters(iparse, NL, NH, T_L, T_R, Phi_Lx, frac_denom, a_numer, b_numer); 		// Read in the input parameters required for a non-uniform doping profile
 		// if frac_denom does not evenly divide Nx, print an error and exit
 		if(Nx%frac_denom != 0)																		// check that size_v/nprocs_mpi has no remainder
 		{

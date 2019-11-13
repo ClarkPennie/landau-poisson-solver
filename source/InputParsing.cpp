@@ -499,6 +499,77 @@ void ReadNoField(GRVY_Input_Class& iparse)												// Function to read the Bo
 	}
 }
 
+void ReadVariableEpsilon(GRVY_Input_Class& iparse)												// Function to read the Boolean option to decide if running with single species collisions or mixed
+{
+	// Check if MeshRefinement has been set and print its value from the
+	// processor with rank 0 (if not, set default value to false):
+	iparse.Read_Var("Doping/VariableEpsilon",&VariableEpsilon,false);
+	if(myrank_mpi==0)
+	{
+		std::cout << "--> Doping/VariableEpsilon  = " << VariableEpsilon << std::endl << std::endl;
+	}
+	if(VariableEpsilon)
+	{
+		if( iparse.Read_Var("Doping/eps_left",&eps_left) )
+		{
+			std::cout << "--> Doping/eps_left = " << eps_left << std::endl;
+		}
+		else
+		{
+			if(myrank_mpi==0)
+			{
+				std::cout << std::endl << "Program cannot run..." << std::endl;
+				std::cout << "epsilon is to have a non-uniform value across the space domain "
+						"but no value on the left has been chosen." << std::endl;
+				std::cout << "Please set the value of 'Doping/eps_left' in the input file." << std::endl;
+			}
+		}
+		if( iparse.Read_Var("Doping/eps_center",&eps_center) )
+		{
+			std::cout << "--> Doping/eps_center = " << eps_center << std::endl;
+		}
+		else
+		{
+			if(myrank_mpi==0)
+			{
+				std::cout << std::endl << "Program cannot run..." << std::endl;
+				std::cout << "epsilon is to have a non-uniform value across the space domain "
+						"but no value in the center has been chosen." << std::endl;
+				std::cout << "Please set the value of 'Doping/eps_center' in the input file." << std::endl;
+			}
+		}
+		if( iparse.Read_Var("Doping/eps_right",&eps_right) )
+		{
+			std::cout << "--> Doping/eps_right = " << eps_right << std::endl << std::endl;
+		}
+		else
+		{
+			if(myrank_mpi==0)
+			{
+				std::cout << std::endl << "Program cannot run..." << std::endl;
+				std::cout << "epsilon is to have a non-uniform value across the space domain "
+						"but no value on the right has been chosen." << std::endl;
+				std::cout << "Please set the value of 'Doping/eps_right' in the input file." << std::endl;
+			}
+		}
+		if(myrank_mpi==0)
+		{
+			std::cout << "The value of epsilon will vary across the doping profile with the above values."
+						<< std::endl << std::endl;
+		}
+	}
+	else
+	{
+		iparse.Read_Var("Doping/eps",&epsilon_fixed,1.0);
+		if(myrank_mpi==0)
+		{
+			std::cout << "--> Doping/eps = " << epsilon_fixed << std::endl << std::endl;
+			std::cout << "The value of the permittivity eps is fixed across the channel "
+							"with the above value." << std::endl << std::endl;
+		}
+	}
+}
+
 void ReadMeshRefinement(GRVY_Input_Class& iparse)												// Function to read the Boolean option to decide if running with single species collisions or mixed
 {
 	// Check if MeshRefinement has been set and print its value from the
@@ -767,7 +838,7 @@ void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 }
 
 void ReadDopingParameters(GRVY_Input_Class& iparse, double& NL, double& NH,
-							double& T_L, double& T_R, double& eps, double& Phi_Lx,
+							double& T_L, double& T_R, double& Phi_Lx,
 							int& channel_denom, int& channel_numer_left, int& channel_numer_right)								// Function to read all parameters for a non-uniform doping profile
 {
 	if(myrank_mpi==0)
@@ -795,15 +866,6 @@ void ReadDopingParameters(GRVY_Input_Class& iparse, double& NL, double& NH,
 	if(myrank_mpi==0)
 	{
 		printf("--> %-22s = %g\n","NH",NH);
-	}
-	if (! iparse.Read_Var("Doping/eps",&eps) )
-	{
-		PrintError("Doping/eps");
-		exit(1);
-	}
-	if(myrank_mpi==0)
-	{
-		printf("--> %-22s = %g\n","eps",eps);
 	}
 
 	grvy_log_setlevel(GRVY_NOLOG);

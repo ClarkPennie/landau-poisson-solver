@@ -457,6 +457,29 @@ double DopingProfile(int i)																		// function to return a step functi
 	return DP;																					// return the value of DP
 }
 
+double EpsilonValue(int i)																		// function to return a step function doping profile, based on what cell a given x is in
+{
+	if(VariableEpsilon)
+	{
+		if(i <= a_i)																		// if the space cell i is either on the left of the channel then return eps_left
+		{
+			return eps_left;
+		}
+		else if(i <= b_i)																		// if the space cell i is in the center of the channel then return eps_center
+		{
+			return eps_center;
+		}
+		else																						// if the space cell i is either on the right of the channel then return eps_right
+		{
+			return eps_right;
+		}
+	}
+	else																						// if VariableEpsilon is false then return the constant value eps_fixed
+	{
+		return eps_fixed
+	}
+}
+
 double computePhi_x_0_Doping(double *U) /* DIFFERENT FOR withND */ 																// compute the constant coefficient of x in phi, which is actually phi_x(0) (Calculate C_E in the paper -between eq. 52 & 53?), with doping profile given by ND above
 {
 	int i, j, k, m, q;
@@ -465,7 +488,10 @@ double computePhi_x_0_Doping(double *U) /* DIFFERENT FOR withND */ 													
 	double a_val = (a_i+1)*dx;
 	double b_val = (b_i+1)*dx;
 //	double Phi_Lx = 1;																									// declare Phi_Lx (the Dirichlet BC, Phi(t, L_x) = Phi_Lx) and set its value
+    double eps;
 
+	eps = EpsilonValue(Nx-1);
+	
 	//#pragma omp parallel for private(j,q,m,k) shared(U) reduction(+:tmp) //reduction may change the final result a little bit
 	for(j=0;j<size_v;j++){
 		//j = j1*Nv*Nv + j2*Nv + j3;
@@ -498,6 +524,10 @@ double computePhi_Doping(double *U, double x, int ix)	/* DIFFERENT FOR withND */
 	int i_out, i, j1, j2, j3, iNNN, j1NN, j2N, k, channel_left, channel_right;			// declare counters i_out (for the outer sum of i values), i, j1, j2, j3 for summing the contribution from cell I_i x K_(j1, j2, j3), iNNN (the value of i*Nv^3), j1NN (the value of j1*Nv^2), j2N (the value of j2*N) & k (the location in U of the cell I_i x K_(j1, j2, j3))
 	double retn, sum1, sum3, sum4, x_diff, x_diff_mid, x_diff_sq, x_eval, dx_val, dx_val_out, C_E;	// declare retn (the value of Phi returned at the end), sum1 (the value of the first two sums), sum3 (the value of the third sum), sum4 (the value of the fourth sum), x_diff (the value of x - x_(ix-1/2)), x_diff_mid (the value of x - x_ix), x_diff_sq (the value of x_diff^2), x_eval (the value associated to the integral of (x - x_i)^2) & C_E (the value of the constant in the formula for phi)
 	double ND;																			// declare ND (the value of the doping profile at the given x)
+	double eps;	
+
+	eps = EpsilonValue(ix);
+
 	sum1 = 0;
 	sum3 = 0;
 	sum4 = 0;
@@ -628,7 +658,10 @@ double computeE_Doping(double *U, double x, int ix)	/* DIFFERENT FOR withND */		
 	double retn, sum, x_diff, x_diff_mid, x_eval, dx_val, C_E;													// declare retn (the value of E returned at the end), sum (the value of the sum to calculate the integral of rho), x_diff (the value of x - x_(ix-1/2)), x_diff_mid (the value of x - x_ix), x_eval (the value associated to the integral of (x - x_i)^2) & C_E (the value of the constant in the formula for E)
 	double ND;																							// declare ND (the value of the doping profile at the given x)
 	sum = 0;																							// initialise the sum at 0
+	double eps;	
 
+	eps = EpsilonValue(ix);
+	
 	if(MeshRefinement)
 	{
 		if(ix < a_i)
@@ -749,6 +782,9 @@ double Int_E_Doping(double *U, int i) 		/* DIFFERENT FOR withND */ 						      /
 	int m, j, k, channel_left, channel_right;
 	double tmp=0., result;
 	double ND, dx_val;																			// declare ND (the value of the doping profile at the given x)
+	double eps;	
+
+	eps = EpsilonValue(i);
 
 	if(MeshRefinement)
 	{
@@ -823,6 +859,9 @@ double Int_E1st_Doping(double *U, int i) 	/* DIFFERENT FOR withND */					// \int
 	int j, k;
 	double tmp=0., result;
 	double ND, dx_val;																			// declare ND (the value of the doping profile at the given x)
+	double eps;	
+
+	eps = EpsilonValue(i);
 
 	if(MeshRefinement)
 	{
@@ -871,6 +910,9 @@ double Int_E2nd_Doping(double *U, int i) 	/* DIFFERENT FOR withND */							// \i
     int m, j, j1, j2, j3, k, channel_left, channel_right;
     double c1=0., c2=0., result;
 	double ND, dx_val;																			// declare ND (the value of the doping profile at the given x)
+	double eps;	
+
+	eps = EpsilonValue(i);
 
 	if(MeshRefinement)
 	{
