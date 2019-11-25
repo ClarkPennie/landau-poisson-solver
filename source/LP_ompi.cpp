@@ -242,7 +242,6 @@ int main(int argc, char** argv)
 		}
 		ReadPoisBCs(iparse);																	// Read in if this run will model electrons or ions
 		CheckPoisBCs();																			// Check no more than one of Electrons or Ions were chosen
-		ReadVariableEpsilon(iparse);															// Check if eps is fixed or varies across the channel
 		ReadMeshRefinement(iparse);																// Check if the mesh will be refined in the channel
 		Nx_global = Nx;
 		if(MeshRefinement)
@@ -256,6 +255,16 @@ int main(int argc, char** argv)
 				printf("--> %-22s = %g\n","dx_global",dx_global);
 				printf("--> %-22s = %g\n\n","dx_loc",dx_loc);
 			}
+		}
+		ReadVariableEpsilon(iparse);															// Check if eps is fixed or varies across the channel
+		if(myrank_mpi==0)
+		{
+			for(int i=0; i<Nx; i++)
+			{
+				tmp = EpsilonValue(i);
+				std::cout << "eps[" << i << "] = " << tmp << " ";
+			}
+			std::cout << std::endl;
 		}
 	}
 

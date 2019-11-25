@@ -105,7 +105,7 @@ NL                     = 0.001  # Value of background density in lower regions
 NH                     = 1      # Value of background density in higher regions
 T_L                    = 0.4    # Temperature at left wall (if using Dirichlet BCs)
 T_R                    = 0.4    # Temperature at right wall (if using Dirichlet BCs)
-channel_denom          = 3	# Denominator for the channel fraction
+channel_denom          = 6	# Denominator for the channel fraction
 channel_numer_left     = 1	# Left edge of channel is at (numer_left/denom)*Lx
 channel_numer_right    = 2	# Right edge of channel is at (numer_right/denom)*Lx
 
@@ -115,7 +115,14 @@ Pois_Neutrality = True          # Use charge neutrality BCs
 
 # Mesh refinement parameters
 MeshRefinement         = True   # Refine the mesh in the channel
-Nx_loc                 = 2      # Number of refined space cells per global cell
+Nx_loc                 = 3      # Number of refined space cells per global cell
+
+# Permittivity Values (variable eps will override above eps value):
+VariableEpsilon = True          # Vary the value of eps across the channel
+
+eps_left               = 0.1    # Value of eps to the left of the channel
+eps_center             = 0.05	# Value of eps in the center of the channel
+eps_right              = 0.1	# Value of eps to the right of the channel
 
 #--------------------------------------------
 # Name of file from previous run to pick up

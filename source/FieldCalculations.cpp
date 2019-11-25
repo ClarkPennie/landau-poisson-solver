@@ -461,17 +461,35 @@ double EpsilonValue(int i)																		// function to return a step functio
 {
 	if(VariableEpsilon)
 	{
-		if(i <= a_i)																		// if the space cell i is either on the left of the channel then return eps_left
+		if(MeshRefinement)
 		{
-			return eps_left;
+			if(i < a_i + Nx_loc)
+			{
+				return eps_left;
+			}
+			else if(i < a_i + Nx_loc*(b_i - a_i + 1))
+			{
+				return eps_center;
+			}
+			else
+			{
+				return eps_right;
+			}
 		}
-		else if(i <= b_i)																		// if the space cell i is in the center of the channel then return eps_center
+		else
 		{
-			return eps_center;
-		}
-		else																						// if the space cell i is either on the right of the channel then return eps_right
-		{
-			return eps_right;
+			if(i <= a_i)																		// if the space cell i is either on the left of the channel then return eps_left
+			{
+				return eps_left;
+			}
+			else if(i <= b_i)																		// if the space cell i is in the center of the channel then return eps_center
+			{
+				return eps_center;
+			}
+			else																						// if the space cell i is either on the right of the channel then return eps_right
+			{
+				return eps_right;
+			}
 		}
 	}
 	else																						// if VariableEpsilon is false then return the constant value eps_fixed
