@@ -476,7 +476,7 @@ double EpsilonValue(int i)																		// function to return a step functio
 	}
 	else																						// if VariableEpsilon is false then return the constant value eps_fixed
 	{
-		return eps_fixed
+		return eps_fixed;
 	}
 }
 

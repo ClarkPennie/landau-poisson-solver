@@ -560,10 +560,10 @@ void ReadVariableEpsilon(GRVY_Input_Class& iparse)												// Function to rea
 	}
 	else
 	{
-		iparse.Read_Var("Doping/eps",&epsilon_fixed,1.0);
+		iparse.Read_Var("Doping/eps",&eps_fixed,1.0);
 		if(myrank_mpi==0)
 		{
-			std::cout << "--> Doping/eps = " << epsilon_fixed << std::endl << std::endl;
+			std::cout << "--> Doping/eps = " << eps_fixed << std::endl << std::endl;
 			std::cout << "The value of the permittivity eps is fixed across the channel "
 							"with the above value." << std::endl << std::endl;
 		}

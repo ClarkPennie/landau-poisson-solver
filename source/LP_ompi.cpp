@@ -241,6 +241,7 @@ int main(int argc, char** argv)
 		}
 		ReadPoisBCs(iparse);																	// Read in if this run will model electrons or ions
 		CheckPoisBCs();																			// Check no more than one of Electrons or Ions were chosen
+		ReadVariableEpsilon(iparse);															// Check if eps is fixed or varies across the channel
 		ReadMeshRefinement(iparse);																// Check if the mesh will be refined in the channel
 		Nx_global = Nx;
 		if(MeshRefinement)

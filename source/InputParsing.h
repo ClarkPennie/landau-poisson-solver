@@ -51,6 +51,8 @@ extern void ReadMassConsOnly(GRVY_Input_Class& iparse);
 
 extern void ReadNoField(GRVY_Input_Class& iparse);
 
+extern void ReadVariableEpsilon(GRVY_Input_Class& iparse);
+
 extern void ReadMeshRefinement(GRVY_Input_Class& iparse);
 
 extern void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
