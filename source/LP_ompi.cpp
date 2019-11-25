@@ -94,6 +94,7 @@ int main(int argc, char** argv)
 	int k_v, k_eta, k_local, nprocs_vlasov;															// declare k_v (the index of a DG coefficient), k_eta (the index of a DG coefficient in Fourier space), k_local (the index of a DG coefficient, local to the space chunk on the current process) & nprocs_vlasov (the number of processes used for solving the Vlasov equation)
 	double tmp, mass, a[3], KiE, EleE, KiEratio, ent1, l_ent1, ll_ent1;								// declare tmp (the square root of electric energy), mass (the mass/density rho), a (the momentum vector J), KiE (the kinetic energy), EleE (the electric energy), KiEratio (the ratio of kinetic energy between where f is positive and negative),  ent1 (the entropy with negatives discarded), l_ent1 (log of the ent1) & ll_ent1 (log of log of ent1)
 	double T_hump, shift, T_0;																		// declare T_hump & shift (the variance and shift of the Maxwellians if the 4Hump IC is used and variance of Maxwellian if the Daming IC is used);
+	double x_val;																					// declare x_val (the value of x which may need to be calculated differently MeshRefinement is true)
 	double *U, **f, *output_buffer;//, **conv_weights_local;										// declare pointers to U (the vector containing the coefficients of the DG basis functions for the solution f(x,v,t) at the given time t), f (the solution which has been transformed from the DG discretisation to the appropriate spectral discretisation) & output_buffer (from where to send MPI messages)
 	double **conv_weights, **conv_weights_linear;													// declare a pointer to conv_weights (a matrix of the weights for the convolution in Fourier space of single species collisions) & conv_weights_linear (a matrix of convolution weights in Fourier space of two species collisions)
 	double **conv_weights1, **conv_weights2;														// declare a pointer to conv_weights1 (the first matrix in the sum of matrices for the weights of the convolution in Fourier space of single species collisions) & conv_weights2 (the second matrix in the sum of matrices for the weights of the convolution in Fourier space of single species collisions)
@@ -1059,7 +1060,7 @@ int main(int argc, char** argv)
 			}
 			if(Doping)																					// only do this if Damping was defined
 			{
-				SetInit_ND(U, rho_0);																	// set initial DG solution appropriate for the non-constant doping profile. For the first time run t=0, use this to give init solution (otherwise, comment out)
+				SetInit_ND(U, T_0, rho_0);																	// set initial DG solution appropriate for the non-constant doping profile. For the first time run t=0, use this to give init solution (otherwise, comment out)
 			}
 			if(LinearLandau)																			// only do this is LinearLandau is true, for using Q(f,M)
 			{
@@ -1233,27 +1234,34 @@ int main(int argc, char** argv)
 		if(Doping)
 		{
 			// Print the values of x that the density will be evaluated at in the file tagged frho:
-			for(int i=0; i<Nx+1; i++)
+			fprintf(frho, "%g ", 0);
+			fprintf(fV1, "%g ", 0);
+			fprintf(fV2, "%g ", 0);
+			fprintf(fV3, "%g ", 0);
+			fprintf(fT, "%g ", 0);
+			for(int i=0; i<Nx; i++)
 			{
-				fprintf(frho, "%g ", i*dx);
-				fprintf(fV1, "%g ", i*dx);
-				fprintf(fV2, "%g ", i*dx);
-				fprintf(fV3, "%g ", i*dx);
-				fprintf(fT, "%g ", i*dx);
+				x_val = Gridx((double)i + 0.5);
+				fprintf(frho, "%g ", x_val);
+				fprintf(fV1, "%g ", x_val);
+				fprintf(fV2, "%g ", x_val);
+				fprintf(fV3, "%g ", x_val);
+				fprintf(fT, "%g ", x_val);
 			}
 			fprintf(frho, "\n");
 			fprintf(fV1, "\n");
 			fprintf(fV2, "\n");
 			fprintf(fV3, "\n");
 			fprintf(fT, "\n");
-			// Print the values of the density rho for teh initial condition, using the DG coefficients in U in the file tagged as frho:
+			// Print the values of the density rho for the initial condition, using the DG coefficients in U in the file tagged as frho:
 			for(int i=0; i<Nx; i++)
 			{
-				fprintf(frho, "%g ", rho_x(i*dx, U, i));
-				fprintf(fV1, "%g ", computeBulkVelocity_v1_in_x(U, i, i*dx));
-				fprintf(fV2, "%g ", computeBulkVelocity_v2_in_x(U, i, i*dx));
-				fprintf(fV3, "%g ", computeBulkVelocity_v3_in_x(U, i, i*dx));
-				fprintf(fT, "%g ", computeKiE_in_x(U, i, i*dx));
+				x_val = Gridx((double)i - 0.5);
+				fprintf(frho, "%g ", rho_x(x_val, U, i));
+				fprintf(fV1, "%g ", computeBulkVelocity_v1_in_x(U, i, x_val));
+				fprintf(fV2, "%g ", computeBulkVelocity_v2_in_x(U, i, x_val));
+				fprintf(fV3, "%g ", computeBulkVelocity_v3_in_x(U, i, x_val));
+				fprintf(fT, "%g ", computeKiE_in_x(U, i, x_val));
 			}
 			fprintf(frho, "%g ", rho_x(Lx, U, Nx-1));
 			fprintf(fV1, "%g ", computeBulkVelocity_v1_in_x(U, Nx-1, Lx));
@@ -1496,11 +1504,12 @@ int main(int argc, char** argv)
 					// Print the values of the density rho, using the DG coefficients in U in the file tagged as frho:
 					for(int i=0; i<Nx; i++)
 					{
-						fprintf(frho, "%g ", rho_x(i*dx, U, i));
-						fprintf(fV1, "%g ", computeBulkVelocity_v1_in_x(U, i, i*dx));
-						fprintf(fV2, "%g ", computeBulkVelocity_v2_in_x(U, i, i*dx));
-						fprintf(fV3, "%g ", computeBulkVelocity_v3_in_x(U, i, i*dx));
-						fprintf(fT, "%g ", computeKiE_in_x(U, i, i*dx));
+						x_val = Gridx((double)i - 0.5);
+						fprintf(frho, "%g ", rho_x(x_val, U, i));
+						fprintf(fV1, "%g ", computeBulkVelocity_v1_in_x(U, i, x_val));
+						fprintf(fV2, "%g ", computeBulkVelocity_v2_in_x(U, i, x_val));
+						fprintf(fV3, "%g ", computeBulkVelocity_v3_in_x(U, i, x_val));
+						fprintf(fT, "%g ", computeKiE_in_x(U, i, x_val));
 					}
 					fprintf(frho, "%g ", rho_x(Lx, U, Nx-1));
 					fprintf(fV1, "%g ", computeBulkVelocity_v1_in_x(U, Nx-1, Lx));

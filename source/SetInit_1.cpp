@@ -122,14 +122,14 @@ void SetInit_LD(double *U, double T0, double rho_0)																						// func
 	}
 }
 
-void SetInit_ND(double *U, double rho_0)																		// function to calculate the DG coefficients for the initial condition for Landau Damping
+void SetInit_ND(double *U, double T0, double rho_0)																		// function to calculate the DG coefficients for the initial condition for Landau Damping
 {
 //	if(myrank_mpi == 0){printf("Inside SetInit_ND\n");}
     int i, i_global, j1, j2, j3, k, m1,m2,m3,nt=5;																// declare i (to represent cell i in x-space), j1, j2, j3 (to represent cell (j1,j2,j3) in v-space), k (the index of cell (i,j1,j2,j3) in U), m1, m2, m3 (counters for the Gaussian quadrature in 3D) & nt (the number of points in the quadrature)
     double a=A_amp, c=k_wave;																					// declare a (the amplitude of cosine wave) and set it to A_amp & c (the frequency of the cosine wave) and set it to k_wave
     double tp, tp0, tp5, tmp0, tmp1, tmp2, tmp3, tmp4;															// declare tp, tp0, tmp0, tmp1, tmp2, tmp3, tmp4 (temporary values while calculating the quadrature for the integral w.r.t. v)
 	double ND;																									// declare ND (the value of the doping profile at the given x)
-	double T0 = T_R;																							// declare T0 (the temperature of the Maxwellian in the initial condition) and set its value
+//	double T0 = T_R;																							// declare T0 (the temperature of the Maxwellian in the initial condition) and set its value
 	//#pragma omp parallel for private(k,j1,j2,j3,i,tmp0, tmp1, tmp2, tmp3, tmp4, tp0, tp5, tp) shared(U)
     for(j1=0;j1<Nv;j1++)																						// loop through all the velocity cells
     {

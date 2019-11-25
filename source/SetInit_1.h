@@ -45,7 +45,7 @@ void SetInit_2H(double *U, double T0, double C, double rho_0 = 1);
 
 void SetInit_2H_sin(double *U, double rho_0 = 1);
 
-void SetInit_ND(double *U, double rho_0 = 1);
+void SetInit_ND(double *U, double T0, double rho_0 = 1);
 
 void setInit_spectral(double *U, double **f);
 

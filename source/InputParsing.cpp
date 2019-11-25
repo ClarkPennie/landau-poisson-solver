@@ -788,7 +788,7 @@ void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 	{
 		iparse.Read_Var("Doping/A_amp",&A_amp,0.);
 		iparse.Read_Var("Doping/k_wave",&k_wave,0.5);
-		iparse.Read_Var("Damping/T_0",&T_0,1.2);
+		iparse.Read_Var("Doping/T_0",&T_0,0.4);
 		iparse.Read_Var("Doping/rho_0",&rho_0,1.);
 		if (! iparse.Read_Var("Doping/Lv",&Lv) )
 		{
