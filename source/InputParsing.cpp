@@ -512,7 +512,10 @@ void ReadVariableEpsilon(GRVY_Input_Class& iparse)												// Function to rea
 	{
 		if( iparse.Read_Var("Doping/eps_left",&eps_left) )
 		{
-			std::cout << "--> Doping/eps_left = " << eps_left << std::endl;
+			if(myrank_mpi==0)
+			{
+				std::cout << "--> Doping/eps_left = " << eps_left << std::endl;
+			}
 		}
 		else
 		{
@@ -526,7 +529,10 @@ void ReadVariableEpsilon(GRVY_Input_Class& iparse)												// Function to rea
 		}
 		if( iparse.Read_Var("Doping/eps_center",&eps_center) )
 		{
-			std::cout << "--> Doping/eps_center = " << eps_center << std::endl;
+			if(myrank_mpi==0)
+			{
+				std::cout << "--> Doping/eps_center = " << eps_center << std::endl;
+			}
 		}
 		else
 		{
@@ -540,7 +546,10 @@ void ReadVariableEpsilon(GRVY_Input_Class& iparse)												// Function to rea
 		}
 		if( iparse.Read_Var("Doping/eps_right",&eps_right) )
 		{
-			std::cout << "--> Doping/eps_right = " << eps_right << std::endl << std::endl;
+			if(myrank_mpi==0)
+			{
+				std::cout << "--> Doping/eps_right = " << eps_right << std::endl << std::endl;
+			}
 		}
 		else
 		{

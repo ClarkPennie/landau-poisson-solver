@@ -1537,7 +1537,7 @@ int main(int argc, char** argv)
 			}
 		}
 
-		if(KiEratio < -1)
+		if(isnan(KiEratio))
 		{
 			if(myrank_mpi==0)
 			{
