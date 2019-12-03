@@ -11,7 +11,7 @@
 # Global input variable definitions
 #--------------------------------------------
 
-flag     = VariableEspilson_Test
+flag     = MomentumValues_Test
 
 nT       = 0 	                # Number of time-steps
 Nx       = 12  	                # Number of space cells

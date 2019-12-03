@@ -51,6 +51,12 @@ double computeBulkVelocity_v2_in_x(double *U, int i, double x);
 
 double computeBulkVelocity_v3_in_x(double *U, int i, double x);
 
+double computeBulkMomentum_nu1_in_x(double *U, int i, double x);
+
+double computeBulkMomentum_nu2_in_x(double *U, int i, double x);
+
+double computeBulkMomentum_nu3_in_x(double *U, int i, double x);
+
 double computeKiE(double *U);
 
 double computeKiE_Inhomo_Uniform(double *U);
@@ -60,6 +66,8 @@ double computeKiE_Inhomo_Refined(double *U);
 double computeKiE_Inhomo(double *U);
 
 double computeKiE_Homo(double *U);
+
+double computeT_in_x(double *U, int i, double x);
 
 double computeKiE_in_x(double *U, int i, double x);
 

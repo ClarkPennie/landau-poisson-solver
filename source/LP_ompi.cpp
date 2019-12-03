@@ -257,6 +257,7 @@ int main(int argc, char** argv)
 			}
 		}
 		ReadVariableEpsilon(iparse);															// Check if eps is fixed or varies across the channel
+		/* DEBUG: Print values of epsilon across the channel
 		if(myrank_mpi==0)
 		{
 			for(int i=0; i<Nx; i++)
@@ -266,6 +267,7 @@ int main(int argc, char** argv)
 			}
 			std::cout << std::endl;
 		}
+		*/
 	}
 
 	size_v=Nv*Nv*Nv;																				// set size_v to Nv^3
@@ -971,7 +973,7 @@ int main(int argc, char** argv)
 
 	char buffer_moment[100], buffer_u[100], buffer_ufull[100], buffer_flags[flag.size() + 1],
 			buffer_phi[110], buffer_E[110], buffer_marg[110], buffer_ent[110],
-			buffer_rho[110], buffer_V1[110], buffer_V2[110], buffer_V3[110], buffer_T[110];			// declare the arrays buffer_moment (to store the name of the file where the moments are printed), buffer_u (to store the name of the file where the solution U is printed), buffer_ufull (to store the name of the file where the solution U is printed in the TwoStream), buffer_flags (to store the flag added to the end of the filenames), buffer_phi (to store the name of the file where the values of phi are printed), buffer_marg (to store the name of the file where the marginals are printed) & buffer_ent (to store the name of the file where the entropy values are printed)
+			buffer_rho[110], buffer_nu1[110], buffer_nu2[110], buffer_nu3[110], buffer_KiE[110];			// declare the arrays buffer_moment (to store the name of the file where the moments are printed), buffer_u (to store the name of the file where the solution U is printed), buffer_ufull (to store the name of the file where the solution U is printed in the TwoStream), buffer_flags (to store the flag added to the end of the filenames), buffer_phi (to store the name of the file where the values of phi are printed), buffer_marg (to store the name of the file where the marginals are printed) & buffer_ent (to store the name of the file where the entropy values are printed)
 
 	// EVERY TIME THE CODE IS RUN, CHANGE THE FLAG TO A NAME THAT IDENTIFIES THE CASE RUNNING FOR OR WHAT TIME RUN UP TO:
 	strcpy(buffer_flags, flag.c_str());																// copy the contents of flag to buffer_flags
@@ -1015,14 +1017,14 @@ int main(int argc, char** argv)
 		{
 			sprintf(buffer_rho,"Data/RhoVals_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
 							nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);				// create a .dc file name, located in the directory Data, whose name is RhoVals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
-			sprintf(buffer_V1,"Data/V1Vals_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
-							nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);				// create a .dc file name, located in the directory Data, whose name is V1Vals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
-			sprintf(buffer_V2,"Data/V2Vals_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
-							nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);				// create a .dc file name, located in the directory Data, whose name is V2Vals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
-			sprintf(buffer_V3,"Data/V3Vals_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
-							nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);				// create a .dc file name, located in the directory Data, whose name is V3Vals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
-			sprintf(buffer_T,"Data/TVals_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
-							nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);				// create a .dc file name, located in the directory Data, whose name is TVals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
+			sprintf(buffer_nu1,"Data/nu1Vals_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
+							nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);				// create a .dc file name, located in the directory Data, whose name is nu1Vals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
+			sprintf(buffer_nu2,"Data/nu2Vals_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
+							nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);				// create a .dc file name, located in the directory Data, whose name is nu2Vals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
+			sprintf(buffer_nu3,"Data/nu3Vals_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
+							nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);				// create a .dc file name, located in the directory Data, whose name is nu3Vals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
+			sprintf(buffer_KiE,"Data/KiEVals_nu%gA%gk%gNx%dLx%gNv%dLv%gSpectralN%ddt%gnT%d_%s.dc",
+							nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT, buffer_flags);				// create a .dc file name, located in the directory Data, whose name is KiEVals_ followed by the values of nu, A_amp, k_wave, Nx, Lx, Nv, Lv, N, dt, nT and the contents of buffer_flags and store it in buffer_moment
 		}
 	}
 	
@@ -1078,7 +1080,7 @@ int main(int argc, char** argv)
 		}
 	}
 	FILE *fmom, *fu, *fufull, *fmarg, *fphi, *fE, *fent,
-			*frho, *fV1, *fV2, *fV3, *fT;															// declare pointers to the files fmom (which will store the moments), fu (which will store the solution U), fufull (which will store the solution U in the TwoStream case), fmarg (which will store the values of the marginals), fphi (which will store the values of the potential phi), fent (which will store the values fo the entropy) & frho (which will store values of density in x)
+			*frho, *fnu1, *fnu2, *fnu3, *fKiE;															// declare pointers to the files fmom (which will store the moments), fu (which will store the solution U), fufull (which will store the solution U in the TwoStream case), fmarg (which will store the values of the marginals), fphi (which will store the values of the potential phi), fent (which will store the values fo the entropy) & frho (which will store values of density in x)
 
 	if(myrank_mpi==0)																				// only the process with rank 0 will do this
 	{
@@ -1150,11 +1152,11 @@ int main(int argc, char** argv)
 		fent=fopen(buffer_ent,"w");																	// set fent to be a file with the name stored in buffer_ent and set the file access mode of fent to w (which creates an empty file and allows it to be written to)
 		if(Doping)
 		{
-			frho=fopen(buffer_rho,"w");																// set frho to be a file with the name stored in buffer_rho and set the file access mode of fent to w (which creates an empty file and allows it to be written to)
-			fV1=fopen(buffer_V1,"w");																// set fV1 to be a file with the name stored in buffer_V1 and set the file access mode of fent to w (which creates an empty file and allows it to be written to)
-			fV2=fopen(buffer_V2,"w");																// set fV2 to be a file with the name stored in buffer_V2 and set the file access mode of fent to w (which creates an empty file and allows it to be written to)
-			fV3=fopen(buffer_V3,"w");																// set fV3 to be a file with the name stored in buffer_V3 and set the file access mode of fent to w (which creates an empty file and allows it to be written to)
-			fT=fopen(buffer_T,"w");																	// set fT to be a file with the name stored in buffer_T and set the file access mode of fent to w (which creates an empty file and allows it to be written to)
+			frho=fopen(buffer_rho,"w");																// set frho to be a file with the name stored in buffer_rho and set the file access mode of frho to w (which creates an empty file and allows it to be written to)
+			fnu1=fopen(buffer_nu1,"w");																// set fnu1 to be a file with the name stored in buffer_nu1 and set the file access mode of fnu1 to w (which creates an empty file and allows it to be written to)
+			fnu2=fopen(buffer_nu2,"w");																// set fnu2 to be a file with the name stored in buffer_nu2 and set the file access mode of fnu2 to w (which creates an empty file and allows it to be written to)
+			fnu3=fopen(buffer_nu3,"w");																// set fnu3 to be a file with the name stored in buffer_nu3 and set the file access mode of fnu3 to w (which creates an empty file and allows it to be written to)
+			fKiE=fopen(buffer_KiE,"w");																// set fKiE to be a file with the name stored in buffer_KiE and set the file access mode of fKiE to w (which creates an empty file and allows it to be written to)
 		}
 
 		FindNegVals(U, fNegVals, fAvgVals);															// find out in which cells the approximate solution goes negative and record it in fNegVals
@@ -1243,45 +1245,46 @@ int main(int argc, char** argv)
 		if(Doping)
 		{
 			// Print the values of x that the density will be evaluated at in the file tagged frho:
-			fprintf(frho, "%g ", 0);
-			fprintf(fV1, "%g ", 0);
-			fprintf(fV2, "%g ", 0);
-			fprintf(fV3, "%g ", 0);
-			fprintf(fT, "%g ", 0);
+			x_val = 0.;
+			fprintf(frho, "%g ", x_val);
+			fprintf(fnu1, "%g ", x_val);
+			fprintf(fnu2, "%g ", x_val);
+			fprintf(fnu3, "%g ", x_val);
+			fprintf(fKiE, "%g ", x_val);
 			for(int i=0; i<Nx; i++)
 			{
 				x_val = Gridx((double)i + 0.5);
 				fprintf(frho, "%g ", x_val);
-				fprintf(fV1, "%g ", x_val);
-				fprintf(fV2, "%g ", x_val);
-				fprintf(fV3, "%g ", x_val);
-				fprintf(fT, "%g ", x_val);
+				fprintf(fnu1, "%g ", x_val);
+				fprintf(fnu2, "%g ", x_val);
+				fprintf(fnu3, "%g ", x_val);
+				fprintf(fKiE, "%g ", x_val);
 			}
 			fprintf(frho, "\n");
-			fprintf(fV1, "\n");
-			fprintf(fV2, "\n");
-			fprintf(fV3, "\n");
-			fprintf(fT, "\n");
+			fprintf(fnu1, "\n");
+			fprintf(fnu2, "\n");
+			fprintf(fnu3, "\n");
+			fprintf(fKiE, "\n");
 			// Print the values of the density rho for the initial condition, using the DG coefficients in U in the file tagged as frho:
 			for(int i=0; i<Nx; i++)
 			{
 				x_val = Gridx((double)i - 0.5);
 				fprintf(frho, "%g ", rho_x(x_val, U, i));
-				fprintf(fV1, "%g ", computeBulkVelocity_v1_in_x(U, i, x_val));
-				fprintf(fV2, "%g ", computeBulkVelocity_v2_in_x(U, i, x_val));
-				fprintf(fV3, "%g ", computeBulkVelocity_v3_in_x(U, i, x_val));
-				fprintf(fT, "%g ", computeKiE_in_x(U, i, x_val));
+				fprintf(fnu1, "%g ", computeBulkMomentum_nu1_in_x(U, i, x_val));
+				fprintf(fnu2, "%g ", computeBulkMomentum_nu2_in_x(U, i, x_val));
+				fprintf(fnu3, "%g ", computeBulkMomentum_nu3_in_x(U, i, x_val));
+				fprintf(fKiE, "%g ", computeKiE_in_x(U, i, x_val));
 			}
 			fprintf(frho, "%g ", rho_x(Lx, U, Nx-1));
-			fprintf(fV1, "%g ", computeBulkVelocity_v1_in_x(U, Nx-1, Lx));
-			fprintf(fV2, "%g ", computeBulkVelocity_v2_in_x(U, Nx-1, Lx));
-			fprintf(fV3, "%g ", computeBulkVelocity_v3_in_x(U, Nx-1, Lx));
-			fprintf(fT, "%g ", computeKiE_in_x(U, Nx-1, Lx));
+			fprintf(fnu1, "%g ", computeBulkMomentum_nu1_in_x(U, Nx-1, Lx));
+			fprintf(fnu2, "%g ", computeBulkMomentum_nu2_in_x(U, Nx-1, Lx));
+			fprintf(fnu3, "%g ", computeBulkMomentum_nu3_in_x(U, Nx-1, Lx));
+			fprintf(fKiE, "%g ", computeKiE_in_x(U, Nx-1, Lx));
 			fprintf(frho, "\n");
-			fprintf(fV1, "\n");
-			fprintf(fV2, "\n");
-			fprintf(fV3, "\n");
-			fprintf(fT, "\n");
+			fprintf(fnu1, "\n");
+			fprintf(fnu2, "\n");
+			fprintf(fnu3, "\n");
+			fprintf(fKiE, "\n");
 		}
 	}
   
@@ -1515,21 +1518,21 @@ int main(int argc, char** argv)
 					{
 						x_val = Gridx((double)i - 0.5);
 						fprintf(frho, "%g ", rho_x(x_val, U, i));
-						fprintf(fV1, "%g ", computeBulkVelocity_v1_in_x(U, i, x_val));
-						fprintf(fV2, "%g ", computeBulkVelocity_v2_in_x(U, i, x_val));
-						fprintf(fV3, "%g ", computeBulkVelocity_v3_in_x(U, i, x_val));
-						fprintf(fT, "%g ", computeKiE_in_x(U, i, x_val));
+						fprintf(fnu1, "%g ", computeBulkMomentum_nu1_in_x(U, i, x_val));
+						fprintf(fnu2, "%g ", computeBulkMomentum_nu2_in_x(U, i, x_val));
+						fprintf(fnu3, "%g ", computeBulkMomentum_nu3_in_x(U, i, x_val));
+						fprintf(fKiE, "%g ", computeKiE_in_x(U, i, x_val));
 					}
 					fprintf(frho, "%g ", rho_x(Lx, U, Nx-1));
-					fprintf(fV1, "%g ", computeBulkVelocity_v1_in_x(U, Nx-1, Lx));
-					fprintf(fV2, "%g ", computeBulkVelocity_v2_in_x(U, Nx-1, Lx));
-					fprintf(fV3, "%g ", computeBulkVelocity_v3_in_x(U, Nx-1, Lx));
-					fprintf(fT, "%g ", computeKiE_in_x(U, Nx-1, Lx));
+					fprintf(fnu1, "%g ", computeBulkMomentum_nu1_in_x(U, Nx-1, Lx));
+					fprintf(fnu2, "%g ", computeBulkMomentum_nu2_in_x(U, Nx-1, Lx));
+					fprintf(fnu3, "%g ", computeBulkMomentum_nu3_in_x(U, Nx-1, Lx));
+					fprintf(fKiE, "%g ", computeKiE_in_x(U, Nx-1, Lx));
 					fprintf(frho, "\n");
-					fprintf(fV1, "\n");
-					fprintf(fV2, "\n");
-					fprintf(fV3, "\n");
-					fprintf(fT, "\n");
+					fprintf(fnu1, "\n");
+					fprintf(fnu2, "\n");
+					fprintf(fnu3, "\n");
+					fprintf(fKiE, "\n");
 				}		
 			}
 		}
@@ -1584,7 +1587,7 @@ int main(int argc, char** argv)
 		fclose(fent);  																				// remove the tag fent to close the file
 		if(Doping)
 		{
-			fclose(frho), fclose(fV1), fclose(fV2), fclose(fV3), fclose(fT); 							// remove the tag frho to close the file
+			fclose(frho), fclose(fnu1), fclose(fnu2), fclose(fnu3), fclose(fKiE); 							// remove the tag frho to close the file
 		}
 	}
 	if(nu_max > 0.)
