@@ -846,7 +846,7 @@ void ReadInputParameters(GRVY_Input_Class& iparse, std::string& flag, int& nT,
 	}
 }
 
-void ReadDopingParameters(GRVY_Input_Class& iparse, double& NL, double& NH,
+void ReadDopingParameters(GRVY_Input_Class& iparse, double& N_left, double& N_center, double& N_right,
 							double& T_L, double& T_R, double& Phi_Lx,
 							int& channel_denom, int& channel_numer_left, int& channel_numer_right)								// Function to read all parameters for a non-uniform doping profile
 {
@@ -858,23 +858,53 @@ void ReadDopingParameters(GRVY_Input_Class& iparse, double& NL, double& NH,
 
 	// Try to read all doping parameters to be used for this run and print them from the
 	// processor with rank 0 (exit if not available)
-	if (! iparse.Read_Var("Doping/NL",&NL) )
+	if (! iparse.Read_Var("Doping/N_left",&N_left) )
 	{
-		PrintError("Doping/NL");
-		exit(1);
+		if(myrank_mpi==0)
+		{
+			std::cout << "No value has been chosen for N_left.  Checking for value of NH..." << std::endl;
+		}
+		if (! iparse.Read_Var("Doping/NH",&N_left) )
+		{
+			PrintError("Doping/N_left");
+			exit(1);
+		}
 	}
 	if(myrank_mpi==0)
 	{
-		printf("--> %-22s = %g\n","NL",NL);
+		printf("--> %-22s = %g\n","N_left",N_left);
 	}
-	if (! iparse.Read_Var("Doping/NH",&NH) )
+	if (! iparse.Read_Var("Doping/N_center",&N_center) )
 	{
-		PrintError("Doping/NH");
-		exit(1);
+		if(myrank_mpi==0)
+		{
+			std::cout << "No value has been chosen for N_center.  Checking for value of NL..." << std::endl;
+		}
+		if (! iparse.Read_Var("Doping/NL",&N_center) )
+		{
+			PrintError("Doping/N_center");
+			exit(1);
+		}
 	}
 	if(myrank_mpi==0)
 	{
-		printf("--> %-22s = %g\n","NH",NH);
+		printf("--> %-22s = %g\n","N_center",N_center);
+	}
+	if (! iparse.Read_Var("Doping/N_right",&N_right) )
+	{
+		if(myrank_mpi==0)
+		{
+			std::cout << "No value has been chosen for N_right.  Checking for value of NH..." << std::endl;
+		}
+		if (! iparse.Read_Var("Doping/NH",&N_right) )
+		{
+			PrintError("Doping/N_right");
+			exit(1);
+		}
+	}
+	if(myrank_mpi==0)
+	{
+		printf("--> %-22s = %g\n\n","N_right",N_right);
 	}
 
 	grvy_log_setlevel(GRVY_NOLOG);

@@ -34,7 +34,8 @@ double h_eta, h_v;																					// declare h_eta (the Fourier stepsize) &
 double nu, dt; 																						// declare nu (1/knudson#), dt (the timestep) & nthread (the number of OpenMP threads)
 
 // Non-uniform doping profile parameters:
-double NL, NH;																						// declare NL & NH (the density of ions in the middle of the well, the Lower value, and the edges, the higher value, respectively)
+//double NL, NH;																						// declare NL & NH (the density of ions in the middle of the well, the Lower value, and the edges, the higher value, respectively)
+double N_left, N_center, N_right;																	// declare N_left, N_center & N_right (the density of ions on the left, middle of the well and the right, respectively)
 int a_i, b_i;																						// declare a_i & b_i (the indices such that ND(x) = NL, for x_{a_i+1/2}< x <= x_{b_i-1/2}, and ND(x) = NH otherwise)
 double T_L, T_R;																					// declare T_L & T_R (the temperatures at the left & right edges of space if periodic BCs are used, respectively)
 double eps_fixed;																					// declare eps_fixed (the dielectric constant in Poisson's equation: div(eps*grad(Phi)) = R(x,t))
@@ -200,7 +201,7 @@ int main(int argc, char** argv)
 
 	if(Doping)
 	{
-		ReadDopingParameters(iparse, NL, NH, T_L, T_R, Phi_Lx, frac_denom, a_numer, b_numer); 		// Read in the input parameters required for a non-uniform doping profile
+		ReadDopingParameters(iparse, N_left, N_center, N_right, T_L, T_R, Phi_Lx, frac_denom, a_numer, b_numer); 		// Read in the input parameters required for a non-uniform doping profile
 		// if frac_denom does not evenly divide Nx, print an error and exit
 		if(Nx%frac_denom != 0)																		// check that size_v/nprocs_mpi has no remainder
 		{
@@ -1500,8 +1501,10 @@ int main(int argc, char** argv)
 			  }*/
       
 
+			t++;																						// increment t by one
+
 	    	//if(t%400==0)fwrite(U,sizeof(double),size*6,fu);
-			if(t%20==0)		// DEGUG CHECK: PRINTING MARGINALS EVERY STEP INSTEAD OF EVERY 20
+			if(t%1==0)		// DEGUG CHECK: PRINT MARGINALS EVERY STEP INSTEAD OF EVERY 20
 			{
 				PrintMarginal(U, fmarg);															// print the marginal distribution, using the DG coefficients in U, in the file tagged as fmarg
 				if(! Homogeneous)
@@ -1546,8 +1549,6 @@ int main(int argc, char** argv)
 			}
 			exit(1);
 		}
-	
-		t++;																						// increment t by one
 	
 		MPI_Barrier(MPI_COMM_WORLD);																// set an MPI barrier to ensure that all processes have reached this point before continuing
 	}

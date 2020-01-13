@@ -11,9 +11,9 @@
 # Global input variable definitions
 #--------------------------------------------
 
-flag     = MomentumValues_Test
+flag     = DopingProfile_Test
 
-nT       = 10 	                # Number of time-steps
+nT       = 100 	                # Number of time-steps
 Nx       = 12  	                # Number of space cells
 Nv       = 12	                # Number of velocity cells in each direction
 N        = 8 	                # Number of Fourier modes
@@ -114,11 +114,11 @@ Pois_Dirichlet  = False         # Use Dirichlet BCs
 Pois_Neutrality = True          # Use charge neutrality BCs
 
 # Mesh refinement parameters
-MeshRefinement         = True   # Refine the mesh in the channel
+MeshRefinement         = False  # Refine the mesh in the channel
 Nx_loc                 = 3      # Number of refined space cells per global cell
 
 # Permittivity Values (variable eps will override above eps value):
-VariableEpsilon = True          # Vary the value of eps across the channel
+VariableEpsilon = False         # Vary the value of eps across the channel
 
 eps_left               = 0.1    # Value of eps to the left of the channel
 eps_center             = 0.05	# Value of eps in the center of the channel

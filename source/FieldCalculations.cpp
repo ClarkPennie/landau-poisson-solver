@@ -67,6 +67,10 @@ void PrintFieldLoc(FILE *phifile, FILE *Efile)							// function to print the va
 				ddx = dx_global/4;
 			}
 		}
+		else
+		{
+			ddx = dx/4;
+		}
 		x_0 = Gridx((double)i - 0.5);									// set x_0 to the value of x at the left edge of the i-th space cell
 		for(int nx=0; nx<np; nx++)
 		{
@@ -357,7 +361,7 @@ double computePhi_Normal(double *U, double x, int ix)									// function to com
 	}
 
 	C_E = computePhi_x_0(U);
-	retn = (sum1 + sum3 + sum4)*dv*dv*dv - x*x/2 - C_E*x;
+	retn = (sum1 + sum3 + sum4)*dv*dv*dv - x*x/2 - C_E*x;  // BUG: This should probably be + C_E*x!!!
 	return retn;
 }
 
@@ -446,13 +450,17 @@ double Int_E2nd_Normal(double *U, int i) // \int_i E* [(x-x_i)/delta_x]^2 dx
 double DopingProfile(int i)																		// function to return a step function doping profile, based on what cell a given x is in
 {
 	double DP;																					// declare DP (the value of the doping profile in the current space cell to be returned)
-	if(i <= a_i || i > b_i)																// if the space cell i is either in the lower or upper third of all cells then set the value of DP to 1
+	if(i <= a_i)																				// if the space cell i is either in the lower or upper third of all cells then set the value of DP to 1
 	{
-		DP = NH;
+		DP = N_left;
 	}
-	else																						// if the space cell i is either in the middle third of all cells then set the value of DP to 0.1
+	else if(i <= b_i)																					// if the space cell i is either in the middle third of all cells then set the value of DP to 0.1
 	{
-		DP = NL;
+		DP = N_center;
+	}
+	else
+	{
+		DP = N_right;
 	}
 	return DP;																					// return the value of DP
 }
@@ -529,11 +537,11 @@ double computePhi_x_0_Doping(double *U) /* DIFFERENT FOR withND */ 													
 
 	if(Electrons)
 	{
-		return Phi_Lx/Lx + 0.5*NH*Lx/eps + (NL-NH)*(b_val-a_val)/eps - (0.5*(NL-NH)*(b_val*b_val - a_val*a_val) + tmp)/(Lx*eps);
+		return Phi_Lx/Lx + (0.5*N_right*Lx + (N_left-N_center)*a_val*(1 - 0.5*a_val/Lx) + (N_center-N_right)*b_val*(1 - 0.5*b_val/Lx) - tmp/Lx)/eps;
 	}
 	if(Ions)
 	{
-		return Phi_Lx/Lx - (0.5*NH*Lx/eps + (NL-NH)*(b_val-a_val)/eps - (0.5*(NL-NH)*(b_val*b_val - a_val*a_val) + tmp)/(Lx*eps));
+		return Phi_Lx/Lx - (0.5*N_right*Lx + (N_left-N_center)*a_val*(1 - 0.5*a_val/Lx) + (N_center-N_right)*b_val*(1 - 0.5*b_val/Lx) - tmp/Lx)/eps;
 	}
 }
 
@@ -650,12 +658,12 @@ double computePhi_Doping(double *U, double x, int ix)	/* DIFFERENT FOR withND */
 	if(ix > channel_left)																						// if x > a then there is an extra term to add
 	{
 		double a_val = (a_i+1)*dx;																		// declare a_val and set it to the value of x at the edge of the ai-th space cell
-		retn -= (NH-NL)*a_val*(x - 0.5*a_val);															// add (NH-NL)a(x-a/2) to retn
+		retn -= (N_left - N_center)*a_val*(x - 0.5*a_val);															// add (NH-NL)a(x-a/2) to retn
 	}
 	if(ix > channel_right)																						// if x > b then there is an extra term to add
 	{
 		double b_val = (b_i+1)*dx;																		// declare b_val and set it to the value of x at the edge of the bi-th space cell
-		retn -= (NL-NH)*b_val*(x - 0.5*b_val);															// add (NL-NH)b(x-b/2) to retn
+		retn -= (N_center - N_right)*b_val*(x - 0.5*b_val);															// add (NL-NH)b(x-b/2) to retn
 	}
 
 	if(Electrons)
@@ -737,12 +745,12 @@ double computeE_Doping(double *U, double x, int ix)	/* DIFFERENT FOR withND */		
 	if(ix > channel_left)
 	{
 		double a_val = (a_i+1)*dx;																		// declare a_val and set it to the value of x at the edge of the ai-th space cell
-		retn += (NH-NL)*a_val;																			// add (NH-NL)a to retn
+		retn += (N_left - N_center)*a_val;																			// add (NH-NL)a to retn
 	}
 	if(ix > channel_right)																				// if x > b then there is an extra term to add
 	{
 		double b_val = (b_i+1)*dx;																		// declare b_val and set it to the value of x at the edge of the bi-th space cell
-		retn += (NL-NH)*b_val;																			// add (NL-NH)b to retn
+		retn += (N_center - N_right)*b_val;																			// add (NL-NH)b to retn
 	}
 
 	if(Electrons)
@@ -778,6 +786,10 @@ void PrintFieldData_Doping(double* U_vals, FILE *phifile, FILE *Efile)							// 
 			{
 				ddx = dx_global/4;
 			}
+		}
+		else
+		{
+			ddx = dx/4;
 		}
 
 		x_0 = Gridx((double)i - 0.5);									// set x_0 to the value of x at the left edge of the i-th space cell
@@ -852,12 +864,12 @@ double Int_E_Doping(double *U, int i) 		/* DIFFERENT FOR withND */ 						      /
 	if(i > channel_left)
 	{
 		double a_val = (a_i+1)*dx;																		// declare a_val and set it to the value of x at the edge of the ai-th space cell
-		result += (NH-NL)*a_val*dx_val;																		// add (NH-NL)a*dx to result
+		result += (N_left - N_center)*a_val*dx_val;																		// add (NH-NL)a*dx to result
 	}
 	if(i > channel_right)																							// if x > b then there is an extra term to add
 	{
 		double b_val = (b_i+1)*dx;																		// declare b_val and set it to the value of x at the edge of the bi-th space cell
-		result += (NL-NH)*b_val*dx_val;																		// add (NL-NH)b*dx to result
+		result += (N_center - N_right)*b_val*dx_val;																		// add (NL-NH)b*dx to result
 	}
 
 	if(Electrons)
@@ -978,12 +990,12 @@ double Int_E2nd_Doping(double *U, int i) 	/* DIFFERENT FOR withND */							// \i
 	if(i > channel_left)
 	{
 		double a_val = (a_i+1)*dx;																		// declare a_val and set it to the value of x at the edge of the ai-th space cell
-		result += (NH-NL)*a_val*dx_val/12.;																	// add (NH-NL)a*dx/12 to result
+		result += (N_left - N_center)*a_val*dx_val/12.;																	// add (NH-NL)a*dx/12 to result
 	}
 	if(i > channel_right)																							// if x > b then there is an extra term to add
 	{
 		double b_val = (b_i+1)*dx;																		// declare b_val and set it to the value of x at the edge of the bi-th space cell
-		result += (NL-NH)*b_val*dx_val/12.;																	// add (NL-NH)b*dx/12 to result
+		result += (N_center - N_right)*b_val*dx_val/12.;																	// add (NL-NH)b*dx/12 to result
 	}
 
     if(Electrons)

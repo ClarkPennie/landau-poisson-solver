@@ -55,7 +55,8 @@ extern double h_eta, h_v;																			// declare h_eta (the Fourier stepsi
 extern double nu, dt, nthread; 																		// declare nu (1/knudson#) and set it to 0.1, dt (the timestep) and set it to 0.004 & nthread (the number of OpenMP threads)
 extern double eps_fixed;																			// declare eps_fixed (the dielectric constant in Poisson's equation: div(eps*grad(Phi)) = R(x,t))
 
-extern double NL, NH;																				// declare NL & NH (the density of ions in the middle of the well, the Lower value, and the edges, the higher value, respectively)
+//extern double NL, NH;																				// declare NL & NH (the density of ions in the middle of the well, the Lower value, and the edges, the higher value, respectively)
+extern double N_left, N_center, N_right;															// declare N_left, N_center & N_right (the density of ions on the left, middle of the well and the right, respectively)
 extern int a_i, b_i;																				// declare a_i & b_i (the indices such that ND(x) = NL, for x_{a_i+1/2}< x <= x_{b_i-1/2}, and ND(x) = NH otherwise)
 extern double T_L, T_R;																				// declare T_L & T_R (the temperatures at the left & right edges of space if periodic BCs are used, respectively)
 extern double eps_fixed;																			// declare eps_fixed (the dielectric constant in Poisson's equation: div(eps*grad(Phi)) = R(x,t))
