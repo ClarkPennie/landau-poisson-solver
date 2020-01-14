@@ -526,6 +526,7 @@ void ReadVariableEpsilon(GRVY_Input_Class& iparse)												// Function to rea
 						"but no value on the left has been chosen." << std::endl;
 				std::cout << "Please set the value of 'Doping/eps_left' in the input file." << std::endl;
 			}
+			exit(1);
 		}
 		if( iparse.Read_Var("Doping/eps_center",&eps_center) )
 		{
@@ -543,6 +544,7 @@ void ReadVariableEpsilon(GRVY_Input_Class& iparse)												// Function to rea
 						"but no value in the center has been chosen." << std::endl;
 				std::cout << "Please set the value of 'Doping/eps_center' in the input file." << std::endl;
 			}
+			exit(1);
 		}
 		if( iparse.Read_Var("Doping/eps_right",&eps_right) )
 		{
@@ -560,6 +562,7 @@ void ReadVariableEpsilon(GRVY_Input_Class& iparse)												// Function to rea
 						"but no value on the right has been chosen." << std::endl;
 				std::cout << "Please set the value of 'Doping/eps_right' in the input file." << std::endl;
 			}
+			exit(1);
 		}
 		if(myrank_mpi==0)
 		{
@@ -856,6 +859,8 @@ void ReadDopingParameters(GRVY_Input_Class& iparse, double& N_left, double& N_ce
 		std::cout << "Parameters associated to this non-uniform doping profile:" << std::endl << std::endl;
 	}
 
+	grvy_log_setlevel(GRVY_NOLOG);
+
 	// Try to read all doping parameters to be used for this run and print them from the
 	// processor with rank 0 (exit if not available)
 	if (! iparse.Read_Var("Doping/N_left",&N_left) )
@@ -906,8 +911,6 @@ void ReadDopingParameters(GRVY_Input_Class& iparse, double& N_left, double& N_ce
 	{
 		printf("--> %-22s = %g\n\n","N_right",N_right);
 	}
-
-	grvy_log_setlevel(GRVY_NOLOG);
 
 	iparse.Read_Var("Doping/T_L",&T_L,0.4);
 	iparse.Read_Var("Doping/T_R",&T_R,0.4);

@@ -1270,17 +1270,27 @@ int main(int argc, char** argv)
 			for(int i=0; i<Nx; i++)
 			{
 				x_val = Gridx((double)i - 0.5);
-				fprintf(frho, "%g ", rho_x(x_val, U, i));
-				fprintf(fnu1, "%g ", computeBulkMomentum_nu1_in_x(U, i, x_val));
-				fprintf(fnu2, "%g ", computeBulkMomentum_nu2_in_x(U, i, x_val));
-				fprintf(fnu3, "%g ", computeBulkMomentum_nu3_in_x(U, i, x_val));
-				fprintf(fKiE, "%g ", computeKiE_in_x(U, i, x_val));
+				tmp = rho_x(x_val, U, i);
+				fprintf(frho, "%g ", tmp);
+				tmp = computeBulkMomentum_nu1_in_x(U, i, x_val);
+				fprintf(fnu1, "%g ", tmp);
+				tmp = computeBulkMomentum_nu2_in_x(U, i, x_val);
+				fprintf(fnu2, "%g ", tmp);
+				tmp = computeBulkMomentum_nu3_in_x(U, i, x_val);
+				fprintf(fnu3, "%g ", tmp);
+				tmp = computeKiE_in_x(U, i, x_val);
+				fprintf(fKiE, "%g ", tmp);
 			}
-			fprintf(frho, "%g ", rho_x(Lx, U, Nx-1));
-			fprintf(fnu1, "%g ", computeBulkMomentum_nu1_in_x(U, Nx-1, Lx));
-			fprintf(fnu2, "%g ", computeBulkMomentum_nu2_in_x(U, Nx-1, Lx));
-			fprintf(fnu3, "%g ", computeBulkMomentum_nu3_in_x(U, Nx-1, Lx));
-			fprintf(fKiE, "%g ", computeKiE_in_x(U, Nx-1, Lx));
+			tmp = rho_x(Lx, U, Nx-1);
+			fprintf(frho, "%g ", tmp);
+			tmp = computeBulkMomentum_nu1_in_x(U, Nx-1, Lx);
+			fprintf(fnu1, "%g ", tmp);
+			tmp = computeBulkMomentum_nu2_in_x(U, Nx-1, Lx);
+			fprintf(fnu2, "%g ", tmp);
+			tmp = computeBulkMomentum_nu3_in_x(U, Nx-1, Lx);
+			fprintf(fnu3, "%g ", tmp);
+			tmp = computeKiE_in_x(U, Nx-1, Lx);
+			fprintf(fKiE, "%g ", tmp);
 			fprintf(frho, "\n");
 			fprintf(fnu1, "\n");
 			fprintf(fnu2, "\n");
@@ -1447,6 +1457,8 @@ int main(int argc, char** argv)
 		    MPI_Bcast(U, size*6, MPI_DOUBLE, 0, MPI_COMM_WORLD);    								// send the contents of U, from the process with rank 0, which contains 6*size entries of datatype MPI_DOUBLE, to all processes via the communicator MPI_COMM_WORLD (so that all processes have the coefficients of the DG approximation to f at the current time-step for the start of the next calculation)
 		}
    
+		t++;																						// increment t by one
+
 		MPI_Barrier(MPI_COMM_WORLD);
 		if(myrank_mpi==0)																			// only the process with rank 0 will do this
 		{
@@ -1469,14 +1481,14 @@ int main(int argc, char** argv)
 			if(Homogeneous || NoField)
 			{
 				printf("step %d: %11.8g  %11.8g  %11.8g  %11.8g  %11.8g %11.8g \n",
-						t+1, mass, a[0], a[1], a[2], KiE, ent1);									// display in the output file that this is step 0 (so these are the initial conditions), then the mass, 3 components of momentum, kinetic energy, entropy & Strain and Guo weighted L2 norm
+						t, mass, a[0], a[1], a[2], KiE, ent1);									// display in the output file that this is step 0 (so these are the initial conditions), then the mass, 3 components of momentum, kinetic energy, entropy & Strain and Guo weighted L2 norm
 				fprintf(fmom, "%11.8g %11.8g %11.8g %11.8g %11.8g %11.8g %11.8g %11.8g \n",
 						mass, a[0], a[1], a[2], 0.0, 0.0, 0.0, KiE);														// in the file tagged as fmom, print the initial mass, 3 components of momentum & kinetic energy
 			}
 			else
 			{
 				printf("step %d: %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g %11.8g %11.8g \n",
-						t+1, mass, a[0], a[1], a[2], KiE, EleE, tmp, log(tmp), KiE+EleE, ent1);			// display in the output file that this is step t+1, then the mass, 3 components of momentum, kinetic energy, electric energy, sqrt(electric energy), log(sqrt(electric energy)), total energy & entropy
+						t, mass, a[0], a[1], a[2], KiE, EleE, tmp, log(tmp), KiE+EleE, ent1);			// display in the output file that this is step t+1, then the mass, 3 components of momentum, kinetic energy, electric energy, sqrt(electric energy), log(sqrt(electric energy)), total energy & entropy
 				fprintf(fmom, "%11.8g %11.8g %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g  %11.8g \n",
 						mass, a[0], a[1], a[2], KiE, EleE, tmp, log(tmp), KiE+EleE);						// in the file tagged as fmom, print the initial mass, 3 components of momentum, kinetic energy, electric energy, sqrt(electric energy), log(sqrt(electric energy)) & total energy
 			}
@@ -1501,10 +1513,8 @@ int main(int argc, char** argv)
 			  }*/
       
 
-			t++;																						// increment t by one
-
 	    	//if(t%400==0)fwrite(U,sizeof(double),size*6,fu);
-			if(t%1==0)		// DEGUG CHECK: PRINT MARGINALS EVERY STEP INSTEAD OF EVERY 20
+			if(t%20==0)		// DEGUG CHECK: PRINT MARGINALS EVERY STEP INSTEAD OF EVERY 20
 			{
 				PrintMarginal(U, fmarg);															// print the marginal distribution, using the DG coefficients in U, in the file tagged as fmarg
 				if(! Homogeneous)
